@@ -1,9 +1,9 @@
 import socket
 import threading
 import pickle
-import sys
+import pygame
 
-
+# Server-Daten
 spieler_daten = {}
 verbindungen = []
 anzahl_spieler = None  # Wird vom ersten Spieler gesetzt
@@ -36,20 +36,22 @@ def client_thread(conn, spieler_id):
                 spieler_daten[spieler_id + 1] = name
             print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
 
-        # Falls noch nicht alle Spieler verbunden sind, warten
+        # Allen Spielern (auch Host) "Warten auf andere Spieler..." schicken, solange nicht alle da sind
         if spieler_id < anzahl_spieler - 1:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
         # Wenn der letzte Spieler erreicht ist, starte das Spiel
         if spieler_id == anzahl_spieler - 1:
-            send_data(conn, {"message": "Alle Spieler verbunden. Ihr könnt jetzt starten!"})
+            # Allen Spielern die Start-Nachricht schicken
+            for v in verbindungen:
+                send_data(v, {"message": "Alle Spieler verbunden. Ihr könnt jetzt starten!"})
 
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")
 
-    finally:
-        conn.close()
-        print(f"[TRENNUNG] Spieler {spieler_id + 1} getrennt")
+    #finally:
+       # conn.close()
+       # print(f"[TRENNUNG] Spieler {spieler_id + 1} getrennt")
 
 def recv_data(conn):
     """Hilfsfunktion für sicheres Empfangen von Daten"""
@@ -82,8 +84,14 @@ def start_server():
 
     while True:
         conn, addr = server.accept()
-        print(f"[VERBUNDEN] Spieler {spieler_id + 1} von {addr}")
 
+        # Warte, bis anzahl_spieler gesetzt ist (nachdem Spieler 1 gewählt hat)
+        if anzahl_spieler is not None and spieler_id >= anzahl_spieler:
+            send_data(conn, {"error": "Maximale Spieleranzahl erreicht. Verbindung abgelehnt."})
+            conn.close()
+            continue
+
+        print(f"[VERBUNDEN] Spieler {spieler_id + 1} von {addr}")
         verbindungen.append(conn)
         thread = threading.Thread(target=client_thread, args=(conn, spieler_id))
         thread.start()
@@ -91,12 +99,8 @@ def start_server():
 
         spieler_id += 1
 
-        # Warten bis anzahl_spieler gesetzt wurde
-        if spieler_id == 1:
-            anzahl_spieler_event.wait()
-
-        # Wenn genug Spieler da sind, starte das Spiel
-        if anzahl_spieler and spieler_id >= anzahl_spieler:
+        # Nur prüfen, wenn anzahl_spieler gesetzt ist!
+        if anzahl_spieler is not None and spieler_id >= anzahl_spieler:
             print("[INFO] Alle Spieler verbunden, das Spiel kann starten.")
             break
 
@@ -105,24 +109,6 @@ def start_server():
         t.join()
 
     server.close()
-
-
-def connect_to_server():
-    SERVER_IP = "127.0.0.1"  # Oder IP des Hosts anpassen
-    PORT = 65432
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((SERVER_IP, PORT))
-
-    # Empfang erste Daten (spieler_id)
-    data = recv_data(sock)
-    if data and "error" in data:
-        print("[SERVER]:", data["error"])
-        sock.close()
-        sys.exit()
-
-    spieler_id = data["spieler_id"]
-    print(f"[INFO] Verbunden als Spieler {spieler_id}")
-    return sock, spieler_id
 
 if __name__ == "__main__":
     start_server()
