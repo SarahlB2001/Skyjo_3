@@ -42,7 +42,9 @@ def client_thread(conn, spieler_id):
 
         # Wenn der letzte Spieler erreicht ist, starte das Spiel
         if spieler_id == anzahl_spieler - 1:
-            send_data(conn, {"message": "Alle Spieler verbunden. Ihr könnt jetzt starten!"})
+            # Allen Spielern die Start-Nachricht schicken
+            for v in verbindungen:
+                send_data(v, {"message": "Alle Spieler verbunden. Ihr könnt jetzt starten!"})
 
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")
@@ -82,7 +84,9 @@ def start_server():
 
     while True:
         conn, addr = server.accept()
-        if anzahl_spieler and spieler_id >= anzahl_spieler:
+
+        # Warte, bis anzahl_spieler gesetzt ist (nachdem Spieler 1 gewählt hat)
+        if anzahl_spieler is not None and spieler_id >= anzahl_spieler:
             send_data(conn, {"error": "Maximale Spieleranzahl erreicht. Verbindung abgelehnt."})
             conn.close()
             continue
@@ -95,7 +99,8 @@ def start_server():
 
         spieler_id += 1
 
-        if anzahl_spieler and spieler_id >= anzahl_spieler:
+        # Nur prüfen, wenn anzahl_spieler gesetzt ist!
+        if anzahl_spieler is not None and spieler_id >= anzahl_spieler:
             print("[INFO] Alle Spieler verbunden, das Spiel kann starten.")
             break
 

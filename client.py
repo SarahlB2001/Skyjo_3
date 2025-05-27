@@ -66,6 +66,8 @@ def main():
     waiting_for_players = False  # Flag für die Auswahl der Spieleranzahl (nur für den Host)
 
     running = True
+    sock = None
+    spieler_id = None
     while running:
         screen.fill((255, 255, 255))
 
@@ -78,12 +80,24 @@ def main():
                     # Verarbeite Spielmodi-Buttons
                     if host_button.collidepoint(event.pos):
                         game_mode = "host"
-                        waiting_for_name = True
+                        waiting_for_players = True
                         print("[DEBUG] Game mode set to 'host'")
                     elif join_button.collidepoint(event.pos):
                         game_mode = "join"
                         waiting_for_name = True
                         print("[DEBUG] Game mode set to 'join'")
+                elif waiting_for_players:
+                    # Verarbeite Spieleranzahl-Buttons (nur Host)
+                    for i, button in enumerate(player_count_buttons):
+                        if button.collidepoint(event.pos):
+                            player_count = i + 1
+                            print(f"[DEBUG] Player count set to {player_count}")
+                            # Verbindung erst jetzt aufbauen!
+                            sock, spieler_id = connect_to_server()
+                            send_data(sock, {"anzahl_spieler": player_count})
+                            waiting_for_players = False
+                            waiting_for_name = True  # Jetzt Name eingeben
+                            break
                 elif waiting_for_name:
                     # Überprüfe, ob das Eingabefeld angeklickt wurde
                     if input_box.collidepoint(event.pos):
@@ -92,24 +106,13 @@ def main():
                     else:
                         active = False
                         print("[DEBUG] Input box deactivated")
-                elif waiting_for_players:
-                    # Verarbeite Spieleranzahl-Buttons
-                    for i, button in enumerate(player_count_buttons):
-                        if button.collidepoint(event.pos):
-                            player_count = i + 1
-                            print(f"[DEBUG] Player count set to {player_count}")
-                            waiting_for_players = False
-                            send_data(sock, {"anzahl_spieler": player_count})
-                            break
 
             if event.type == pygame.KEYDOWN:
                 if active:
                     if event.key == pygame.K_RETURN:
                         # Nach Eingabe des Namens, sende Name an Server
                         if game_mode == "host":
-                            sock, spieler_id = connect_to_server()
                             send_data(sock, {"name": text_input})
-                            waiting_for_players = True  # Host muss Spieleranzahl festlegen
                         elif game_mode == "join":
                             sock, spieler_id = connect_to_server()
                             send_data(sock, {"name": text_input})
@@ -133,6 +136,15 @@ def main():
         screen.blit(host_text, (host_button.x + 20, host_button.y + 10))
         screen.blit(join_text, (join_button.x + 20, join_button.y + 10))
 
+        # Spieleranzahl-Buttons anzeigen, wenn der Host die Spieleranzahl wählen soll
+        if waiting_for_players:
+            headline = font.render("Spieleranzahl wählen", True, (0, 0, 0))
+            screen.blit(headline, (50, 310))
+            for i, button in enumerate(player_count_buttons):
+                pygame.draw.rect(screen, (0, 0, 255), button)
+                player_text = small_font.render(f"{i+1}", True, (255, 255, 255))
+                screen.blit(player_text, (button.x + 15, button.y + 10))
+
         # Eingabefeld für den Namen anzeigen, wenn der Benutzer seinen Namen eingeben soll
         if waiting_for_name:
             prompt_text = small_font.render(f"Bitte Namen eingeben:", True, (0, 0, 0))
@@ -140,13 +152,6 @@ def main():
             txt_surface = font.render(text_input, True, (0, 0, 0))
             screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
             pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
-
-        # Spieleranzahl-Buttons anzeigen, wenn der Host seinen Namen eingegeben hat
-        if waiting_for_players:
-            for i, button in enumerate(player_count_buttons):
-                pygame.draw.rect(screen, (0, 0, 255), button)
-                player_text = small_font.render(f"{i+1}", True, (255, 255, 255))
-                screen.blit(player_text, (button.x + 15, button.y + 10))
 
         pygame.display.flip()
         clock.tick(30)
