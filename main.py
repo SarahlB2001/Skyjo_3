@@ -1,5 +1,5 @@
 ''' This program simulates the card game Skyjo  '''
-# author: Sarah B., Antonia  H., Diedan.S, Dieja S., Marit S. 
+# author: Sarah B., Antonia  H., Diedan.S, Dieja S., Marit S.
 
 import pygame
 import sys
@@ -30,6 +30,10 @@ def main():
     # Namen an Server senden
     serv.send_data(sock, {"name": player_name})
 
+    round_count_buttons = [pygame.Rect(50 + 60 * i, 420, 50, 50) for i in range(5)]
+    round_count = None
+    waiting_for_rounds = False
+
     while running:
         s.clock.tick(s.FPS)
 
@@ -46,5 +50,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-# keine Begrenzung der Buchstaben 
-# Klasse Spielstart erstellen

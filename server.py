@@ -36,7 +36,7 @@ def client_thread(conn, spieler_id):
                 spieler_daten[spieler_id + 1] = name
             print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
 
-        # Falls noch nicht alle Spieler verbunden sind, warten
+        # Allen Spielern (auch Host) "Warten auf andere Spieler..." schicken, solange nicht alle da sind
         if spieler_id < anzahl_spieler - 1:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
@@ -49,9 +49,9 @@ def client_thread(conn, spieler_id):
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")
 
-    finally:
-        conn.close()
-        print(f"[TRENNUNG] Spieler {spieler_id + 1} getrennt")
+    #finally:
+       # conn.close()
+       # print(f"[TRENNUNG] Spieler {spieler_id + 1} getrennt")
 
 def recv_data(conn):
     """Hilfsfunktion für sicheres Empfangen von Daten"""
