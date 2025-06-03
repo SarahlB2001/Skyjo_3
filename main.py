@@ -29,7 +29,7 @@ def main():
     entering_ip = False
 
     # Auswahl Buttons für die Anzahl der Spieler (nur für den Host sichtbar)
-    player_count_buttons = [pygame.Rect(50 + 60 * i, 350, 50, 50) for i in range(8)]
+    player_count_buttons = [pygame.Rect(50 + 60 * i, 350, 50, 50) for i in range(4)]
     player_count = None  # Spieleranzahl, wird nach der Namensangabe festgelegt
 
     # Auswahl Buttons für die Anzahl der Runden (nur für den Host sichtbar)
@@ -40,6 +40,8 @@ def main():
     waiting_for_name = False  # Flag für Namen eingeben
     waiting_for_players = False  # Flag für die Auswahl der Spieleranzahl (nur für den Host)
     waiting_for_rounds = False  # Flag für die Auswahl der Rundenanzahl (nur für den Host)
+
+    status_message = ""
 
     running = True
     sock = None
@@ -130,10 +132,16 @@ def main():
                         text_input = ""
                         waiting_for_name = False  # Namen eingegeben, keine Eingabe mehr notwendig
 
-                        # Nachricht vom Server warten:
+                        # Status sofort setzen
+                        status_message = "Warten auf andere Spieler..."
+
+                        # Nachricht vom Server abwarten
                         msg = serv.recv_data(sock)
                         if msg and "message" in msg:
-                            print(msg["message"])
+                            if "starten" in msg["message"].lower():
+                                status_message = "Spiel startet"
+                            else:
+                                status_message = msg["message"]
 
                     elif event.key == pygame.K_BACKSPACE:
                         text_input = text_input[:-1]
@@ -141,33 +149,56 @@ def main():
                         text_input += event.unicode
 
         # GUI für die Auswahl der Spielmodi
-        pygame.draw.rect(screen, (0, 200, 0), host_button)
-        pygame.draw.rect(screen, (200, 0, 0), join_button)
+        if game_mode is None:
+            pygame.draw.rect(screen, (0, 200, 0), host_button)
+            pygame.draw.rect(screen, (200, 0, 0), join_button)
 
-        host_text = font.render("Spiel Hosten", True, (255, 255, 255))
-        join_text = font.render("Spiel Beitreten", True, (255, 255, 255))
+            host_text = font.render("Spiel Hosten", True, (255, 255, 255))
+            join_text = font.render("Spiel Beitreten", True, (255, 255, 255))
 
-        screen.blit(host_text, (host_button.x + 20, host_button.y + 10))
-        screen.blit(join_text, (join_button.x + 20, join_button.y + 10))
+            screen.blit(host_text, (host_button.x + 20, host_button.y + 10))
+            screen.blit(join_text, (join_button.x + 20, join_button.y + 10))
 
         # Spieleranzahl-Buttons anzeigen, wenn der Host die Spieleranzahl wählen soll
         if waiting_for_players:
             headline = font.render("Spieleranzahl wählen", True, (0, 0, 0))
-            screen.blit(headline, (50, 310))
+            screen.blit(
+                headline,
+                (screen.get_width() // 2 - headline.get_width() // 2, 200)
+            )
+            # Buttons mittig anordnen
+            total_width = len(player_count_buttons) * 60 - 10  # 60 Abstand, 50 Buttonbreite, 10 Überlappungskorrektur
+            start_x = screen.get_width() // 2 - total_width // 2
+            y = 260
             for i, button in enumerate(player_count_buttons):
+                button.x = start_x + i * 60
+                button.y = y
                 pygame.draw.rect(screen, (0, 0, 255), button)
                 player_text = small_font.render(f"{i+1}", True, (255, 255, 255))
-                screen.blit(player_text, (button.x + 15, button.y + 10))
+                screen.blit(
+                    player_text,
+                    (button.x + button.width // 2 - player_text.get_width() // 2, button.y + 10)
+                )
 
         # Rundenzahl-Buttons anzeigen, wenn der Host die Rundenzahl wählen soll
         if waiting_for_rounds:
             headline = font.render("Rundenanzahl wählen", True, (0, 0, 0))
-            screen.blit(headline, (50, 270))  # <-- y-Wert von 380 auf 250 geändert
+            screen.blit(
+                headline,
+                (screen.get_width() // 2 - headline.get_width() // 2, 200)
+            )
+            total_width = len(round_count_buttons) * 60 - 10
+            start_x = screen.get_width() // 2 - total_width // 2
+            y = 260
             for i, button in enumerate(round_count_buttons):
-                button.y = 290  # <-- y-Wert der Buttons z.B. auf 290 setzen
+                button.x = start_x + i * 60
+                button.y = y
                 pygame.draw.rect(screen, (255, 140, 0), button)
                 round_text = small_font.render(f"{i+1}", True, (255, 255, 255))
-                screen.blit(round_text, (button.x + 15, button.y + 10))
+                screen.blit(
+                    round_text,
+                    (button.x + button.width // 2 - round_text.get_width() // 2, button.y + 10)
+                )
 
         # Eingabefeld für den Namen anzeigen, wenn der Benutzer seinen Namen eingeben soll
         if waiting_for_name:
@@ -183,6 +214,13 @@ def main():
             ip_surface = font.render(ip_input, True, (0, 0, 0))
             screen.blit(ip_surface, (ip_input_box.x + 5, ip_input_box.y + 5))
             pygame.draw.rect(screen, (0, 0, 0), ip_input_box, 2)
+
+        if status_message:
+            status_surface = font.render(status_message, True, (0, 0, 0))
+            screen.blit(
+                status_surface,
+                (screen.get_width() // 2 - status_surface.get_width() // 2, 100)
+            )
 
         pygame.display.flip()
         clock.tick(30)
