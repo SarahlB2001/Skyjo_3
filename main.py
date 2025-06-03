@@ -157,7 +157,8 @@ def main():
                     elif event.key == pygame.K_BACKSPACE:
                         text_input = text_input[:-1]
                     else:
-                        text_input += event.unicode
+                        if len(text_input) < 12:  # Maximal 12 Zeichen erlauben
+                            text_input += event.unicode
 
         # Menü: Spielmodi Auswahl
         if game_mode is None:
