@@ -18,7 +18,7 @@ drei = {'x': s.WIDTH * 3 // 4 - s.WIDTH // 16,
 vier = {'x': s.WIDTH * 3 // 4 - s.WIDTH // 16,
         'y': s.HEIGHT - s.HEIGHT//4 - s.HEIGHT//16}
 
-fünf = {'x': s.WIDTH // 8 + s.WIDTH // 4,
+funf = {'x': s.WIDTH // 8 + s.WIDTH // 4,
         'y': s.HEIGHT - s.HEIGHT//4 - s.HEIGHT//16}
 
 sechs = {'x': s.WIDTH // 16,
@@ -36,7 +36,14 @@ field_pos = {'1': eins,
              '2': zwei,
              '3': drei,
              '4': vier,
-             '5': fünf,
+             '5': funf,
              '6': sechs,
              'size': size,
              'carddeck': carddeck}
+
+player_pos = {2: [(eins['x'], eins['y']), (drei ['x'], drei['y'])],
+              3: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (funf ['x'], funf['y'])],
+              4: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (sechs ['x'], sechs['y'])],
+              5: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (funf ['x'], funf['y']), (sechs ['x'], sechs['y'])],
+              6: [(eins['x'], eins['y']), (zwei ['x'], zwei['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (funf ['x'], funf['y']), (sechs ['x'], sechs['y'])]}
+
