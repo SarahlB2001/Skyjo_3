@@ -1,6 +1,7 @@
 import socket
 import sys
 import server as serv
+import settings as s
 
 def recv_loop(sock, message_queue):
     """Läuft in separatem Thread, um Nachrichten dauerhaft zu empfangen"""
@@ -26,17 +27,17 @@ def connect_to_server(SERVER_IP="127.0.0.1"):
         sock.close()
         sys.exit()
 
-    spieler_id = data["spieler_id"]
-    print(f"[INFO] Verbunden als Spieler {spieler_id}")
-    return sock, spieler_id
+    s.spieler_id = data["spieler_id"]
+    print(f"[INFO] Verbunden als Spieler {s.spieler_id}")
+    return sock, s.spieler_id
 
 def get_local_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    so = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
+        so.connect(("8.8.8.8", 80))
+        ip = so.getsockname()[0]
     except Exception:
         ip = "127.0.0.1"
     finally:
-        s.close()
+        so.close()
     return ip
