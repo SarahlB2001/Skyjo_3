@@ -1,7 +1,7 @@
 import socket
 import threading
 import pickle
-import pygame
+
 
 # Server-Daten
 spieler_daten = {}
