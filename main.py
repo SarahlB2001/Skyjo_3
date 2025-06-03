@@ -28,6 +28,9 @@ def main():
     ip_input = ""
     entering_ip = False
 
+    # Hintergrundbild des Menüs
+    background = pygame.image.load("Skyjo_Menü.png")
+
     # Auswahl Buttons für die Anzahl der Spieler (nur für den Host sichtbar)
     player_count_buttons = [pygame.Rect(50 + 60 * i, 350, 50, 50) for i in range(4)]
     player_count = None  # Spieleranzahl, wird nach der Namensangabe festgelegt
@@ -47,7 +50,7 @@ def main():
     sock = None
     spieler_id = None
     while running:
-        screen.fill((255, 255, 255))
+        screen.blit(background, (0,0))
 
         # Zeige die IP-Adresse an, wenn Host ausgewählt wurde
         if game_mode == "host":
