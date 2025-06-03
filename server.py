@@ -1,8 +1,13 @@
 import socket
 import threading
 import pickle
-import settings as s
 
+# Globale Variablen
+spieler_daten = {}
+verbindungen = []
+anzahl_spieler = None
+anzahl_spieler_event = threading.Event()
+lock = threading.Lock()
 
 def recv_data(conn):
     try:
@@ -20,36 +25,36 @@ def send_data(conn, data):
         pass
 
 def client_thread(conn, spieler_id):
-
+    global anzahl_spieler
 
     try:
         # Spieler-ID senden
-        send_data(conn, {"spieler_id": s.spieler_id + 1})
+        send_data(conn, {"spieler_id": spieler_id + 1})
 
-        if s.spieler_id == 0:
+        if spieler_id == 0:
             daten = recv_data(conn)
             if daten:
-                s.anzahl_spieler = daten.get("anzahl_spieler", 2)
-                print(f"[INFO] Anzahl der Spieler festgelegt auf {s.anzahl_spieler}")
-                s.anzahl_spieler_event.set()
+                anzahl_spieler = daten.get("anzahl_spieler", 2)
+                print(f"[INFO] Anzahl der Spieler festgelegt auf {anzahl_spieler}")
+                anzahl_spieler_event.set()
         else:
-            s.anzahl_spieler_event.wait()
+            anzahl_spieler_event.wait()
 
         daten = recv_data(conn)
         if daten:
-            name = daten.get("name", f"Spieler{s.spieler_id + 1}")
-            with s.lock:
-                s.spieler_daten[s.spieler_id + 1] = name
-            print(f"[INFO] Spieler {s.spieler_id + 1} heißt {name}")
+            name = daten.get("name", f"Spieler{spieler_id + 1}")
+            with lock:
+                spieler_daten[spieler_id + 1] = name
+            print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
 
         # Allen Spielern "Warten..." senden
-        if s.spieler_id < s.anzahl_spieler - 1:
+        if spieler_id < anzahl_spieler - 1:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
         # Wenn alle verbunden, allen Startmeldung schicken
-        if s.spieler_id == s.anzahl_spieler - 1:
+        if spieler_id == anzahl_spieler - 1:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
-            for v in s.verbindungen:
+            for v in verbindungen:
                 send_data(v, {"message": "Alle Spieler verbunden. Ihr könnt jetzt starten!"})
 
         # Hier könntest du später die Spiellogik oder weitere Kommunikation einbauen
@@ -59,7 +64,7 @@ def client_thread(conn, spieler_id):
             pass
 
     except Exception as e:
-        print(f"[FEHLER] Spieler {s.spieler_id + 1} Verbindung verloren: {e}")
+        print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")
 
 def start_server():
     HOST = "0.0.0.0"
@@ -75,19 +80,19 @@ def start_server():
     while True:
         conn, addr = server.accept()
 
-        if s.anzahl_spieler is not None and spieler_id >= s.anzahl_spieler:
+        if anzahl_spieler is not None and spieler_id >= anzahl_spieler:
             send_data(conn, {"error": "Maximale Spieleranzahl erreicht. Verbindung abgelehnt."})
             conn.close()
             continue
 
         print(f"[VERBUNDEN] Spieler {spieler_id + 1} von {addr}")
-        s.verbindungen.append(conn)
+        verbindungen.append(conn)
         thread = threading.Thread(target=client_thread, args=(conn, spieler_id), daemon=True)
         thread.start()
 
         spieler_id += 1
 
-        if s.anzahl_spieler is not None and spieler_id >= s.anzahl_spieler:
+        if anzahl_spieler is not None and spieler_id >= anzahl_spieler:
             print("[INFO] Alle Spieler verbunden, das Spiel kann starten.")
             # Warten auf Threads ist hier nicht nötig, da server läuft weiter
 
