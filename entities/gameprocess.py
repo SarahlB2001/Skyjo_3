@@ -5,13 +5,28 @@ import settings as s
 #__________________________________________________
 # Erste Runde
 
-# Karten verteilen
+def erste_runde(spieler_anzahl):
+    stapel = st.create_stack()    # Kartenstapel erstellen
+    
+    # Karten verteilen
+    spieler_karten = {}
+    for spieler in range(spieler_anzahl):
+        spieler_karten[spieler] = stapel[:12]  # Ziehe die ersten 12 Karten
+        del stapel[:12]  # Entferne die gezogenen Karten aus dem Stapel
+        
+    # Oberste Karte des Stapels aufdecken
+    offene_karte = stapel.pop()
+    
+    # Spieler wählen 2 Karten aus
+    #ERST MÖGLICH WENN WIR WISSEN WO wELCHE kARTE LIEGT
+    
 
-# Kartenstapel erstellen und oberste Karte aufdecken
+    # Beginner auswählen: Spieler mit der höchsten Punktzahl
+    punkte = {spieler: card.calculate_points(spieler_karten[spieler]) for spieler in spieler_karten}
+    beginner = max(punkte, key=punkte.get)
+    print(f"Spieler {beginner} beginnt mit der höchsten Punktzahl: {punkte[beginner]}")
 
-# Alle Spieler können 2 Karten mit der Maus auswählen 
-
-# Beginner auswählen: der Mit der Höchsten Punktzahl
+    return spieler_karten, offene_karte, stapel, beginner
 
 #_____________________________________________________
 # Hauptschleife (Loop 1!)
