@@ -32,3 +32,11 @@ PLAYER_FONT = pygame.font.SysFont("comicsans", PLAYER_SIZE)
 PLAYER_FONT_COLOR = BLACK
 
 PL_ANZAHL = 6
+
+CARD_WIDTH = 50
+CARD_HEIGHT = 90
+CARD_GAP = 10 
+
+CARD_IMAGES= {
+    i: f"img/card_{i}.png" for i in range ( -2, 13)
+}

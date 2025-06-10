@@ -5,6 +5,7 @@ import pygame
 import sys
 import functions.client as c
 import server as serv
+import layout as l
 
 def main():
     pygame.init()
@@ -52,7 +53,8 @@ def main():
 
     while running:
         screen.blit(background, (0, 0))
-
+        layout = l.CardLayout(start_x=100, start_y=200)
+        layout.draw(screen)
         # Zeige die IP-Adresse an, wenn Host ausgewählt wurde
         if game_mode == "host":
             ip_text = small_font.render(f"Deine IP: {c.get_local_ip()}", True, (0, 0, 0))
@@ -61,6 +63,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+            
+           
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if game_mode is None:
