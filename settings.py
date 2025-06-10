@@ -66,9 +66,13 @@ running = True
 sock = None
 spieler_id = None
 
+ROWS = 3
+COLS = 4
+
 CARD_WIDTH = 50
 CARD_HEIGHT = 90
-CARD_GAP = 10 
+gap_width = 10
+gap_height = 10
 
 def calculate_gaps (size, cols, rows, card_width, card_height):
     
