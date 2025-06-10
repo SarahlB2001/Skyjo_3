@@ -60,7 +60,7 @@ def draw():
     WINDOW.fill(s.WINDOW_COLOR)
 
 
-    cP.card_place_position()
+    cP.card_set_positions()
     player_place_position()
 
     pygame.display.flip()
