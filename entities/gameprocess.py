@@ -75,23 +75,40 @@ def main_loop(player_cards, open_card, deck, beginner, open_cards):
         current_player = (current_player + 1) % player_count  # Nächster Spieler
 
 #________________________________________________________
-# Ergebnis
+#Logik für Rundenende und Neustart und Ergebnis
 
-# Karten Punkte jedes spielers zusammenzählen
-scores = {}
-for player in range(player_count):
-        scores[player] = card.calculate_points(open_cards[player])
-        print(f"Player {player} score: {scores[player]}")
+def game_loop(player_count, max_rounds):
+    total_scores = {player: 0 for player in range(player_count)}
+    round_number = 1 # Rundenzählung beginnt bei 1
+    beginner = 0  # Startspieler der ersten Runde
 
-# gewinner ermitteln -> der mit der niedrigsten Punktzahl
-winner = min(scores, key=scores.get)
-print(f"\nWinner is Player {winner} with {scores[winner]} points!")
+    while round_number <= max_rounds:
+        print(f"\n--- Round {round_number} ---")
+        player_cards, open_card, deck, beginner, open_cards = first_round(player_count)
+        main_loop(player_cards, open_card, deck, beginner, open_cards) # Hauptschleife wird für die Runde gestartet
 
-# Punktestand anzeigen
-print("\nFinal scores:")
-for player, score in scores.items():
+        # Karten Punkte jedes Spielers zusammenzählen
+        scores = {}
+        for player in range(player_count):
+            scores[player] = card.calculate_points(open_cards[player])
+            total_scores[player] += scores[player]
+            print(f"Player {player} score this round: {scores[player]} (Total: {total_scores[player]})")
+
+        # Gewinner der Runde
+        winner = min(scores, key=scores.get)
+        print(f"\nWinner of round {round_number}: Player {winner} with {scores[winner]} points!")
+         # Beginner der nächsten Runde ist der, der alle Karten aufgedeckt hat (hier: winner)
+        beginner = winner
+
+        round_number += 1
+
+    # Endstand Tabelle
+    print("\n=== Final Standings ===")
+    for player, score in total_scores.items():
         print(f"Player {player}: {score} points")
+    overall_winner = min(total_scores, key=total_scores.get)
+    print(f"\nOverall winner is Player {overall_winner} with {total_scores[overall_winner]} points!")
 
-# Überprüfen ob Rundenanzahl erreicht, wenn ja Endstand Tabelle? wenn nein runde neu Starten. 
-# Beginner Auswahl: derjenige der Aufgedeckt hat
-# Loop 1 neu starten
+
+
+
