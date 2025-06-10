@@ -77,11 +77,21 @@ def main_loop(player_cards, open_card, deck, beginner, open_cards):
 #________________________________________________________
 # Ergebnis
 
-# Karten Punkte zusammenzählen
+# Karten Punkte jedes spielers zusammenzählen
+scores = {}
+for player in range(player_count):
+        scores[player] = card.calculate_points(open_cards[player])
+        print(f"Player {player} score: {scores[player]}")
 
-# gewinner ermitteln
+# gewinner ermitteln -> der mit der niedrigsten Punktzahl
+winner = min(scores, key=scores.get)
+print(f"\nWinner is Player {winner} with {scores[winner]} points!")
 
 # Punktestand anzeigen
+print("\nFinal scores:")
+for player, score in scores.items():
+        print(f"Player {player}: {score} points")
 
-# Überprüfen ob Rundenanzahl erreicht, wenn ja Endstand Tabelle, wenn nein runde neu Starten. Beginner auswahl: derjenige der Aufgedeckt hat
+# Überprüfen ob Rundenanzahl erreicht, wenn ja Endstand Tabelle? wenn nein runde neu Starten. 
+# Beginner Auswahl: derjenige der Aufgedeckt hat
 # Loop 1 neu starten
