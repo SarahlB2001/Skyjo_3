@@ -5,45 +5,47 @@ import settings as s
 #__________________________________________________
 # Erste Runde
 
-def erste_runde(spieler_anzahl):
-    stapel = st.create_stack()    # Kartenstapel erstellen
+def first_round(player_anzahl):
+    deck = st.create_stack()    # Kartendeck erstellen
     
     # Karten verteilen
-    spieler_karten = {}
-    for spieler in range(spieler_anzahl):
-        spieler_karten[spieler] = stapel[:12]  # Ziehe die ersten 12 Karten
-        del stapel[:12]  # Entferne die gezogenen Karten aus dem Stapel
+    player_cards = {}
+    for player in range(player_anzahl):
+        player_cards[player] = deck[:12]  # Ziehe die ersten 12 Karten
+        del deck[:12]  # Entferne die gezogenen Karten aus dem deck
         
-    # Oberste Karte des Stapels aufdecken
-    offene_karte = stapel.pop()
+    # Oberste Karte des decks aufdecken
+    open_card = deck.pop()
     
-    # Spieler wählen 2 Karten aus
+    # player wählen 2 Karten aus
     #ERST MÖGLICH WENN WIR WISSEN WO wELCHE kARTE LIEGT 
-    # Variablen Name für die zwei aufgedeckten karten jedes Spielers: "offene_karten"
-    offene_karten = {}
-    for spieler in range(spieler_anzahl):
-        offene_karten[spieler] = [spieler_karten[spieler][0], spieler_karten[spieler][1]]
+    # Variablen Name für die zwei aufgedeckten karten jedes players: "open_cards"
+    open_cards = {}
+    for player in range(player_anzahl):
+        open_cards[player] = [player_cards[player][0], player_cards[player][1]]
     
 
-    # Beginner auswählen: Spieler mit der höchsten Punktzahl
-    punkte = {spieler: card.calculate_points(offene_karten[spieler]) for spieler in offene_karten}
-    beginner = max(punkte, key=punkte.get)
-    print(f"Spieler {beginner} beginnt mit der höchsten Punktzahl: {punkte[beginner]}")
+    # Beginner auswählen: player mit der höchsten Punktzahl
+    points = {player: card.calculate_points(open_cards[player]) for player in open_cards}
+    beginner = max(points, key=points.get)
+    print(f"player {beginner} beginnt mit der höchsten Punktzahl: {points[beginner]}")
 
-    return spieler_karten, offene_karte, stapel, beginner,offene_karten
+    return player_cards, open_card, deck, beginner,open_cards
 
 #_____________________________________________________
 # Hauptschleife (Loop 1!)
 
-# Immer der Spieler, der aktuell dran ist : Loop 1.2 (in Loop 1)
+def main_loop
 
-    # Karte von stapel oder offene Karte ziehen (Wählen mit Stapel)
+# Immer der player, der aktuell dran ist : Loop 1.2 (in Loop 1)
+
+    # Karte von deck oder offene Karte ziehen (Wählen mit deck)
 
     # Auswählen: Karte nicht behalten oder Tauschen + Auswahl der Tauschkarte/Aufdeckkarte
 
     # Überprüfen ob in einer Spalte 3 Gleiche -> reihe verschwindet
 
-# Überprüfen ob ein Spieler alle Karten aufgedeckt hat, wenn ja noch 1 runde, dann end loop
+# Überprüfen ob ein player alle Karten aufgedeckt hat, wenn ja noch 1 runde, dann end loop
 
 
 #________________________________________________________
