@@ -1,11 +1,11 @@
 # Datei für die Settings (Konstanten, Globale Variablen etc.)
-
+import pygame
 import server as serv
 import threading
 
 # Fürs Fenster:
 HEIGHT, WIDTH = 1200, 600
-#WINDOW = pygame.display.set_mode((HEIGHT, WIDTH))
+
 # pygame.display.set_caption(" ")
 WINDOW_COLOR = "SILVER"
 
@@ -37,6 +37,14 @@ PL_ANZAHL = 6
 
 # Variablen für den Server
 player_data = {}
+
+player_daten = {'Spieler 1': 'eins',
+                'Spieler 2': 'zwei',
+                'Spieler 3': 'drei',
+                'Spieler 4': 'vier',
+                'Spieler 5': 'funf',
+                'Spieler 6': 'sechs'}
+
 connection = []
 player_count = None
 player_count_event = threading.Event()

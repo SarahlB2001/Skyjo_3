@@ -6,31 +6,31 @@ import settings as s
 # Für Spiel mit 5 Leuten: 1 & 2 & 3 & 4 & 6
 # Für Spiel mit 6 Leuten : 1 & 2 & 3 & 4 & 5 & 6
 
-eins = {'x': s.WIDTH // 16,
-        "y": s.HEIGHT // 16}
+eins = {'x': s.HEIGHT // 16,
+        "y": s.WIDTH // 16}
 
-zwei = {'x': s.WIDTH * 2 // 16 + s.WIDTH // 4,
-        'y': s.HEIGHT // 16}
+zwei = {'x': s.HEIGHT * 2 // 16 + s.HEIGHT // 4,
+        'y': s.WIDTH // 16}
 
-drei = {'x': s.WIDTH * 3 // 4 - s.WIDTH // 16,
-        'y': s.HEIGHT // 16}
+drei = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
+        'y': s.WIDTH // 16}
 
-vier = {'x': s.WIDTH * 3 // 4 - s.WIDTH // 16,
-        'y': s.HEIGHT - s.HEIGHT//4 - s.HEIGHT//16}
+vier = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
+        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
 
-funf = {'x': s.WIDTH // 8 + s.WIDTH // 4,
-        'y': s.HEIGHT - s.HEIGHT//4 - s.HEIGHT//16}
+funf = {'x': s.HEIGHT // 8 + s.HEIGHT // 4,
+        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
 
-sechs = {'x': s.WIDTH // 16,
-         'y': s.HEIGHT - s.HEIGHT//4 - s.HEIGHT//16}
+sechs = {'x': s.HEIGHT // 16,
+         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
 
-size = {'width': s.WIDTH // 4,
-        'height': s.HEIGHT // 4}
+size = {'height': s.WIDTH // 4,
+        'width': s.HEIGHT // 4}
 
-carddeck = {'x': (s.WIDTH - (2*s.WIDTH // 16 + s.WIDTH // 4)) // 2,
-            'y': s.HEIGHT // 2 - (s.HEIGHT // 4) // 2,
-            'width': 2 * s.WIDTH // 16 + s.WIDTH // 4,
-            'height': s.HEIGHT // 4}
+carddeck = {'x': (s.HEIGHT - (2*s.HEIGHT // 16 + s.HEIGHT // 4)) // 2,
+            'y': s.WIDTH // 2 - (s.WIDTH // 4) // 2,
+            'width': 2 * s.HEIGHT // 16 + s.HEIGHT // 4,
+            'height': s.WIDTH // 4}
 
 field_pos = {'1': eins,
              '2': zwei,
