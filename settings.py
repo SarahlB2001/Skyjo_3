@@ -1,5 +1,5 @@
 # Datei für die Settings (Konstanten, Globale Variablen etc.)
-# import server as serv
+import server as serv
 import pygame
 pygame.init()
 
@@ -34,14 +34,18 @@ PLAYER_SIZE = 20
 PLAYER_FONT = pygame.font.SysFont("comicsans", PLAYER_SIZE)
 PLAYER_FONT_COLOR = WHITE
 
-PL_ANZAHL = 2
+PL_ANZAHL = serv.anzahl_spieler
+
+# PL_ANZAHL = 2
 
 # vom Server
-# spieler_daten = serv.spieler_daten
+spieler_daten = serv.spieler_daten
 
+'''
 player_daten = {'Spieler 1': 'eins',
                 'Spieler 2': 'zwei',
                 'Spieler 3': 'drei',
                 'Spieler 4': 'vier',
                 'Spieler 5': 'funf',
                 'Spieler 6': 'sechs'}
+'''
