@@ -3,7 +3,7 @@
 import threading
 
 # Fürs Fenster:
-HEIGHT, WIDTH = 600, 400
+HEIGHT, WIDTH = 1200, 600
 #WINDOW = pygame.display.set_mode((HEIGHT, WIDTH))
 # pygame.display.set_caption(" ")
 WINDOW_COLOR = "SILVER"

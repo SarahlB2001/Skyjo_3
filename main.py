@@ -17,22 +17,21 @@ def main():
 
     clock = pygame.time.Clock()
 
-    host_button = pygame.Rect(200, 250, 200, 50)
-    join_button = pygame.Rect(200, 320, 200, 50)
+    host_button = pygame.Rect(500, 420, 200, 50)
+    join_button = pygame.Rect(500, 490, 200, 50)
 
-    input_box = pygame.Rect(150, 300, 300, 50)
+    input_box = pygame.Rect(450, 450, 300, 50)
     
 
-    ip_input_box = pygame.Rect(150, 270, 300, 50)
+    ip_input_box = pygame.Rect(450, 540, 300, 50)
     
     # Hintergrundbild des Menüs
     background = pygame.image.load("Skyjo_Menü.png") 
     
-    # Auswahl Buttons für die Anzahl der Spieler (nur für den Host sichtbar)
-    player_count_buttons = [pygame.Rect(50 + 60 * i, 350, 50, 50) for i in range(4)]
-   
-    # Auswahl Buttons für die Anzahl der Runden (nur für den Host sichtbar)
-    round_count_buttons = [pygame.Rect(50 + 60 * i, 470, 50, 50) for i in range(5)]
+    # Buttons für Spieleranzahl (auf Höhe des Host-Buttons)
+    player_count_buttons = [pygame.Rect(0, 420, 50, 50) for i in range(4)]
+    # Buttons für Rundenzahl (auf Höhe des Host-Buttons)
+    round_count_buttons = [pygame.Rect(0, 420, 50, 50) for i in range(5)]
     
 
     while s.running:
@@ -160,10 +159,10 @@ def main():
         # Spieleranzahl auswählen (Host)
         if s.waiting_for_players:
             headline = font.render("Spieleranzahl wählen", True, (0, 0, 0))
-            screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 200))
+            screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 420))
             total_width = len(player_count_buttons) * 60 - 10
             start_x = screen.get_width() // 2 - total_width // 2
-            y = 260
+            y = 480
             for i, button in enumerate(player_count_buttons):
                 button.x = start_x + i * 60
                 button.y = y
@@ -174,10 +173,10 @@ def main():
         # Rundenzahl auswählen (Host)
         if s.waiting_for_rounds:
             headline = font.render("Rundenanzahl wählen", True, (0, 0, 0))
-            screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 200))
+            screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 420))
             total_width = len(round_count_buttons) * 60 - 10
             start_x = screen.get_width() // 2 - total_width // 2
-            y = 260
+            y = 480
             for i, button in enumerate(round_count_buttons):
                 button.x = start_x + i * 60
                 button.y = y
@@ -188,7 +187,7 @@ def main():
         # Namenseingabe
         if s.waiting_for_name:
             prompt_text = small_font.render(f"Bitte Namen eingeben:", True, (0, 0, 0))
-            screen.blit(prompt_text, (150, 270))
+            screen.blit(prompt_text, (500, 420))
             txt_surface = font.render(s.text_input, True, (0, 0, 0))
             screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
             pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
@@ -196,7 +195,7 @@ def main():
         # IP Eingabe beim Join
         if s.game_mode == "join" and s.entering_ip:
             prompt = small_font.render("Host-IP eingeben:", True, (0, 0, 0))
-            screen.blit(prompt, (150, 330))
+            screen.blit(prompt, (500, 420))
             ip_surface = font.render(s.ip_input, True, (0, 0, 0))
             screen.blit(ip_surface, (ip_input_box.x + 5, ip_input_box.y + 5))
             pygame.draw.rect(screen, (0, 0, 0), ip_input_box, 2)
