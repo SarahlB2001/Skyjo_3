@@ -20,10 +20,10 @@ def main():
     host_button = pygame.Rect(500, 420, 200, 50)
     join_button = pygame.Rect(500, 490, 200, 50)
 
-    input_box = pygame.Rect(450, 450, 300, 50)
+    input_box = pygame.Rect(450, 470, 300, 50)
     
 
-    ip_input_box = pygame.Rect(450, 540, 300, 50)
+    ip_input_box = pygame.Rect(450, 470, 300, 50)
     
     # Hintergrundbild des Menüs
     background = pygame.image.load("Skyjo_Menü.png") 
