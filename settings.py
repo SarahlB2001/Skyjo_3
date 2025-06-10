@@ -1,10 +1,11 @@
 # Datei für die Settings (Konstanten, Globale Variablen etc.)
-
+import pygame
+import server as serv
 import threading
 
 # Fürs Fenster:
 HEIGHT, WIDTH = 1200, 600
-#WINDOW = pygame.display.set_mode((HEIGHT, WIDTH))
+
 # pygame.display.set_caption(" ")
 WINDOW_COLOR = "SILVER"
 
@@ -32,9 +33,18 @@ PLAYER_SIZE = 20
 PLAYER_FONT_COLOR = BLACK
 
 PL_ANZAHL = 6
+# PL_ANZAHL = serv.anzahl_spieler
 
 # Variablen für den Server
 player_data = {}
+
+player_daten = {'Spieler 1': 'eins',
+                'Spieler 2': 'zwei',
+                'Spieler 3': 'drei',
+                'Spieler 4': 'vier',
+                'Spieler 5': 'funf',
+                'Spieler 6': 'sechs'}
+
 connection = []
 player_count = None
 player_count_event = threading.Event()
@@ -58,9 +68,11 @@ spieler_id = None
 
 ROWS = 3
 COLS = 4
+
 CARD_WIDTH = 50
 CARD_HEIGHT = 90
-CARD_GAP = 10 
+gap_width = 10
+gap_height = 10
 
 
 

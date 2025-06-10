@@ -1,56 +1,66 @@
 import settings as s
 from dictionaries import plaPosition as pl
-# from dictionaries import Spieler_Spielername as pln
+from dictionaries import cardSetPosition as cP
 # import server as serv
 import pygame
 pygame.init()
 import layout as l
 
 
+WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
+PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
+
 
 def first_draw():
-    s.WINDOW.fill(s.WINDOW_COLOR)
+    WINDOW.fill(s.WINDOW_COLOR)
 
     pygame.display.flip()
+
+
+def player_place_position():
+    for index, (spieler_id, name) in enumerate(s.player_daten.items()):
+            if index < len(pl.player_pos[s.PL_ANZAHL]):
+                x_pos, y_pos = pl.player_pos[s.PL_ANZAHL][index]
+                name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)  # Text rendern
+                WINDOW.blit(name_text, (x_pos, y_pos))
+
+def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
+    gap_width = size_x // 4
+    gap_height = (size_y - (rows * card_height)) / (rows + 1)
+    s.gap_width = gap_width
+    s.gap_height = gap_height
+    # return gap_width, gap_height
+
+calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH, s.CARD_HEIGHT)
+
+def draw():
+    WINDOW.fill(s.WINDOW_COLOR)
+
+    cP.card_place_position()
+    player_place_position()
     
-def calculate_gaps (size, cols, rows, card_width, card_height):
-    gap_width = (size - (cols * card_width)) / (cols + 1)
-    gap_height = (size - (rows * card_height)) / (rows + 1)
-    return gap_width, gap_height
 
-def draw(player_name):
-    s.WINDOW.fill(s.WINDOW_COLOR)
+def player_place_position():
+    for index, (spieler_id, name) in enumerate(s.player_daten.items()):
+            if index < len(pl.player_pos[s.PL_ANZAHL]):
+                x_pos, y_pos = pl.player_pos[s.PL_ANZAHL][index]
+                name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)  # Text rendern
+                WINDOW.blit(name_text, (x_pos, y_pos))
 
-    if s.PL_ANZAHL == 2:
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['1'] ['x'], pl.field_pos['1'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['3'] ['x'], pl.field_pos['3'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-    elif s.PL_ANZAHL == 3:
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['1'] ['x'], pl.field_pos['1'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['3'] ['x'], pl.field_pos['3'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['5'] ['x'], pl.field_pos['5'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-    elif s.PL_ANZAHL == 4:
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['1'] ['x'], pl.field_pos['1'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['3'] ['x'], pl.field_pos['3'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['4'] ['x'], pl.field_pos['4'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['6'] ['x'], pl.field_pos['6'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-    elif s.PL_ANZAHL == 5:
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['1'] ['x'], pl.field_pos['1'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['3'] ['x'], pl.field_pos['3'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['4'] ['x'], pl.field_pos['4'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['6'] ['x'], pl.field_pos['6'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['5'] ['x'], pl.field_pos['5'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-    elif s.PL_ANZAHL == 6:
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['1'] ['x'], pl.field_pos['1'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['2'] ['x'], pl.field_pos['2'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['3'] ['x'], pl.field_pos['3'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['4'] ['x'], pl.field_pos['4'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['6'] ['x'], pl.field_pos['6'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
-        pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['5'] ['x'], pl.field_pos['5'] ['y'], pl.field_pos['size'] ['width'], pl.field_pos['size'] ['height']))
+def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
+    gap_width = size_x // 4
+    gap_height = (size_y - (rows * card_height)) / (rows + 1)
+    s.gap_width = gap_width
+    s.gap_height = gap_height
+    # return gap_width, gap_height
 
-    pygame.draw.rect(s.WINDOW, s.BLACK, (pl.field_pos['carddeck'] ['x'], pl.field_pos['carddeck'] ['y'], pl.field_pos['carddeck'] ['width'], pl.field_pos['carddeck'] ['height']))
+calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH, s.CARD_HEIGHT)
 
-    player_text = s.PLAYER_FONT.render(player_name, 1, s.PLAYER_FONT_COLOR)
-    s.WINDOW.blit(player_text, (s.PLAYER_X_POSITION, s.PLAYER_Y_POSITION))
+def draw():
+    WINDOW.fill(s.WINDOW_COLOR)
 
+
+    cP.card_place_position()
+    player_place_position()
 
     pygame.display.flip()

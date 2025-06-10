@@ -29,8 +29,8 @@ class CardLayout:
         for row in range (rows):
             row_cards = []
             for col in range (cols):
-                x = start_x + col * (s.CARD_WIDTH + sf.gap_width )
-                y = start_y + row * (s.CARD_HEIGHT + sf.gap_height)
+                x = start_x + col * (s.CARD_WIDTH + s.gap_width)
+                y = start_y + row * (s.CARD_HEIGHT + s.gap_height)
                 value = r.randint (-2, 12)
                 card = Card(value, x, y, s.CARD_WIDTH, s.CARD_HEIGHT, is_face_up=False)
                 row_cards.append(card)
