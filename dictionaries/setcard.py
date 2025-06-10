@@ -1,17 +1,19 @@
 import settings as s
 from dictionaries import plaPosition as pla
 
-x1 = 0
-x2 = s.CARD_WIDTH + s.gap_width
-x3 = 2*(s.CARD_WIDTH + s.gap_width)
-x4 = 3*(s.CARD_WIDTH + s.gap_width)
-
-y1 = 0 
-y2 = s.CARD_HEIGHT + s.gap_height
-y3 = 2*(s.CARD_HEIGHT + s.gap_height)
-
 card_width = pla.size["width"] / 5
 card_height = pla.size ["height"] / 4 
+
+x1 = 0
+x2 = s.gap_height + card_width
+x3 = 2*(s.gap_height + card_width)
+x4 = 3*(s.gap_height + card_width)
+
+y1 = 0 
+y2 = s.gap_width + card_height
+y3 = 2*(s.gap_width + card_height)
+
+
 
 card1 = {"x": x1, "y": y1}
 card2 = {"x": x2, "y": y1}
