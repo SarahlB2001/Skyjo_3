@@ -70,6 +70,12 @@ CARD_WIDTH = 50
 CARD_HEIGHT = 90
 CARD_GAP = 10 
 
+def calculate_gaps (size, cols, rows, card_width, card_height):
+    
+    gap_width = (size - (cols * card_width)) / (cols + 1)
+    gap_height = (size - (rows * card_height)) / (rows + 1)
+    return gap_width, gap_height
+
 CARD_IMAGES= {
     i: f"img/card_{i}.png" for i in range ( -2, 13)
 }

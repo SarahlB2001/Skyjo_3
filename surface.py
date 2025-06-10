@@ -4,6 +4,8 @@ from dictionaries import cardSetPosition as cP
 # import server as serv
 import pygame
 pygame.init()
+import layout as l
+
 
 WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
 PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
@@ -29,5 +31,10 @@ def draw():
     cP.card_set_positions()
     player_place_position()
     
+
+    def calculate_gaps (size, cols, rows, card_width, card_height):
+        gap_width = (size - (l.cols * l.card_width)) / (l.cols + 1)
+        gap_height = (size - (l.rows * l.card_height)) / (l.rows + 1)
+        return gap_width, gap_height
 
     pygame.display.flip()
