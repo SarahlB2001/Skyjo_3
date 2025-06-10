@@ -23,21 +23,21 @@ def main():
     join_button = pygame.Rect(500, 490, 200, 50)
 
     input_box = pygame.Rect(450, 470, 300, 50)
-    
+
 
     ip_input_box = pygame.Rect(450, 470, 300, 50)
-    
+
     # Hintergrundbild des Menüs
-    background = pygame.image.load("Skyjo_Menü.png") 
-    
+    background = pygame.image.load("Skyjo_Menü.png")
+
     # Buttons für Spieleranzahl (auf Höhe des Host-Buttons)
     player_count_buttons = [pygame.Rect(0, 420, 50, 50) for i in range(4)]
     # Buttons für Rundenzahl (auf Höhe des Host-Buttons)
     round_count_buttons = [pygame.Rect(0, 420, 50, 50) for i in range(5)]
-    
+
 
     while s.running:
-        
+
         screen.blit(background, (0, 0))
         layout = l.CardLayout(start_x=100, start_y=200)
         layout.draw(screen)
@@ -50,11 +50,11 @@ def main():
             if event.type == pygame.QUIT:
                 s.running = False
 
-            
-           
 
-            
-           
+
+
+
+
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if s.game_mode is None:
@@ -124,7 +124,8 @@ def main():
                     elif event.key == pygame.K_BACKSPACE:
                         s.ip_input = s.ip_input[:-1]
                     else:
-                        s.ip_input += event.unicode
+                        if len(ip_input) < 25:
+                            ip_input += event.unicode
 
                 elif s.waiting_for_name and s.active:
                     if event.key == pygame.K_RETURN:
