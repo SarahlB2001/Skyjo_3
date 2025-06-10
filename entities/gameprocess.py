@@ -35,18 +35,44 @@ def first_round(player_anzahl):
 #_____________________________________________________
 # Hauptschleife (Loop 1!)
 
-def main_loop
+def main_loop(player_cards, open_card, deck, beginner, open_cards):
+    player_anzahl = len(player_cards)
+    current_player = beginner  # Start mit dem Spieler, der begonnen hat
 
-# Immer der player, der aktuell dran ist : Loop 1.2 (in Loop 1)
+    while True:  # aktuell Endlosschleif... 
+        print(f"Player {current_player} ist am Zug.")
+        
+        # Spieler wählt eine Karte aus dem Deck oder die offene Karte
+        selected_card = st.select_card(deck, open_card)  
+        # Funktion zum Auswählen der Karte einfügen!
+        
+        # Spieler entscheidet, ob er die Karte behalten oder tauschen möchte
+        if st.wants_to_swap(selected_card):  # Funktion zur Abfrage der Entscheidung
+            swap_card = st.select_swap_card(open_cards[current_player])  # Auswahl der Tauschkarte
+            open_cards[current_player].remove(swap_card)  # Entferne die Tauschkarte aus den offenen Karten
+            open_cards[current_player].append(selected_card)  # Füge die ausgewählte Karte hinzu
+        else:
+            print(f"Player {current_player} behält die Karte {selected_card}.")
+        
+        # Überprüfen, ob in einer Spalte drei gleiche Karten sind
+        if st.check_for_three_in_column(open_cards[current_player]):
+            print(f"Player {current_player} hat drei gleiche Karten in einer Spalte! Diese Reihe verschwindet.")
+            st.remove_three_in_column(open_cards[current_player])  # Entferne die drei gleichen Karten
+        
+        # Überprüfen, ob ein Spieler alle Karten aufgedeckt hat
+        if not final_round and st.check_all_cards_face_up(open_cards[current_player]):
+            print(f"Player {current_player} hat alle Karten aufgedeckt!")
+            final_round = True
+            final_round_counter = player_count - 1  # Alle anderen Spieler dürfen noch einmal
 
-    # Karte von deck oder offene Karte ziehen (Wählen mit deck)
+        elif final_round:
+            final_round_counter -= 1
+            if final_round_counter == 0:
+                print("Letzte Runde beendet!")
+                break  # Beende die Runde
 
-    # Auswählen: Karte nicht behalten oder Tauschen + Auswahl der Tauschkarte/Aufdeckkarte
-
-    # Überprüfen ob in einer Spalte 3 Gleiche -> reihe verschwindet
-
-# Überprüfen ob ein player alle Karten aufgedeckt hat, wenn ja noch 1 runde, dann end loop
-
+        # Nächster Spieler ist am Zug
+        current_player = (current_player + 1) % player_count  # Nächster Spieler
 
 #________________________________________________________
 # Ergebnis
