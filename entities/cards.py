@@ -11,25 +11,34 @@ Die Klasse wird verwendet, um die Kartenlogik zu verwalten und Aktionen wie das 
 """
 import pygame
 import random
-import settings as s
+# import settings as s
 
 # Definieren eines benutzerdefiniertes Event für das Umdrehen einer Karte
 CARD_FLIP_EVENT = pygame.USEREVENT + 1
 
 # Laden der Bilder für die Karten
-CARD_IMAGES = {value: pygame.image.load(f"card_{value}.png") for value in range(-2, 13)}
-CARD_BACK_IMAGE = pygame.image.load("card_back.png")
+CARD_IMAGES = {value: pygame.image.load(f"Karten_png/card_{value}.png") for value in range(-2, 13)}
+CARD_BACK_IMAGE = pygame.image.load("Karten_png/card_back.png")
 
 class Card:
-    def __init__(self, value, is_face_up=False):
+    def __init__(self, value, x, y,width, height, is_face_up=False):
         """
         Repräsentiert eine einzelne Karte.
         - value: Der Wert der Karte (z. B. -2 bis 12 in Skyjo).
         - is_face_up: Gibt an, ob die Karte offen (True) oder verdeckt (False) ist.
         """
         self.value = value
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
         self.is_face_up = is_face_up
-        self.image = CARD_IMAGES[value]  # Bilddatei der Karte
+        self.front_image = pygame.transform.scale(CARD_IMAGES[value], (width, height))
+        self.back_image = pygame.transform.scale(CARD_BACK_IMAGE, (width, height))
+        self.rect = pygame.Rect(x, y, width, height)
+    
+    def draw(self, screen):
+        return 
 
     def flip(self):
         """Dreht die Karte um (verdeckt <-> offen) und löst ein Event aus."""
