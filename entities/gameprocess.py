@@ -18,15 +18,19 @@ def erste_runde(spieler_anzahl):
     offene_karte = stapel.pop()
     
     # Spieler wählen 2 Karten aus
-    #ERST MÖGLICH WENN WIR WISSEN WO wELCHE kARTE LIEGT
+    #ERST MÖGLICH WENN WIR WISSEN WO wELCHE kARTE LIEGT 
+    # Variablen Name für die zwei aufgedeckten karten jedes Spielers: "offene_karten"
+    offene_karten = {}
+    for spieler in range(spieler_anzahl):
+        offene_karten[spieler] = [spieler_karten[spieler][0], spieler_karten[spieler][1]]
     
 
     # Beginner auswählen: Spieler mit der höchsten Punktzahl
-    punkte = {spieler: card.calculate_points(spieler_karten[spieler]) for spieler in spieler_karten}
+    punkte = {spieler: card.calculate_points(offene_karten[spieler]) for spieler in offene_karten}
     beginner = max(punkte, key=punkte.get)
     print(f"Spieler {beginner} beginnt mit der höchsten Punktzahl: {punkte[beginner]}")
 
-    return spieler_karten, offene_karte, stapel, beginner
+    return spieler_karten, offene_karte, stapel, beginner,offene_karten
 
 #_____________________________________________________
 # Hauptschleife (Loop 1!)
