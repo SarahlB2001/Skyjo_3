@@ -33,6 +33,7 @@ PLAYER_SIZE = 20
 PLAYER_FONT_COLOR = BLACK
 
 PL_ANZAHL = 6
+# PL_ANZAHL = serv.anzahl_spieler
 
 # Variablen für den Server
 player_data = {}
