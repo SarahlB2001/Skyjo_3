@@ -14,8 +14,8 @@ def first_draw():
     pygame.display.flip()
     
 def calculate_gaps (size, cols, rows, card_width, card_height):
-    gap_width = (size - (l.cols * l.card_width)) / (l.cols + 1)
-    gap_height = (size - (l.rows * l.card_height)) / (l.rows + 1)
+    gap_width = (size - (cols * card_width)) / (cols + 1)
+    gap_height = (size - (rows * card_height)) / (rows + 1)
     return gap_width, gap_height
 
 def draw(player_name):

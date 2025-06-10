@@ -5,7 +5,7 @@ import surface as sf
 
 
 class CardLayout:
-    def __init__( self, start_x, start_y, rows=3, cols=4):
+    def __init__( self, start_x, start_y, rows=s.ROWS, cols=s.COLS):
         self.cards = []
         for row in range (rows):
             row_cards = []
