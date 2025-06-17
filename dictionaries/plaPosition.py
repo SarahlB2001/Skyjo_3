@@ -41,9 +41,9 @@ field_pos = {'1': eins,
              'size': size,
              'carddeck': carddeck}
 
-player_pos = {2: [(eins['x'], eins['y']), (drei ['x'], drei['y'])],
-              3: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (funf ['x'], funf['y'])],
-              4: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (sechs ['x'], sechs['y'])],
-              5: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (funf ['x'], funf['y']), (sechs ['x'], sechs['y'])],
-              6: [(eins['x'], eins['y']), (zwei ['x'], zwei['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (funf ['x'], funf['y']), (sechs ['x'], sechs['y'])]}
+player_pos = {2: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS)],
+              3: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (funf ['x'], funf['y'] - s.PL_NAME_POS)],
+              4: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (vier ['x'], vier['y'] - s.PL_NAME_POS), (sechs ['x'], sechs['y'] - s.PL_NAME_POS)],
+              5: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (vier ['x'], vier['y'] - s.PL_NAME_POS), (funf ['x'], funf['y'] - s.PL_NAME_POS), (sechs ['x'], sechs['y'] - s.PL_NAME_POS)],
+              6: [(eins['x'], eins['y'] - s.PL_NAME_POS), (zwei ['x'], zwei['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (vier ['x'], vier['y'] - s.PL_NAME_POS), (funf ['x'], funf['y'] - s.PL_NAME_POS), (sechs ['x'], sechs['y'] - s.PL_NAME_POS)]}
 
