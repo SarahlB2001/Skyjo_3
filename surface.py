@@ -32,11 +32,6 @@ def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
     # return gap_width, gap_height
 
 calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH, s.CARD_HEIGHT)
-
-
-
-    cP.card_place_position()
-    player_place_position()
     
 
 def player_place_position():
