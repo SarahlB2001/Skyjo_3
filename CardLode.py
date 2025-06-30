@@ -1,10 +1,11 @@
 import pygame 
 import layout as l
+import surface as su
+from dictionaries import setcard as sc
 
 
-
-bild2- = pygame.image.load("Karten_png/card_-2.png")
-bild1- = pygame.image.load("Karten_png/card_-1.png")
+bild_2 = pygame.image.load("Karten_png/card_-2.png")
+bild_1 = pygame.image.load("Karten_png/card_-1.png")
 bild0 = pygame.image.load("Karten_png/card_0.png")
 bild1 = pygame.image.load("Karten_png/card_1.png")
 bild2 = pygame.image.load("Karten_png/card_2.png")
@@ -20,8 +21,8 @@ bild11 = pygame.image.load("Karten_png/card_11.png")
 bild12 = pygame.image.load("Karten_png/card_12.png")
 bildb = pygame.image.load("Karten_png/card_back.png")
 
-bild2- = pygame.transform.scale(bild2-, ( sc.card_width, sc.card_height))
-bild1- = pygame.transform.scale(bild1-, ( sc.card_width, sc.card_height))
+bild_2 = pygame.transform.scale(bild_2, ( sc.card_width, sc.card_height))
+bild_1 = pygame.transform.scale(bild_1, ( sc.card_width, sc.card_height))
 bild0 = pygame.transform.scale(bild0, ( sc.card_width, sc.card_height))
 bild1 = pygame.transform.scale(bild1, ( sc.card_width, sc.card_height))
 bild2 = pygame.transform.scale(bild2, ( sc.card_width, sc.card_height))
@@ -37,8 +38,8 @@ bild11 = pygame.transform.scale(bild11, ( sc.card_width, sc.card_height))
 bild12 = pygame.transform.scale(bild12, ( sc.card_width, sc.card_height))
 bildb = pygame.transform.scale(bildb, ( sc.card_width, sc.card_height))
 
-su.WINDOW.blit(bild2-, (start_x + sc.card2-["x"], start_y + sc.card2-["y"]))
-su.WINDOW.blit(bild1-, (start_x + sc.card1-["x"], start_y + sc.card1-["y"]))
+su.WINDOW.blit(bild_2, (start_x + sc.card_2["x"], start_y + sc.card2-["y"]))
+su.WINDOW.blit(bild_1, (start_x + sc.card_1["x"], start_y + sc.card1-["y"]))
 su.WINDOW.blit(bild0, (start_x + sc.card0["x"], start_y + sc.card0["y"]))
 su.WINDOW.blit(bild1, (start_x + sc.card1["x"], start_y + sc.card1["y"]))
 su.WINDOW.blit(bild2, (start_x + sc.card2["x"], start_y + sc.card2["y"]))
