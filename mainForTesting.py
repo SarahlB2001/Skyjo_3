@@ -67,4 +67,4 @@ def main():
     sys.exit()
 
 main()
-print(s.gap_height)
+print(s.gap_width)
