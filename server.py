@@ -2,7 +2,7 @@ import socket
 import threading
 import pickle
 import settings as s
-
+import time
 
 def recv_data(conn):
     try:
@@ -54,9 +54,22 @@ def client_thread(conn, spieler_id):
 
         # Hier könntest du später die Spiellogik oder weitere Kommunikation einbauen
         while True:
-            # Server wartet z.B. auf weitere Daten, verarbeitet sie ...
-            # Oder hält Verbindung offen
-            pass
+            daten = recv_data(conn)
+            if daten:
+                # Beispiel: Spieler macht einen Zug
+                if daten.get("aktion") == "karte_aufdecken":
+                    # Spiellogik ausführen, z.B. Karte aufdecken
+                    # Dann allen Spielern neuen Zustand schicken
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "karte_aufgedeckt",
+                            "spieler": spieler_id + 1,
+                            "karte": daten["karte"]
+                        })
+                # Weitere Aktionen hier behandeln
+            else:
+                # Verbindung verloren
+                break
 
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")

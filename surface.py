@@ -52,9 +52,7 @@ calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH
 
 def draw():
     WINDOW.fill(s.WINDOW_COLOR)
-
-
-    cP.card_set_positions()
-    player_place_position()
-
+    cP.card_place_position()  # <-- KORREKT!
+    for layout in cP.player_cardlayouts.values():
+        layout.draw(WINDOW)
     pygame.display.flip()
