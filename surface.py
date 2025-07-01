@@ -25,19 +25,13 @@ def player_place_position():
                 WINDOW.blit(name_text, (x_pos, y_pos))
 
 def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
-    gap_width = size_x // 4
+    gap_width = size_x // 5
     gap_height = (size_y - (rows * card_height)) / (rows + 1)
     s.gap_width = gap_width
     s.gap_height = gap_height
     # return gap_width, gap_height
 
 calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH, s.CARD_HEIGHT)
-
-def draw():
-    WINDOW.fill(s.WINDOW_COLOR)
-
-    cP.card_place_position()
-    player_place_position()
     
 
 def player_place_position():
@@ -60,7 +54,7 @@ def draw():
     WINDOW.fill(s.WINDOW_COLOR)
 
 
-    cP.card_place_position()
+    cP.card_set_positions()
     player_place_position()
 
     pygame.display.flip()
