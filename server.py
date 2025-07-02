@@ -20,7 +20,7 @@ def send_data(conn, data):
         pass
 
 def client_thread(conn, spieler_id):
-   
+
 
     try:
         # Spieler-ID senden
@@ -29,7 +29,7 @@ def client_thread(conn, spieler_id):
         if spieler_id == 0:
             daten = recv_data(conn)
             if daten:
-                s.player_count = daten.get("anzahl_spieler", 2)
+                s.player_count = daten.get("anzahl_spieler", 2)  # <-- Nur noch player_count!
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
         else:
@@ -46,11 +46,14 @@ def client_thread(conn, spieler_id):
         if spieler_id < s.player_count - 1:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
-        # Wenn alle verbunden, allen Startmeldung schicken
         if spieler_id == s.player_count - 1:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
             for v in s.connection:
-                send_data(v, {"message": "Alle Spieler verbunden. Ihr könnt jetzt starten!"})
+                send_data(v, {
+                    "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
+                    "anzahl_spieler": s.player_count   # <--- HIER hinzufügen!
+                })
+            print(f"[DEBUG] Startnachricht empfangen: {s.status_message}, Spieleranzahl: {s.player_count}")
 
         # Hier könntest du später die Spiellogik oder weitere Kommunikation einbauen
         while True:

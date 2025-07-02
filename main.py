@@ -64,6 +64,7 @@ def main():
                         for i, button in enumerate(player_count_buttons):
                             if button.collidepoint(event.pos):
                                 s.player_count = i + 1
+                                s.PL_ANZAHL = s.player_count  # <--- HIER hinzufügen!
                                 s.sock, s.spieler_id = c.connect_to_server()
                                 serv.send_data(s.sock, {"anzahl_spieler": s.player_count})
                                 s.waiting_for_players = False
@@ -177,20 +178,12 @@ def main():
                     msg = serv.recv_data(s.sock)
                     if msg and "message" in msg:
                         s.status_message = msg["message"]
+                        # HIER Spieleranzahl setzen, falls sie mitgeschickt wird:
                         if "anzahl_spieler" in msg:
-                            s.PL_ANZAHL = msg["anzahl_spieler"]
+                            s.player_count = int(msg["anzahl_spieler"])
                         if "startet" in s.status_message.lower() or "starten" in s.status_message.lower():
-                            from dictionaries import cardSetPosition as cP
-                            cP.card_set_positions()
-                            # Zeige 5 Sekunden lang eine Startmeldung, aber NICHT das Spielfeld!
-                            start_time = time.time()
-                            while time.time() - start_time < 5:
-                                screen.blit(background, (0, 0))
-                                info = font.render(s.status_message, True, (0, 0, 0))
-                                screen.blit(info, (screen.get_width() // 2 - info.get_width() // 2, 200))
-                                pygame.display.flip()
-                                clock.tick(30)
                             s.waiting_for_start = False
+                            s.game_started = True
                 except BlockingIOError:
                     pass
                 except Exception as e:
@@ -205,7 +198,7 @@ def main():
                 if event.type == pygame.QUIT:
                     s.running = False
 
-            su.draw()
+            su.draw(screen)
 
         pygame.display.flip()
         clock.tick(30)
