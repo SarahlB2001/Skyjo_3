@@ -32,6 +32,14 @@ def client_thread(conn, spieler_id):
                 s.player_count = daten.get("anzahl_spieler", 2)  # <-- Nur noch player_count!
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
+            
+            daten = recv_data(conn)
+            if daten:
+                name = daten.get("name", f"Spieler{spieler_id +1}")  
+                with s.lock:
+                    s.player_data[spieler_id + 1] = name
+                print(f"[INFO] Spieler {spieler_id +1} heißt {name}")
+                
         else:
             s.player_count_event.wait()
 
@@ -51,7 +59,8 @@ def client_thread(conn, spieler_id):
             for v in s.connection:
                 send_data(v, {
                     "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
-                    "anzahl_spieler": s.player_count   # <--- HIER hinzufügen!
+                    "anzahl_spieler": s.player_count,
+                    "spielernamen": s.player_data  # <--- Namen mitsenden!
                 })
             print(f"[DEBUG] Startnachricht empfangen: {s.status_message}, Spieleranzahl: {s.player_count}")
 
