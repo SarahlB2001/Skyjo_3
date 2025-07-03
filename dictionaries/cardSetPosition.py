@@ -51,11 +51,22 @@ def card_place_position(screen):
 def card_set_positions(screen):
     print("[DEBUG] card_set_positions wurde aufgerufen")
     global player_cardlayouts
-    player_cardlayouts = {}  # immer neu anlegen
+    player_cardlayouts = {}
 
     fields = player_fields.get(s.player_count, [])
     for idx, f in enumerate(fields, 1):
-        player_cardlayouts[idx] = l.CardLayout(pl.field_pos[f]['x'], pl.field_pos[f]['y'])
+        # Matrix vom Server verwenden!
+        matrix = None
+        if hasattr(s, "karten_matrizen"):
+            # Keys können int oder str sein
+            if isinstance(list(s.karten_matrizen.keys())[0], int):
+                matrix = s.karten_matrizen.get(idx)
+            else:
+                matrix = s.karten_matrizen.get(str(idx))
+        if matrix is None:
+            # Fallback: Dummy-Matrix falls noch keine Daten da sind
+            matrix = [[0 for _ in range(s.COLS)] for _ in range(s.ROWS)]
+        player_cardlayouts[idx] = l.CardLayout(pl.field_pos[f]['x'], pl.field_pos[f]['y'], idx, matrix)
 
     # Kartenstapel zeichnen
     pygame.draw.rect(

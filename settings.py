@@ -66,7 +66,7 @@ CARD_HEIGHT = 70
 gap_width = 45
 gap_height = 3
 
-
+cards_flipped_this_turn = 0
 
 CARD_IMAGES= {
     i: f"img/card_{i}.png" for i in range ( -2, 13)

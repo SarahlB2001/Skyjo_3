@@ -208,6 +208,40 @@ def main():
                 if event.type == pygame.QUIT:
                     s.running = False
 
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = event.pos
+                    # Nur eigene Karten dürfen angeklickt werden
+                    my_layout = cP.player_cardlayouts.get(s.spieler_id)
+                    if my_layout:
+                        for row_idx, row in enumerate(my_layout.cards):
+                            for col_idx, card in enumerate(row):
+                                if card.rect.collidepoint(pos):
+                                    # Im ersten Zug: max. 3 Karten aufdecken
+                                    if s.cards_flipped_this_turn < 3 and not card.is_face_up:
+                                        serv.send_data(s.sock, {
+                                            "aktion": "karte_aufdecken",
+                                            "spieler_id": s.spieler_id,  # <--- HINZUGEFÜGT!
+                                            "karte": {"row": row_idx, "col": col_idx}
+                                        })
+                                        s.cards_flipped_this_turn += 1
+
+            # ...nach dem Event-Handling und vor su.draw(screen)...
+            try:
+                s.sock.setblocking(False)
+                msg = serv.recv_data(s.sock)
+                if msg and msg.get("update") == "karte_aufgedeckt":
+                    spieler = msg["spieler"]
+                    row = msg["karte"]["row"]
+                    col = msg["karte"]["col"]
+                    layout = cP.player_cardlayouts.get(spieler)
+                    if layout:
+                        card = layout.cards[row][col]
+                        card.flip()
+            except BlockingIOError:
+                pass
+            finally:
+                s.sock.setblocking(True)
+
             su.draw(screen)
 
         pygame.display.flip()

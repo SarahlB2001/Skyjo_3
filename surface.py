@@ -23,13 +23,15 @@ def first_draw():
 
     pygame.display.flip()
 
-
+''''
 def player_place_position():
     for index, (spieler_id, name) in enumerate(s.player_daten.items()):
         if index < len(pl.player_pos[s.player_count]):
             x_pos, y_pos = pl.player_pos[s.player_count][index]
             name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)
             WINDOW.blit(name_text, (x_pos, y_pos))
+
+        '''
 
 def draw_player_names():
     fields = player_fields.get(s.player_count, [])

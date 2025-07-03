@@ -70,14 +70,16 @@ def client_thread(conn, spieler_id):
             if daten:
                 # Beispiel: Spieler macht einen Zug
                 if daten.get("aktion") == "karte_aufdecken":
-                    # Spiellogik ausführen, z.B. Karte aufdecken
-                    # Dann allen Spielern neuen Zustand schicken
-                    for v in s.connection:
-                        send_data(v, {
-                            "update": "karte_aufgedeckt",
-                            "spieler": spieler_id + 1,
-                            "karte": daten["karte"]
-                        })
+                    # Prüfe, ob der Spieler nur seine eigenen Karten aufdeckt
+                    if daten["spieler_id"] == spieler_id + 1:
+                        # Spiellogik ausführen, z.B. Karte aufdecken
+                        # Dann allen Spielern neuen Zustand schicken
+                        for v in s.connection:
+                            send_data(v, {
+                                "update": "karte_aufgedeckt",
+                                "spieler": spieler_id + 1,
+                                "karte": daten["karte"]
+                            })
                 # Weitere Aktionen hier behandeln
             else:
                 # Verbindung verloren
