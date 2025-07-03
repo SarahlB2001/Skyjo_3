@@ -16,13 +16,13 @@ drei = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
         'y': s.WIDTH // 16}
 
 vier = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
-        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
+        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9} 
 
 funf = {'x': s.HEIGHT // 8 + s.HEIGHT // 4,
         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
 
 sechs = {'x': s.HEIGHT // 16,
-         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
+         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9} 
 
 size = {'height': s.WIDTH // 4,
         'width': s.HEIGHT // 4}

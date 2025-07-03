@@ -1,6 +1,6 @@
 import settings as s
 from dictionaries import plaPosition as pla
-
+''''
 card_width = pla.size["width"] / 5
 card_height = pla.size ["height"] / 4 
 
@@ -28,3 +28,4 @@ card10 = {"x": x2, "y": y3}
 card11 = {"x": x3, "y": y3}
 card12 = {"x": x4, "y": y3}  
 
+'''

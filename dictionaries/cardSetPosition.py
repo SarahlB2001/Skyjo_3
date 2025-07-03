@@ -33,6 +33,7 @@ def card_place_position(screen):
 
 
 def card_set_positions(screen):
+    print("[DEBUG] card_set_positions wurde aufgerufen")
     global player_cardlayouts
     player_cardlayouts = {}  # immer neu anlegen
 

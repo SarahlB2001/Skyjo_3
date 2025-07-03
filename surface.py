@@ -14,7 +14,7 @@ player_fields = {
     6: ['1', '2', '3', '4', '5', '6']
 }
 
-WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH)) ################################################
+WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH)) 
 PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
 
 
@@ -42,9 +42,9 @@ def draw_player_names():
             text_rect = name_text.get_rect(center=(x + pl.field_pos['size']['width'] // 2, y - 25))
             WINDOW.blit(name_text, text_rect)
 
-
+'''''
 def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
-    gap_width = size_x // 5
+    gap_width = (size_x - (cols * card_width)) / (cols + 1) ##################################
     gap_height = (size_y - (rows * card_height)) / (rows + 1)
     s.gap_width = gap_width
     s.gap_height = gap_height
@@ -52,7 +52,7 @@ def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
 
 calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH, s.CARD_HEIGHT)
 
-
+'''
 def player_place_position():
     for index, (spieler_id, name) in enumerate(s.player_daten.items()):
         if index < len(pl.player_pos[s.player_count]):
@@ -60,14 +60,6 @@ def player_place_position():
             name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)
             WINDOW.blit(name_text, (x_pos, y_pos))
 
-def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
-    gap_width = size_x // 4
-    gap_height = (size_y - (rows * card_height)) / (rows + 1)
-    s.gap_width = gap_width
-    s.gap_height = gap_height
-    # return gap_width, gap_height
-
-calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH, s.CARD_HEIGHT)
 
 def draw(screen):
     screen.fill(s.WINDOW_COLOR)

@@ -38,7 +38,10 @@ class Card:
         self.rect = pygame.Rect(x, y, width, height)
     
     def draw(self, screen):
-        return 
+        if self.is_face_up:
+            screen.blit(self.front_image, (self.x, self.y))
+        else:
+            screen.blit(self.back_image, (self.x, self.y))
 
     def flip(self):
         """Dreht die Karte um (verdeckt <-> offen) und löst ein Event aus."""

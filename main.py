@@ -9,6 +9,7 @@ import layout as l
 import settings as s
 import surface as su
 import time
+from dictionaries import cardSetPosition as cP
 
 
 def main():
@@ -185,6 +186,7 @@ def main():
                         if "anzahl_spieler" in msg:
                             s.player_count = int(msg["anzahl_spieler"])
                         if "startet" in s.status_message.lower() or "starten" in s.status_message.lower():
+                            cP.card_set_positions(screen)
                             s.waiting_for_start = False
                             s.game_started = True
                 except BlockingIOError:
