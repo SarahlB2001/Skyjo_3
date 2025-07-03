@@ -93,6 +93,11 @@ def main():
                         else:
                             s.active = False
 
+                    # Beispiel im Event-Loop:
+                    if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(event.pos):
+                        print("Kartenstapel wurde angeklickt!")
+                        # Hier kannst du die Logik für das Aufdecken/Abheben implementieren
+
                 if event.type == pygame.KEYDOWN:
                     if s.entering_ip and s.active:
                         if event.key == pygame.K_RETURN:

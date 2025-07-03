@@ -1,7 +1,8 @@
-import pygame 
+import pygame
 import layout as l
 import surface as su
 from dictionaries import setcard as sc
+
 ''''
 start_x = 1
 start_y = 1

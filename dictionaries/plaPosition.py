@@ -16,21 +16,23 @@ drei = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
         'y': s.WIDTH // 16}
 
 vier = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
-        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9} 
+        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9}
 
 funf = {'x': s.HEIGHT // 8 + s.HEIGHT // 4,
-        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
+        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9}
 
 sechs = {'x': s.HEIGHT // 16,
-         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9} 
+         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9}
 
 size = {'height': s.WIDTH // 4,
         'width': s.HEIGHT // 4}
 
-carddeck = {'x': (s.HEIGHT - (2*s.HEIGHT // 16 + s.HEIGHT // 4)) // 2,
-            'y': s.WIDTH // 2 - (s.WIDTH // 4) // 2,
-            'width': 2 * s.HEIGHT // 16 + s.HEIGHT // 4,
-            'height': s.WIDTH // 4}
+carddeck = {
+    'x': (s.HEIGHT // 2) - 40,   # Passe ggf. an
+    'y': (s.WIDTH // 2) - 100,    # Passe ggf. an
+    'width': 80,                 # z.B. kleiner als vorher
+    'height': 120                # z.B. kleiner als vorher
+}
 
 field_pos = {'1': eins,
              '2': zwei,
