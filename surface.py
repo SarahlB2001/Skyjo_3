@@ -14,9 +14,11 @@ player_fields = {
     6: ['1', '2', '3', '4', '5', '6']
 }
 
-WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH)) 
+WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
 PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
 
+BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
+BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
 
 def first_draw():
     WINDOW.fill(s.WINDOW_COLOR)
@@ -64,7 +66,7 @@ def player_place_position():
 
 
 def draw(screen):
-    screen.fill(s.WINDOW_COLOR)
+    screen.blit(BACKGROUND_IMAGE, (0, 0))
     cP.card_place_position(screen)
 
     # Spielerfelder und Namen zeichnen
@@ -88,7 +90,7 @@ def draw(screen):
             score_rect = score_text.get_rect()
             total_width = name_rect.width + 30 + score_rect.width  # 30px Abstand
             x_start = rect['x'] + pl.field_pos['size']['width']//2 - total_width//2
-            y_pos = rect['y'] - 28 
+            y_pos = rect['y'] - 28
             screen.blit(name_text, (x_start, y_pos))
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
 

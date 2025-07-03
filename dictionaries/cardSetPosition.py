@@ -37,19 +37,33 @@ def card_place_position(screen):
     )
     pygame.draw.rect(screen, s.BLACK, deck_rect, 2)
 
-    # Mehrere Kartenrücken überlappend zeichnen
+    # Ablagestapel-Rechteck zeichnen (nur leer)
+    discard_rect = pygame.Rect(
+        pl.field_pos['discarddeck']['x'],
+        pl.field_pos['discarddeck']['y'],
+        pl.field_pos['discarddeck']['width'],
+        pl.field_pos['discarddeck']['height']
+    )
+    pygame.draw.rect(screen, (150, 0, 0), discard_rect, 2)  # z.B. rot umrandet
+
+    # Kartenrücken nur auf den Kartenstapel legen
     card_back = pygame.image.load("Karten_png/card_back.png")
     card_back = pygame.transform.scale(card_back, (s.CARD_WIDTH, s.CARD_HEIGHT))
-    num_stack = 5  # Anzahl Karten im Stapel
-    overlap = 8    # Wie stark die Karten überlappen (Pixel)
-    stack_rects = []
+    num_stack = 5
+    overlap = 8
     for i in range(num_stack):
         x = deck_rect.x + deck_rect.width // 2 - s.CARD_WIDTH // 2 + i * overlap
         y = deck_rect.y + deck_rect.height // 2 - s.CARD_HEIGHT // 2 + i * overlap
         screen.blit(card_back, (x, y))
-        stack_rects.append(pygame.Rect(x, y, s.CARD_WIDTH, s.CARD_HEIGHT))
-    # Den vordersten Kartenrücken (oberste Karte) als "anklickbar" merken:
-    s.card_stack_rect = stack_rects[-1]
+
+    # KEINE Karte auf den Ablagestapel legen!
+
+    s.card_stack_rect = pygame.Rect(
+        deck_rect.x + (num_stack - 1) * overlap,
+        deck_rect.y + (num_stack - 1) * overlap,
+        s.CARD_WIDTH, s.CARD_HEIGHT
+    )
+    s.discard_stack_rect = discard_rect
 
 
 def card_set_positions(screen):

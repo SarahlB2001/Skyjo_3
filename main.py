@@ -30,7 +30,7 @@ def main():
 
     background = pygame.image.load("Skyjo_Menü.png")
 
-    player_count_buttons = [pygame.Rect(0, 420, 50, 50) for _ in range(4)]
+    player_count_buttons = [pygame.Rect(0, 420, 50, 50) for _ in range(3)]  # Nur 3 Buttons für 2, 3, 4 Spieler
     round_count_buttons = [pygame.Rect(0, 420, 50, 50) for _ in range(5)]
 
     while s.running:
@@ -64,7 +64,7 @@ def main():
                     elif s.waiting_for_players:
                         for i, button in enumerate(player_count_buttons):
                             if button.collidepoint(event.pos):
-                                s.player_count = i + 1
+                                s.player_count = i + 2  # Jetzt 2, 3 oder 4
                                 s.PL_ANZAHL = s.player_count  # <--- HIER hinzufügen!
                                 s.sock, s.spieler_id = c.connect_to_server()
                                 serv.send_data(s.sock, {"anzahl_spieler": s.player_count})
@@ -146,7 +146,7 @@ def main():
                     button.x = start_x + i * 60
                     button.y = y
                     pygame.draw.rect(screen, (0, 0, 255), button)
-                    text = small_font.render(f"{i+1}", True, (255, 255, 255))
+                    text = small_font.render(f"{i+2}", True, (255, 255, 255))  # Buttons zeigen 2, 3, 4
                     screen.blit(text, (button.x + button.width // 2 - text.get_width() // 2, button.y + 10))
 
             if s.waiting_for_rounds:
@@ -220,7 +220,7 @@ def main():
                                     if s.cards_flipped_this_turn < 3 and not card.is_face_up:
                                         serv.send_data(s.sock, {
                                             "aktion": "karte_aufdecken",
-                                            "spieler_id": s.spieler_id,  # <--- HINZUGEFÜGT!
+                                            "spieler_id": s.spieler_id,  # <--- HINZUFGEFT!
                                             "karte": {"row": row_idx, "col": col_idx}
                                         })
                                         s.cards_flipped_this_turn += 1
