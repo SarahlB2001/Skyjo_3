@@ -184,12 +184,12 @@ def main():
                     msg = serv.recv_data(s.sock)
                     if msg and "message" in msg:
                         s.status_message = msg["message"]
-                        # HIER Spielernamen speichern:
                         if "spielernamen" in msg:
-                            # Keys in int umwandeln!
                             s.player_data = {int(k): v for k, v in msg["spielernamen"].items()}
                         if "anzahl_spieler" in msg:
                             s.player_count = int(msg["anzahl_spieler"])
+                        if "karten_matrizen" in msg:
+                            s.karten_matrizen = msg["karten_matrizen"]  # <--- HINZUGEFÜGT!
                         if "startet" in s.status_message.lower() or "starten" in s.status_message.lower():
                             cP.card_set_positions(screen)
                             s.waiting_for_start = False

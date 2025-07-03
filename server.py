@@ -3,6 +3,7 @@ import threading
 import pickle
 import settings as s
 import time
+import random
 
 def recv_data(conn):
     try:
@@ -56,33 +57,40 @@ def client_thread(conn, spieler_id):
 
         if spieler_id == s.player_count - 1:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
+
+            # Kartenmatrizen für alle Spieler erzeugen
+            karten_matrizen = {}
+            for pid in range(1, s.player_count + 1):
+                matrix = []
+                for row in range(s.ROWS):
+                    matrix.append([random.randint(-2, 12) for _ in range(s.COLS)])
+                karten_matrizen[pid] = matrix
+            s.karten_matrizen = karten_matrizen  # Optional: global speichern
+
             for v in s.connection:
                 send_data(v, {
                     "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
                     "anzahl_spieler": s.player_count,
-                    "spielernamen": s.player_data  # <--- Namen mitsenden!
+                    "spielernamen": s.player_data,
+                    "karten_matrizen": karten_matrizen  # <--- Kartenmatrizen mitsenden!
                 })
-            print(f"[DEBUG] Startnachricht empfangen: {s.status_message}, Spieleranzahl: {s.player_count}")
+            print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
+
+            # Nach dem Senden der Startnachricht an alle Spieler:
+            
 
         # Hier könntest du später die Spiellogik oder weitere Kommunikation einbauen
         while True:
             daten = recv_data(conn)
             if daten:
-                # Beispiel: Spieler macht einen Zug
                 if daten.get("aktion") == "karte_aufdecken":
-                    # Prüfe, ob der Spieler nur seine eigenen Karten aufdeckt
-                    if daten["spieler_id"] == spieler_id + 1:
-                        # Spiellogik ausführen, z.B. Karte aufdecken
-                        # Dann allen Spielern neuen Zustand schicken
-                        for v in s.connection:
-                            send_data(v, {
-                                "update": "karte_aufgedeckt",
-                                "spieler": spieler_id + 1,
-                                "karte": daten["karte"]
-                            })
-                # Weitere Aktionen hier behandeln
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "karte_aufgedeckt",
+                            "spieler": daten["spieler_id"],
+                            "karte": daten["karte"]
+                        })
             else:
-                # Verbindung verloren
                 break
 
     except Exception as e:
