@@ -251,5 +251,14 @@ def main():
     sys.exit()
 
 
+def berechne_punktzahl(layout):
+    punkte = 0
+    for row in layout.cards:
+        for card in row:
+            if card.is_face_up:
+                punkte += card.value
+    return punkte
+
+
 if __name__ == "__main__":
     main()

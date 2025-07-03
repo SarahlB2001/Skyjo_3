@@ -19,10 +19,14 @@ player_cardlayouts = {}
 def card_place_position(screen):
     fields = player_fields.get(s.player_count, [])
     for f in fields:
+        feld_x = pl.field_pos[f]['x']
+        feld_y = pl.field_pos[f]['y']
+        feld_breite = pl.field_pos['size']['width']
+        # Dynamische Höhe: 3 Karten + 2 Abstände
+        feld_hoehe = s.ROWS * s.CARD_HEIGHT + (s.ROWS - 1) * s.gap_height
         pygame.draw.rect(
             screen, s.BLACK,
-            (pl.field_pos[f]['x'], pl.field_pos[f]['y'],
-             pl.field_pos['size']['width'], pl.field_pos['size']['height'])
+            (feld_x, feld_y, feld_breite, feld_hoehe), 2  # 2 = Rahmenstärke, kannst du anpassen
         )
     # Kartenstapel-Rechteck zeichnen
     deck_rect = pygame.Rect(
@@ -77,3 +81,4 @@ def card_set_positions(screen):
 
     for layout in player_cardlayouts.values():
         layout.draw(screen)
+

@@ -69,16 +69,28 @@ def draw(screen):
 
     # Spielerfelder und Namen zeichnen
     fields = cP.player_fields.get(s.player_count, [])
-    # Sortiere Namen nach Spieler-ID (int!)
     namen = [s.player_data.get(i, f"Spieler{i}") for i in range(1, s.player_count + 1)]
 
     for idx, f in enumerate(fields):
         rect = pl.field_pos[f]
         if idx < len(namen):
             name = namen[idx]
-            name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)
-            text_rect = name_text.get_rect(center=(rect['x'] + pl.field_pos['size']['width']//2, rect['y'] - 20))
-            screen.blit(name_text, text_rect)
+            layout = cP.player_cardlayouts.get(idx + 1)
+            punkte = 0
+            if layout:
+                punkte = sum(card.value for row in layout.cards for card in row if card.is_face_up)
+            # Abstand zwischen Name und Score
+            name_color = (0, 0, 255) if (idx + 1) == s.spieler_id else s.PLAYER_FONT_COLOR
+            name_text = PLAYER_FONT.render(name, True, name_color)
+            score_text = PLAYER_FONT.render(f"   Score: {punkte}", True, s.PLAYER_FONT_COLOR)
+            # Name und Score nebeneinander mit Abstand
+            name_rect = name_text.get_rect()
+            score_rect = score_text.get_rect()
+            total_width = name_rect.width + 30 + score_rect.width  # 30px Abstand
+            x_start = rect['x'] + pl.field_pos['size']['width']//2 - total_width//2
+            y_pos = rect['y'] - 28 
+            screen.blit(name_text, (x_start, y_pos))
+            screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
 
     for layout in cP.player_cardlayouts.values():
         layout.draw(screen)

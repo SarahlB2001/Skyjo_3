@@ -33,7 +33,7 @@ class Card:
         self.width = width
         self.height = height
         self.is_face_up = is_face_up
-        self.front_image = pygame.transform.scale(CARD_IMAGES[value], (77, 54))
+        self.front_image = pygame.transform.scale(CARD_IMAGES[value], (width, height))
         self.back_image = pygame.transform.scale(CARD_BACK_IMAGE, (width, height))
         self.rect = pygame.Rect(x, y, width, height)
     
