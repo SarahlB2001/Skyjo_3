@@ -229,14 +229,21 @@ def main():
             try:
                 s.sock.setblocking(False)
                 msg = serv.recv_data(s.sock)
-                if msg and msg.get("update") == "karte_aufgedeckt":
-                    spieler = msg["spieler"]
-                    row = msg["karte"]["row"]
-                    col = msg["karte"]["col"]
-                    layout = cP.player_cardlayouts.get(spieler)
-                    if layout:
-                        card = layout.cards[row][col]
-                        card.flip()
+                if msg:
+                    if msg.get("update") == "karte_aufgedeckt":
+                        spieler = msg["spieler"]
+                        row = msg["karte"]["row"]
+                        col = msg["karte"]["col"]
+                        layout = cP.player_cardlayouts.get(spieler)
+                        if layout:
+                            card = layout.cards[row][col]
+                            card.flip()
+                    if msg.get("update") == "spielreihenfolge":
+                        s.spielreihenfolge = msg["reihenfolge"]  # z.B. [3, 1, 2, 4]
+                        s.scores = msg["scores"]
+                        # Liste der Namen in der richtigen Reihenfolge:
+                        reihenfolge_namen = [s.player_data.get(pid, f"Spieler{pid}") for pid in s.spielreihenfolge]
+                        print("Spielreihenfolge (Namen):", reihenfolge_namen)
             except BlockingIOError:
                 pass
             finally:
@@ -260,5 +267,5 @@ def berechne_punktzahl(layout):
     return punkte
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     main()

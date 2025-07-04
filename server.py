@@ -67,6 +67,11 @@ def client_thread(conn, spieler_id):
                 karten_matrizen[pid] = matrix
             s.karten_matrizen = karten_matrizen  # Optional: global speichern
 
+            aufgedeckt_matrizen = {}
+            for pid in range(1, s.player_count + 1):
+                aufgedeckt_matrizen[pid] = [[False for _ in range(s.COLS)] for _ in range(s.ROWS)]
+            s.aufgedeckt_matrizen = aufgedeckt_matrizen
+
             for v in s.connection:
                 send_data(v, {
                     "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
@@ -84,12 +89,40 @@ def client_thread(conn, spieler_id):
             daten = recv_data(conn)
             if daten:
                 if daten.get("aktion") == "karte_aufdecken":
+                    # Karte im Server als aufgedeckt markieren!
+                    s.aufgedeckt_matrizen[daten["spieler_id"]][daten["karte"]["row"]][daten["karte"]["col"]] = True
                     for v in s.connection:
                         send_data(v, {
                             "update": "karte_aufgedeckt",
                             "spieler": daten["spieler_id"],
                             "karte": daten["karte"]
                         })
+                        # Nach dem Aufdecken einer Karte:
+                        if not hasattr(s, "cards_flipped"):
+                            s.cards_flipped = {}
+                        s.cards_flipped[daten["spieler_id"]] = s.cards_flipped.get(daten["spieler_id"], 0) + 1
+
+                        # Prüfen, ob alle Spieler 3 Karten aufgedeckt haben
+                        if all(s.cards_flipped.get(pid, 0) >= 3 for pid in range(1, s.player_count + 1)):
+                            # Punktzahlen berechnen
+                            scores = {}
+                            for pid in range(1, s.player_count + 1):
+                                matrix = s.karten_matrizen[pid]
+                                aufgedeckt_matrix = s.aufgedeckt_matrizen[pid]
+                                scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix)
+
+                            # Spieler mit höchster Punktzahl bestimmen
+                            startspieler = max(scores, key=scores.get)
+
+                            # Sitzordnung (IDs in der Reihenfolge, wie sie im Kreis sitzen)
+                            sitzordnung = list(range(1, s.player_count + 1))
+                            start_idx = sitzordnung.index(startspieler)
+                            reihenfolge = sitzordnung[start_idx:] + sitzordnung[:start_idx]
+
+                            print("Spielreihenfolge:", reihenfolge)
+                            print("Scores:", scores)
+                            for v in s.connection:
+                                send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
             else:
                 break
 
@@ -125,6 +158,14 @@ def start_server():
         if s.player_count is not None and spieler_id >= s.player_count:
             print("[INFO] Alle Spieler verbunden, das Spiel kann starten.")
             # Warten auf Threads ist hier nicht nötig, da server läuft weiter
+
+def berechne_punktzahl(matrix, aufgedeckt_matrix):
+    punkte = 0
+    for row in range(len(matrix)):
+        for col in range(len(matrix[0])):
+            if aufgedeckt_matrix[row][col]:
+                punkte += matrix[row][col]
+    return punkte
 
 if __name__ == "__main__":
     start_server()
