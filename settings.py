@@ -67,7 +67,7 @@ gap_width = 45
 gap_height = 3
 
 cards_flipped_this_turn = 0 
-
+current_player = None  # Der Spieler, der gerade am Zug ist
 
 
 CARD_IMAGES= {

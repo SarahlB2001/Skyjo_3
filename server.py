@@ -16,9 +16,12 @@ def recv_data(conn):
 
 def send_data(conn, data):
     try:
-        conn.sendall(pickle.dumps(data))
-    except:
-        pass
+        serialized = pickle.dumps(data)
+        conn.sendall(serialized)
+        return True
+    except Exception as e:
+        print(f"[ERROR] Fehler beim Senden: {e}, Daten: {data}")
+        return False
 
 def client_thread(conn, spieler_id):
 
@@ -77,7 +80,8 @@ def client_thread(conn, spieler_id):
                     "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
                     "anzahl_spieler": s.player_count,
                     "spielernamen": s.player_data,
-                    "karten_matrizen": karten_matrizen  # <--- Kartenmatrizen mitsenden!
+                    "karten_matrizen": karten_matrizen,
+                    "aufgedeckt_matrizen": aufgedeckt_matrizen  # <--- HINZUFÜGEN!
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 
@@ -126,8 +130,24 @@ def client_thread(conn, spieler_id):
                         print("Spielreihenfolge:", reihenfolge)
                         print("Scores:", scores)
                         for v in s.connection:
-                            send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
+                            success = send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
+                            if not success:
+                                print(f"[ERROR] Konnte Spielreihenfolge nicht an {v} senden")
+
+                        # NACH dem Senden der Spielreihenfolge, füge eine Verzögerung und eine Wiederholung ein:
+                        for v in s.connection:
+                            success = send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
+                            # Kleine Pause, damit die Nachricht sicher ankommt
+                            time.sleep(0.05)
+                            # Sende die Nachricht zur Sicherheit nochmal
+                            success = send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
+                            if not success:
+                                print(f"[ERROR] Konnte Spielreihenfolge nicht an {v} senden")
+
+                        # Debug-Ausgaben für alle Spieler
+                        for pid in scores:
                             print(f"[DEBUG] Punktzahlen für Spieler {pid}: {scores[pid]}")
+                        print(f"[DEBUG] Spielreihenfolge gesendet: {reihenfolge}")
             else:
                 break
 

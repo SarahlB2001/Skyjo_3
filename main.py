@@ -34,6 +34,59 @@ def main():
     round_count_buttons = [pygame.Rect(0, 420, 50, 50) for _ in range(5)]
 
     while s.running:
+        # NACHRICHTEN EMPFANGEN - IMMER!
+        if s.sock:
+            try:
+                s.sock.setblocking(False)
+                msg = serv.recv_data(s.sock)
+                if msg:
+                    print(f"[DEBUG] Client empfängt Nachricht: {msg}")
+                    
+                    # Startnachricht behandeln
+                    if "message" in msg and ("startet" in msg["message"].lower() or "starten" in msg["message"].lower()):
+                        s.status_message = msg["message"]
+                        if "spielernamen" in msg:
+                            s.player_data = {int(k): v for k, v in msg["spielernamen"].items()}
+                        if "anzahl_spieler" in msg:
+                            s.player_count = int(msg["anzahl_spieler"])
+                        if "karten_matrizen" in msg:
+                            s.karten_matrizen = msg["karten_matrizen"]
+                        if "aufgedeckt_matrizen" in msg:
+                            s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
+                        cP.card_set_positions(screen)
+                        s.waiting_for_start = False
+                        s.game_started = True
+                        print("[DEBUG] Spiel gestartet!")
+                    
+                    # Andere Nachrichten behandeln
+                    elif msg.get("update") == "karte_aufgedeckt":
+                        spieler = msg["spieler"]
+                        row = msg["karte"]["row"]
+                        col = msg["karte"]["col"]
+                        layout = cP.player_cardlayouts.get(spieler)
+                        if layout:
+                            card = layout.cards[row][col]
+                            card.flip()
+                        if hasattr(s, "aufgedeckt_matrizen"):
+                            s.aufgedeckt_matrizen[spieler][row][col] = True
+                    elif msg.get("update") == "spielreihenfolge":
+                        s.spielreihenfolge = msg["reihenfolge"]
+                        s.scores = msg["scores"]
+                        s.current_player = s.spielreihenfolge[0]
+                        print(f"[DEBUG] Current player gesetzt auf: {s.current_player}")
+                        reihenfolge_namen = [s.player_data.get(pid, f"Spieler{pid}") for pid in s.spielreihenfolge]
+                        print("Spielreihenfolge (Namen):", reihenfolge_namen)
+                        print(f"Startspieler: {s.player_data.get(s.current_player, f'Spieler{s.current_player}')}")
+                    elif "message" in msg:
+                        s.status_message = msg["message"]
+                    elif msg.get("update") == "test":
+                        print(f"[DEBUG] Test-Nachricht empfangen: {msg}")
+                        
+            except BlockingIOError:
+                pass
+            finally:
+                s.sock.setblocking(True)
+
         if (
             s.game_mode is None
             or s.waiting_for_players
@@ -178,31 +231,8 @@ def main():
                 status_surface = font.render(s.status_message, True, (0, 0, 0))
                 screen.blit(status_surface, (screen.get_width() // 2 - status_surface.get_width() // 2, 100))
 
-            if s.waiting_for_start and s.sock:
-                s.sock.setblocking(False)
-                try:
-                    msg = serv.recv_data(s.sock)
-                    if msg and "message" in msg:
-                        s.status_message = msg["message"]
-                        if "spielernamen" in msg:
-                            s.player_data = {int(k): v for k, v in msg["spielernamen"].items()}
-                        if "anzahl_spieler" in msg:
-                            s.player_count = int(msg["anzahl_spieler"])
-                        if "karten_matrizen" in msg:
-                            s.karten_matrizen = msg["karten_matrizen"]  # <--- HINZUGEFÜGT!
-                        if "startet" in s.status_message.lower() or "starten" in s.status_message.lower():
-                            cP.card_set_positions(screen)
-                            s.waiting_for_start = False
-                            s.game_started = True
-                except BlockingIOError:
-                    pass
-                except Exception as e:
-                    print(f"[FEHLER] Empfangsfehler: {e}")
-                    s.status_message = "Verbindungsfehler!"
-                    s.waiting_for_start = False
-                finally:
-                    s.sock.setblocking(True)
-
+           
+                
         else:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -226,28 +256,7 @@ def main():
                                         s.cards_flipped_this_turn += 1
 
             # ...nach dem Event-Handling und vor su.draw(screen)...
-            try:
-                s.sock.setblocking(False)
-                msg = serv.recv_data(s.sock)
-                if msg:
-                    if msg.get("update") == "karte_aufgedeckt":
-                        spieler = msg["spieler"]
-                        row = msg["karte"]["row"]
-                        col = msg["karte"]["col"]
-                        layout = cP.player_cardlayouts.get(spieler)
-                        if layout:
-                            card = layout.cards[row][col]
-                            card.flip()
-                    if msg.get("update") == "spielreihenfolge":
-                        s.spielreihenfolge = msg["reihenfolge"]  # z.B. [3, 1, 2, 4]
-                        s.scores = msg["scores"]
-                        # Liste der Namen in der richtigen Reihenfolge:
-                        reihenfolge_namen = [s.player_data.get(pid, f"Spieler{pid}") for pid in s.spielreihenfolge]
-                        print("Spielreihenfolge (Namen):", reihenfolge_namen)
-            except BlockingIOError:
-                pass
-            finally:
-                s.sock.setblocking(True)
+            
 
             su.draw(screen)
 

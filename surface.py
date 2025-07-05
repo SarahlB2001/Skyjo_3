@@ -81,19 +81,28 @@ def draw(screen):
             punkte = 0
             if layout:
                 punkte = sum(card.value for row in layout.cards for card in row if card.is_face_up)
-            # Abstand zwischen Name und Score
+            
+            # Farbe bestimmen
             name_color = (0, 0, 255) if (idx + 1) == s.spieler_id else s.PLAYER_FONT_COLOR
             name_text = PLAYER_FONT.render(name, True, name_color)
             score_text = PLAYER_FONT.render(f"   Score: {punkte}", True, s.PLAYER_FONT_COLOR)
-            # Name und Score nebeneinander mit Abstand
+            
+            # Position berechnen
             name_rect = name_text.get_rect()
             score_rect = score_text.get_rect()
-            total_width = name_rect.width + 30 + score_rect.width  # 30px Abstand
+            total_width = name_rect.width + 30 + score_rect.width
             x_start = rect['x'] + pl.field_pos['size']['width']//2 - total_width//2
             y_pos = rect['y'] - 28
+            
+            # Grüner Punkt für aktuellen Spieler
+          #  print(f"[DEBUG] Prüfe current_player: {getattr(s, 'current_player', 'NICHT GESETZT')}")
+            if hasattr(s, 'current_player') and s.current_player == (idx + 1):
+              #  print(f"[DEBUG] Zeichne grünen Punkt für Spieler {s.current_player} an Position ({x_start - 20}, {y_pos + 10})")
+                pygame.draw.circle(screen, (0, 255, 0), (x_start - 20, y_pos + 10), 8)  # Grüner Punkt
+            
             screen.blit(name_text, (x_start, y_pos))
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
 
     for layout in cP.player_cardlayouts.values():
         layout.draw(screen)
-    pygame.display.flip()
+   # pygame.display.flip()
