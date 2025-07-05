@@ -75,13 +75,18 @@ def client_thread(conn, spieler_id):
                 aufgedeckt_matrizen[pid] = [[False for _ in range(s.COLS)] for _ in range(s.ROWS)]
             s.aufgedeckt_matrizen = aufgedeckt_matrizen
 
+            # Erzeuge eine Karte für den Ablagestapel
+            discard_card_value = random.randint(-2, 12)
+            s.discard_card = discard_card_value  # Optional: global speichern
+
             for v in s.connection:
                 send_data(v, {
                     "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
                     "anzahl_spieler": s.player_count,
                     "spielernamen": s.player_data,
                     "karten_matrizen": karten_matrizen,
-                    "aufgedeckt_matrizen": aufgedeckt_matrizen  # <--- HINZUFÜGEN!
+                    "aufgedeckt_matrizen": aufgedeckt_matrizen,
+                    "discard_card": discard_card_value  # <-- HIER: Füge die Ablagestapelkarte hinzu
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 

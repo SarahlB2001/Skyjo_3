@@ -53,6 +53,8 @@ def main():
                             s.karten_matrizen = msg["karten_matrizen"]
                         if "aufgedeckt_matrizen" in msg:
                             s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
+                        if "discard_card" in msg:  # <-- HIER: Ablagestapelkarte speichern
+                            s.discard_card = msg["discard_card"]
                         cP.card_set_positions(screen)
                         s.waiting_for_start = False
                         s.game_started = True

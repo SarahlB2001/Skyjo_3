@@ -65,6 +65,17 @@ def card_place_position(screen):
     )
     s.discard_stack_rect = discard_rect
 
+    # Wenn eine Ablagestapelkarte existiert, zeige sie an
+    if hasattr(s, "discard_card"):
+        # Lade das entsprechende Kartenbild
+        discard_card_img = pygame.image.load(f"Karten_png/card_{s.discard_card}.png")
+        discard_card_img = pygame.transform.scale(discard_card_img, (s.CARD_WIDTH, s.CARD_HEIGHT))
+        
+        # Positioniere sie auf dem Ablagestapel
+        discard_x = discard_rect.x + discard_rect.width // 2 - s.CARD_WIDTH // 2
+        discard_y = discard_rect.y + discard_rect.height // 2 - s.CARD_HEIGHT // 2
+        screen.blit(discard_card_img, (discard_x, discard_y))
+
 
 def card_set_positions(screen):
     print("[DEBUG] card_set_positions wurde aufgerufen")
