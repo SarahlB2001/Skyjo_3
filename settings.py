@@ -73,3 +73,11 @@ current_player = None  # Der Spieler, der gerade am Zug ist
 CARD_IMAGES= {
     i: f"img/card_{i}.png" for i in range ( -2, 13)
 }
+
+# Zustandsvariablen für Spielzüge
+tausche_mit_ablagestapel = False
+warte_auf_entscheidung = False
+gezogene_karte = None
+muss_karte_aufdecken = False
+setup_phase = True  # Phase in der 2 Karten aufgedeckt werden
+

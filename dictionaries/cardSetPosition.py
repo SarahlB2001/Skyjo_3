@@ -49,20 +49,14 @@ def card_place_position(screen):
     # Kartenrücken nur auf den Kartenstapel legen
     card_back = pygame.image.load("Karten_png/card_back.png")
     card_back = pygame.transform.scale(card_back, (s.CARD_WIDTH, s.CARD_HEIGHT))
-    num_stack = 5
-    overlap = 8
-    for i in range(num_stack):
-        x = deck_rect.x + deck_rect.width // 2 - s.CARD_WIDTH // 2 + i * overlap
-        y = deck_rect.y + deck_rect.height // 2 - s.CARD_HEIGHT // 2 + i * overlap
-        screen.blit(card_back, (x, y))
 
-    # KEINE Karte auf den Ablagestapel legen!
+    # Nur eine einzige Karte in der Mitte anzeigen (statt eines Stapels)
+    x = deck_rect.x + deck_rect.width // 2 - s.CARD_WIDTH // 2
+    y = deck_rect.y + deck_rect.height // 2 - s.CARD_HEIGHT // 2
+    screen.blit(card_back, (x, y))
 
-    s.card_stack_rect = pygame.Rect(
-        deck_rect.x + (num_stack - 1) * overlap,
-        deck_rect.y + (num_stack - 1) * overlap,
-        s.CARD_WIDTH, s.CARD_HEIGHT
-    )
+    # Rechteck für Klick-Erkennung aktualisieren
+    s.card_stack_rect = pygame.Rect(x, y, s.CARD_WIDTH, s.CARD_HEIGHT)
     s.discard_stack_rect = discard_rect
 
     # Wenn eine Ablagestapelkarte existiert, zeige sie an

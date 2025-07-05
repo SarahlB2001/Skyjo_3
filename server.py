@@ -153,6 +153,124 @@ def client_thread(conn, spieler_id):
                         for pid in scores:
                             print(f"[DEBUG] Punktzahlen für Spieler {pid}: {scores[pid]}")
                         print(f"[DEBUG] Spielreihenfolge gesendet: {reihenfolge}")
+                elif daten.get("aktion") == "nehme_ablagestapel":
+                    spieler_id = daten["spieler_id"]
+                    ziel_karte = daten["ziel_karte"]  # Die Karte, gegen die getauscht wird
+                    
+                    # Aktuelle Karte vom Ablagestapel holen
+                    discard_value = s.discard_card
+                    
+                    # Karte aus der Spielerhand nehmen und auf Ablagestapel legen
+                    row, col = ziel_karte["row"], ziel_karte["col"]
+                    alte_karte = s.karten_matrizen[spieler_id][row][col]
+                    
+                    # Karten tauschen
+                    s.karten_matrizen[spieler_id][row][col] = discard_value
+                    s.aufgedeckt_matrizen[spieler_id][row][col] = True  # Karte ist immer offen
+                    s.discard_card = alte_karte
+                    
+                    # Allen Clients mitteilen
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "karten_getauscht",
+                            "spieler": spieler_id,
+                            "karte": {"row": row, "col": col},
+                            "neue_karte": discard_value,
+                            "ablagestapel": alte_karte
+                        })
+                    
+                    # Nächster Spieler ist dran
+                    naechster_spieler_idx = (s.spielreihenfolge.index(spieler_id) + 1) % len(s.spielreihenfolge)
+                    s.current_player = s.spielreihenfolge[naechster_spieler_idx]
+                    
+                    # Allen Clients den nächsten Spieler mitteilen
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "naechster_spieler",
+                            "spieler": s.current_player
+                        })
+                
+                elif daten.get("aktion") == "nehme_nachziehstapel":
+                    spieler_id = daten["spieler_id"]
+                    
+                    # Neue zufällige Karte generieren
+                    neue_karte = random.randint(-2, 12)
+                    
+                    # Nur dem Spieler mitteilen, der die Karte gezogen hat
+                    for v in s.connection:
+                        if s.connection.index(v) == spieler_id - 1:  # Spieler-ID beginnt bei 1, Index bei 0
+                            send_data(v, {
+                                "update": "nachziehstapel_karte",
+                                "karte": neue_karte
+                            })
+                    
+                    # Karte in temporärem Speicher halten
+                    s.gezogene_karte = neue_karte
+                
+                elif daten.get("aktion") == "nachziehstapel_tauschen":
+                    spieler_id = daten["spieler_id"]
+                    ziel_karte = daten["ziel_karte"]
+                    
+                    # Karte aus der Spielerhand nehmen und auf Ablagestapel legen
+                    row, col = ziel_karte["row"], ziel_karte["col"]
+                    alte_karte = s.karten_matrizen[spieler_id][row][col]
+                    
+                    # Karten tauschen
+                    s.karten_matrizen[spieler_id][row][col] = s.gezogene_karte
+                    s.aufgedeckt_matrizen[spieler_id][row][col] = True  # Karte ist immer offen
+                    s.discard_card = alte_karte
+                    
+                    # Allen Clients mitteilen
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "karten_getauscht",
+                            "spieler": spieler_id,
+                            "karte": {"row": row, "col": col},
+                            "neue_karte": s.gezogene_karte,
+                            "ablagestapel": alte_karte
+                        })
+                    
+                    # Nächster Spieler ist dran
+                    naechster_spieler_idx = (s.spielreihenfolge.index(spieler_id) + 1) % len(s.spielreihenfolge)
+                    s.current_player = s.spielreihenfolge[naechster_spieler_idx]
+                    
+                    # Allen Clients den nächsten Spieler mitteilen
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "naechster_spieler",
+                            "spieler": s.current_player
+                        })
+                
+                elif daten.get("aktion") == "nachziehstapel_ablehnen":
+                    spieler_id = daten["spieler_id"]
+                    aufzudeckende_karte = daten["aufzudeckende_karte"]
+                    
+                    # Abgelehnte Karte auf den Ablagestapel
+                    s.discard_card = s.gezogene_karte
+                    
+                    # Karte des Spielers aufdecken
+                    row, col = aufzudeckende_karte["row"], aufzudeckende_karte["col"]
+                    s.aufgedeckt_matrizen[spieler_id][row][col] = True
+                    
+                    # Allen Clients mitteilen
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "karte_abgelehnt",
+                            "spieler": spieler_id,
+                            "ablagestapel": s.gezogene_karte,
+                            "aufgedeckte_karte": {"row": row, "col": col}
+                        })
+                    
+                    # Nächster Spieler ist dran
+                    naechster_spieler_idx = (s.spielreihenfolge.index(spieler_id) + 1) % len(s.spielreihenfolge)
+                    s.current_player = s.spielreihenfolge[naechster_spieler_idx]
+                    
+                    # Allen Clients den nächsten Spieler mitteilen
+                    for v in s.connection:
+                        send_data(v, {
+                            "update": "naechster_spieler",
+                            "spieler": s.current_player
+                        })
             else:
                 break
 

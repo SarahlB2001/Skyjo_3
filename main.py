@@ -59,6 +59,7 @@ def main():
                         s.waiting_for_start = False
                         s.game_started = True
                         print("[DEBUG] Spiel gestartet!")
+                        s.status_message = "Decke zwei Karten auf"  # <-- Neue Statusnachricht
                     
                     # Andere Nachrichten behandeln
                     elif msg.get("update") == "karte_aufgedeckt":
@@ -75,10 +76,52 @@ def main():
                         s.spielreihenfolge = msg["reihenfolge"]
                         s.scores = msg["scores"]
                         s.current_player = s.spielreihenfolge[0]
+                        s.setup_phase = False  # Setup-Phase ist beendet
+                        s.status_message = f"Spieler {s.current_player} ist am Zug"
                         print(f"[DEBUG] Current player gesetzt auf: {s.current_player}")
                         reihenfolge_namen = [s.player_data.get(pid, f"Spieler{pid}") for pid in s.spielreihenfolge]
                         print("Spielreihenfolge (Namen):", reihenfolge_namen)
                         print(f"Startspieler: {s.player_data.get(s.current_player, f'Spieler{s.current_player}')}")
+                    elif msg.get("update") == "nachziehstapel_karte":
+                        s.gezogene_karte = msg["karte"]
+                        s.status_message = f"Du hast eine {s.gezogene_karte} gezogen. Klicke auf eine deiner Karten zum Tauschen oder drücke 'N' zum Ablehnen."
+                    
+                    elif msg.get("update") == "karten_getauscht":
+                        spieler = msg["spieler"]
+                        row = msg["karte"]["row"]
+                        col = msg["karte"]["col"]
+                        neue_karte = msg["neue_karte"]
+                        ablagestapel = msg["ablagestapel"]
+                        
+                        # Karte im Spielerlayout aktualisieren
+                        layout = cP.player_cardlayouts.get(spieler)
+                        if layout:
+                            card = layout.cards[row][col]
+                            card.value = neue_karte
+                            card.front_image = pygame.transform.scale(pygame.image.load(f"Karten_png/card_{neue_karte}.png"), (s.CARD_WIDTH, s.CARD_HEIGHT))
+                            card.is_face_up = True
+                        
+                        # Ablagestapel aktualisieren
+                        s.discard_card = ablagestapel
+                    
+                    elif msg.get("update") == "karte_abgelehnt":
+                        spieler = msg["spieler"]
+                        row = msg["aufgedeckte_karte"]["row"]
+                        col = msg["aufgedeckte_karte"]["col"]
+                        ablagestapel = msg["ablagestapel"]
+                        
+                        # Karte im Spielerlayout aufdecken
+                        layout = cP.player_cardlayouts.get(spieler)
+                        if layout:
+                            card = layout.cards[row][col]
+                            card.is_face_up = True
+                        
+                        # Ablagestapel aktualisieren
+                        s.discard_card = ablagestapel
+                    
+                    elif msg.get("update") == "naechster_spieler":
+                        s.current_player = msg["spieler"]
+                        print(f"[DEBUG] Nächster Spieler: {s.current_player}")
                     elif "message" in msg:
                         s.status_message = msg["message"]
                     elif msg.get("update") == "test":
@@ -240,10 +283,31 @@ def main():
                 if event.type == pygame.QUIT:
                     s.running = False
 
+                # Korrigiere den Event-Handler in main.py (ca. Zeile 220-250):
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = event.pos
                     # Nur eigene Karten dürfen angeklickt werden
                     my_layout = cP.player_cardlayouts.get(s.spieler_id)
+                    
+                    # Nur der aktuelle Spieler darf Aktionen ausführen
+                    if s.current_player == s.spieler_id:
+                        # Kartenstapel angeklickt
+                        if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(pos) and not s.warte_auf_entscheidung:
+                            print("Kartenstapel wurde angeklickt!")
+                            serv.send_data(s.sock, {
+                                "aktion": "nehme_nachziehstapel",
+                                "spieler_id": s.spieler_id
+                            })
+                            s.warte_auf_entscheidung = True
+                        
+                        # Ablagestapel angeklickt
+                        elif hasattr(s, "discard_stack_rect") and s.discard_stack_rect.collidepoint(pos) and not s.tausche_mit_ablagestapel:
+                            print("Ablagestapel wurde angeklickt!")
+                            s.tausche_mit_ablagestapel = True
+                            s.status_message = "Wähle eine Karte zum Tauschen mit dem Ablagestapel"
+                    
+                    # Kartenauswahl für das Aufdecken oder Tauschen
                     if my_layout:
                         for row_idx, row in enumerate(my_layout.cards):
                             for col_idx, card in enumerate(row):
@@ -252,10 +316,45 @@ def main():
                                     if s.cards_flipped_this_turn < 2 and not card.is_face_up:
                                         serv.send_data(s.sock, {
                                             "aktion": "karte_aufdecken",
-                                            "spieler_id": s.spieler_id,  # <--- HINZUFGEFT!
+                                            "spieler_id": s.spieler_id,
                                             "karte": {"row": row_idx, "col": col_idx}
                                         })
                                         s.cards_flipped_this_turn += 1
+                                    
+                                    # Nach Ablehnung einer Nachziehstapelkarte eine eigene Karte aufdecken
+                                    elif s.muss_karte_aufdecken and not card.is_face_up:
+                                        serv.send_data(s.sock, {
+                                            "aktion": "nachziehstapel_ablehnen",
+                                            "spieler_id": s.spieler_id,
+                                            "aufzudeckende_karte": {"row": row_idx, "col": col_idx}
+                                        })
+                                        s.muss_karte_aufdecken = False
+                                        s.warte_auf_entscheidung = False
+                                        s.gezogene_karte = None
+                                        s.status_message = ""
+                                    
+                                    # Eigene Karte angeklickt für Tausch mit Ablagestapel
+                                    elif s.tausche_mit_ablagestapel:
+                                        print(f"Tausche Karte ({row_idx}, {col_idx}) mit Ablagestapel")
+                                        serv.send_data(s.sock, {
+                                            "aktion": "nehme_ablagestapel",
+                                            "spieler_id": s.spieler_id,
+                                            "ziel_karte": {"row": row_idx, "col": col_idx}
+                                        })
+                                        s.tausche_mit_ablagestapel = False
+                                        s.status_message = ""
+                                    
+                                    # Eigene Karte angeklickt für Tausch mit gezogener Karte
+                                    elif s.warte_auf_entscheidung and s.gezogene_karte is not None:
+                                        print(f"Tausche Karte ({row_idx}, {col_idx}) mit gezogener Karte")
+                                        serv.send_data(s.sock, {
+                                            "aktion": "nachziehstapel_tauschen",
+                                            "spieler_id": s.spieler_id,
+                                            "ziel_karte": {"row": row_idx, "col": col_idx}
+                                        })
+                                        s.warte_auf_entscheidung = False
+                                        s.gezogene_karte = None
+                                        s.status_message = ""
 
             # ...nach dem Event-Handling und vor su.draw(screen)...
             

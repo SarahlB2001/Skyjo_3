@@ -105,4 +105,41 @@ def draw(screen):
 
     for layout in cP.player_cardlayouts.values():
         layout.draw(screen)
-   # pygame.display.flip()
+
+    # Gezogene Karte anzeigen, wenn vorhanden
+    if hasattr(s, "gezogene_karte") and s.gezogene_karte is not None:
+        card_img = pygame.image.load(f"Karten_png/card_{s.gezogene_karte}.png")
+        card_img = pygame.transform.scale(card_img, (s.CARD_WIDTH * 1.5, s.CARD_HEIGHT * 1.5))
+        x = screen.get_width() // 2 - card_img.get_width() // 2
+        y = screen.get_height() // 2 - card_img.get_height() // 2
+        screen.blit(card_img, (x, y))
+        
+        # Ablehnen-Button über den Stapeln
+        button_width = 120
+        button_height = 40
+        button_x = screen.get_width() // 2 - button_width // 2
+        button_y = pl.field_pos['carddeck']['y'] - button_height - 10  # 10px Abstand über den Stapeln
+        
+        # Button-Rechteck zeichnen
+        ablehnen_button = pygame.Rect(button_x, button_y, button_width, button_height)
+        pygame.draw.rect(screen, (255, 0, 0), ablehnen_button)  # Roter Button
+        
+        # Button-Text
+        font = pygame.font.SysFont(None, 30)
+        button_text = font.render("Ablehnen", True, (255, 255, 255))  # Weißer Text
+        screen.blit(button_text, (button_x + button_width // 2 - button_text.get_width() // 2, 
+                                 button_y + button_height // 2 - button_text.get_height() // 2))
+        
+        # Button-Rechteck in settings speichern für Klick-Erkennung
+        s.ablehnen_button_rect = ablehnen_button
+        
+        # Tauschoption anzeigen
+        font = pygame.font.SysFont(None, 30)
+        text = font.render("Klicke auf eine Karte zum Tauschen oder auf 'Ablehnen'", True, (0, 0, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y + card_img.get_height() + 10))
+
+    # Statusnachricht anzeigen
+    if s.status_message:
+        font = pygame.font.SysFont(None, 30)
+        text = font.render(s.status_message, True, (0, 0, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
