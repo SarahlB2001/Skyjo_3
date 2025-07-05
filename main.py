@@ -216,8 +216,8 @@ def main():
                         for row_idx, row in enumerate(my_layout.cards):
                             for col_idx, card in enumerate(row):
                                 if card.rect.collidepoint(pos):
-                                    # Im ersten Zug: max. 3 Karten aufdecken
-                                    if s.cards_flipped_this_turn < 3 and not card.is_face_up:
+                                    # Im ersten Zug: max. 2 Karten aufdecken
+                                    if s.cards_flipped_this_turn < 2 and not card.is_face_up:
                                         serv.send_data(s.sock, {
                                             "aktion": "karte_aufdecken",
                                             "spieler_id": s.spieler_id,  # <--- HINZUFGEFT!

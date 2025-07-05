@@ -106,8 +106,8 @@ def client_thread(conn, spieler_id):
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte ({karte['row']}, {karte['col']}) aufgedeckt.")
                     print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
 
-                    # Prüfen, ob alle Spieler 3 Karten aufgedeckt haben
-                    if all(s.cards_flipped.get(pid, 0) >= 3 for pid in range(1, s.player_count + 1)):
+                    # Prüfen, ob alle Spieler 2 Karten aufgedeckt haben
+                    if all(s.cards_flipped.get(pid, 0) >= 2 for pid in range(1, s.player_count + 1)):
                         # Punktzahlen berechnen
                         scores = {}
                         for pid in range(1, s.player_count + 1):
