@@ -134,12 +134,32 @@ def draw(screen):
         s.ablehnen_button_rect = ablehnen_button
         
         # Tauschoption anzeigen
-        font = pygame.font.SysFont(None, 30)
+        font = pygame.font.SysFont(None, 22)  
         text = font.render("Klicke auf eine Karte zum Tauschen oder auf 'Ablehnen'", True, (0, 0, 0))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y + card_img.get_height() + 10))
 
-    # Statusnachricht anzeigen
-    if s.status_message:
-        font = pygame.font.SysFont(None, 30)
+    # Statusnachricht nur für nicht-aktive Spieler anzeigen
+    if s.status_message and s.current_player != s.spieler_id:
+        font = pygame.font.SysFont(None, 22)  # Kleinere Schriftgröße (war 30)
         text = font.render(s.status_message, True, (0, 0, 0))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
+    # Spielanweisungen für den aktiven Spieler oder Karte aufdecken
+    if s.current_player == s.spieler_id:
+        font = pygame.font.SysFont(None, 22)  # Konsistente Schriftgröße
+        
+        if hasattr(s, "muss_karte_aufdecken") and s.muss_karte_aufdecken:
+            # Aufdecken-Nachricht hat Priorität über andere Anweisungen
+            text = font.render("WÄHLE EINE VERDECKTE KARTE ZUM AUFDECKEN", True, (255, 0, 0))
+        elif hasattr(s, "tausche_mit_ablagestapel") and s.tausche_mit_ablagestapel:
+            # Nachricht für Tausch mit Ablagestapel
+            text = font.render("Wähle eine Karte auf deinem Spielfeld zum Tauschen", True, (0, 0, 0))
+        elif not s.zug_begonnen:
+            # Standard-Spielanweisung
+            text = font.render("WÄHLE: Entweder Karte vom Ablagestapel ODER vom Nachziehstapel", True, (0, 0, 0))
+        else:
+            # Kein Text, wenn der Zug bereits begonnen hat
+            text = None
+        
+        if text:
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))

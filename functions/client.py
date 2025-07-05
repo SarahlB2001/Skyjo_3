@@ -1,6 +1,7 @@
 import socket
 import sys
 import server as serv
+import pickle
 
 def recv_loop(sock, message_queue):
     """Läuft in separatem Thread, um Nachrichten dauerhaft zu empfangen"""
@@ -40,3 +41,17 @@ def get_local_ip():
     finally:
         s.close()
     return ip
+
+# Ergänze die recv_data Funktion:
+
+def recv_data(conn):
+    try:
+        data = conn.recv(4096)
+        if data:
+            return pickle.loads(data)
+    except (EOFError, pickle.UnpicklingError, ConnectionResetError):
+        return None
+    except BlockingIOError:
+        # Diese Exception explizit behandeln für non-blocking sockets
+        return None
+    return None

@@ -132,6 +132,10 @@ def client_thread(conn, spieler_id):
                         start_idx = sitzordnung.index(startspieler)
                         reihenfolge = sitzordnung[start_idx:] + sitzordnung[:start_idx]
 
+                        # Spielreihenfolge auch im Server speichern
+                        s.spielreihenfolge = reihenfolge
+                        print(f"[DEBUG] Server speichert Spielreihenfolge: {s.spielreihenfolge}")
+
                         print("Spielreihenfolge:", reihenfolge)
                         print("Scores:", scores)
                         for v in s.connection:
@@ -179,16 +183,24 @@ def client_thread(conn, spieler_id):
                             "ablagestapel": alte_karte
                         })
                     
+                    # WICHTIG: Pause einfügen, damit Client Zeit hat, die Nachricht zu verarbeiten
+                    time.sleep(0.1)  
+
                     # Nächster Spieler ist dran
                     naechster_spieler_idx = (s.spielreihenfolge.index(spieler_id) + 1) % len(s.spielreihenfolge)
                     s.current_player = s.spielreihenfolge[naechster_spieler_idx]
-                    
+                    print(f"[DEBUG] Nächster Spieler berechnet: {s.current_player} (Index: {naechster_spieler_idx})")
+
                     # Allen Clients den nächsten Spieler mitteilen
                     for v in s.connection:
-                        send_data(v, {
+                        success = send_data(v, {
                             "update": "naechster_spieler",
                             "spieler": s.current_player
                         })
+                        if not success:
+                            print(f"[ERROR] Konnte nächsten Spieler nicht an {v} senden")
+                        else:
+                            print(f"[DEBUG] Nächster Spieler ({s.current_player}) an Client gesendet")
                 
                 elif daten.get("aktion") == "nehme_nachziehstapel":
                     spieler_id = daten["spieler_id"]
@@ -230,16 +242,24 @@ def client_thread(conn, spieler_id):
                             "ablagestapel": alte_karte
                         })
                     
+                    # WICHTIG: Pause einfügen, damit Client Zeit hat, die Nachricht zu verarbeiten
+                    time.sleep(0.1)  
+
                     # Nächster Spieler ist dran
                     naechster_spieler_idx = (s.spielreihenfolge.index(spieler_id) + 1) % len(s.spielreihenfolge)
                     s.current_player = s.spielreihenfolge[naechster_spieler_idx]
-                    
+                    print(f"[DEBUG] Nächster Spieler berechnet: {s.current_player} (Index: {naechster_spieler_idx})")
+
                     # Allen Clients den nächsten Spieler mitteilen
                     for v in s.connection:
-                        send_data(v, {
+                        success = send_data(v, {
                             "update": "naechster_spieler",
                             "spieler": s.current_player
                         })
+                        if not success:
+                            print(f"[ERROR] Konnte nächsten Spieler nicht an {v} senden")
+                        else:
+                            print(f"[DEBUG] Nächster Spieler ({s.current_player}) an Client gesendet")
                 
                 elif daten.get("aktion") == "nachziehstapel_ablehnen":
                     spieler_id = daten["spieler_id"]
@@ -261,16 +281,24 @@ def client_thread(conn, spieler_id):
                             "aufgedeckte_karte": {"row": row, "col": col}
                         })
                     
+                    # WICHTIG: Pause einfügen, damit Client Zeit hat, die Nachricht zu verarbeiten
+                    time.sleep(0.1)  
+
                     # Nächster Spieler ist dran
                     naechster_spieler_idx = (s.spielreihenfolge.index(spieler_id) + 1) % len(s.spielreihenfolge)
                     s.current_player = s.spielreihenfolge[naechster_spieler_idx]
-                    
+                    print(f"[DEBUG] Nächster Spieler berechnet: {s.current_player} (Index: {naechster_spieler_idx})")
+
                     # Allen Clients den nächsten Spieler mitteilen
                     for v in s.connection:
-                        send_data(v, {
+                        success = send_data(v, {
                             "update": "naechster_spieler",
                             "spieler": s.current_player
                         })
+                        if not success:
+                            print(f"[ERROR] Konnte nächsten Spieler nicht an {v} senden")
+                        else:
+                            print(f"[DEBUG] Nächster Spieler ({s.current_player}) an Client gesendet")
             else:
                 break
 

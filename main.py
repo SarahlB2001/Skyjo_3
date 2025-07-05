@@ -38,97 +38,115 @@ def main():
         if s.sock:
             try:
                 s.sock.setblocking(False)
-                msg = serv.recv_data(s.sock)
-                if msg:
-                    print(f"[DEBUG] Client empfängt Nachricht: {msg}")
-                    
-                    # Startnachricht behandeln
-                    if "message" in msg and ("startet" in msg["message"].lower() or "starten" in msg["message"].lower()):
-                        s.status_message = msg["message"]
-                        if "spielernamen" in msg:
-                            s.player_data = {int(k): v for k, v in msg["spielernamen"].items()}
-                        if "anzahl_spieler" in msg:
-                            s.player_count = int(msg["anzahl_spieler"])
-                        if "karten_matrizen" in msg:
-                            s.karten_matrizen = msg["karten_matrizen"]
-                        if "aufgedeckt_matrizen" in msg:
-                            s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
-                        if "discard_card" in msg:  # <-- HIER: Ablagestapelkarte speichern
-                            s.discard_card = msg["discard_card"]
-                        cP.card_set_positions(screen)
-                        s.waiting_for_start = False
-                        s.game_started = True
-                        print("[DEBUG] Spiel gestartet!")
-                        s.status_message = "Decke zwei Karten auf"  # <-- Neue Statusnachricht
-                    
-                    # Andere Nachrichten behandeln
-                    elif msg.get("update") == "karte_aufgedeckt":
-                        spieler = msg["spieler"]
-                        row = msg["karte"]["row"]
-                        col = msg["karte"]["col"]
-                        layout = cP.player_cardlayouts.get(spieler)
-                        if layout:
-                            card = layout.cards[row][col]
-                            card.flip()
-                        if hasattr(s, "aufgedeckt_matrizen"):
-                            s.aufgedeckt_matrizen[spieler][row][col] = True
-                    elif msg.get("update") == "spielreihenfolge":
-                        s.spielreihenfolge = msg["reihenfolge"]
-                        s.scores = msg["scores"]
-                        s.current_player = s.spielreihenfolge[0]
-                        s.setup_phase = False  # Setup-Phase ist beendet
-                        s.status_message = f"Spieler {s.current_player} ist am Zug"
-                        print(f"[DEBUG] Current player gesetzt auf: {s.current_player}")
-                        reihenfolge_namen = [s.player_data.get(pid, f"Spieler{pid}") for pid in s.spielreihenfolge]
-                        print("Spielreihenfolge (Namen):", reihenfolge_namen)
-                        print(f"Startspieler: {s.player_data.get(s.current_player, f'Spieler{s.current_player}')}")
-                    elif msg.get("update") == "nachziehstapel_karte":
-                        s.gezogene_karte = msg["karte"]
-                        s.status_message = f"Du hast eine {s.gezogene_karte} gezogen. Klicke auf eine deiner Karten zum Tauschen oder drücke 'N' zum Ablehnen."
-                    
-                    elif msg.get("update") == "karten_getauscht":
-                        spieler = msg["spieler"]
-                        row = msg["karte"]["row"]
-                        col = msg["karte"]["col"]
-                        neue_karte = msg["neue_karte"]
-                        ablagestapel = msg["ablagestapel"]
+                # Mehrere Nachrichten in einer Schleife verarbeiten!
+                while True:
+                    try:
+                        msg = serv.recv_data(s.sock)
+                        if not msg:
+                            break
                         
-                        # Karte im Spielerlayout aktualisieren
-                        layout = cP.player_cardlayouts.get(spieler)
-                        if layout:
-                            card = layout.cards[row][col]
-                            card.value = neue_karte
-                            card.front_image = pygame.transform.scale(pygame.image.load(f"Karten_png/card_{neue_karte}.png"), (s.CARD_WIDTH, s.CARD_HEIGHT))
-                            card.is_face_up = True
+                        print(f"[DEBUG] Client empfängt Nachricht: {msg}")
                         
-                        # Ablagestapel aktualisieren
-                        s.discard_card = ablagestapel
-                    
-                    elif msg.get("update") == "karte_abgelehnt":
-                        spieler = msg["spieler"]
-                        row = msg["aufgedeckte_karte"]["row"]
-                        col = msg["aufgedeckte_karte"]["col"]
-                        ablagestapel = msg["ablagestapel"]
+                        # Startnachricht behandeln
+                        if "message" in msg and ("startet" in msg["message"].lower() or "starten" in msg["message"].lower()):
+                            s.status_message = msg["message"]
+                            if "spielernamen" in msg:
+                                s.player_data = {int(k): v for k, v in msg["spielernamen"].items()}
+                            if "anzahl_spieler" in msg:
+                                s.player_count = int(msg["anzahl_spieler"])
+                            if "karten_matrizen" in msg:
+                                s.karten_matrizen = msg["karten_matrizen"]
+                            if "aufgedeckt_matrizen" in msg:
+                                s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
+                            if "discard_card" in msg:  # <-- HIER: Ablagestapelkarte speichern
+                                s.discard_card = msg["discard_card"]
+                            cP.card_set_positions(screen)
+                            s.waiting_for_start = False
+                            s.game_started = True
+                            print("[DEBUG] Spiel gestartet!")
+                            s.status_message = "Decke zwei Karten auf"  # <-- Neue Statusnachricht
                         
-                        # Karte im Spielerlayout aufdecken
-                        layout = cP.player_cardlayouts.get(spieler)
-                        if layout:
-                            card = layout.cards[row][col]
-                            card.is_face_up = True
+                        # Andere Nachrichten behandeln
+                        elif msg.get("update") == "karte_aufgedeckt":
+                            spieler = msg["spieler"]
+                            row = msg["karte"]["row"]
+                            col = msg["karte"]["col"]
+                            layout = cP.player_cardlayouts.get(spieler)
+                            if layout:
+                                card = layout.cards[row][col]
+                                card.flip()
+                            if hasattr(s, "aufgedeckt_matrizen"):
+                                s.aufgedeckt_matrizen[spieler][row][col] = True
+                        elif msg.get("update") == "spielreihenfolge":
+                            s.spielreihenfolge = msg["reihenfolge"]
+                            s.scores = msg["scores"]
+                            s.current_player = s.spielreihenfolge[0]
+                            s.setup_phase = False  # Setup-Phase ist beendet
+                            
+                            # Den Namen des Spielers verwenden statt nur die ID
+                            current_player_name = s.player_data.get(s.current_player, f"Spieler{s.current_player}")
+                            s.status_message = f"{current_player_name} ist am Zug"
+                            
+                            print(f"[DEBUG] Current player gesetzt auf: {s.current_player}")
+                            reihenfolge_namen = [s.player_data.get(pid, f"Spieler{pid}") for pid in s.spielreihenfolge]
+                            print("Spielreihenfolge (Namen):", reihenfolge_namen)
+                            print(f"Startspieler: {s.player_data.get(s.current_player, f'Spieler{s.current_player}')}")
+                        elif msg.get("update") == "nachziehstapel_karte":
+                            s.gezogene_karte = msg["karte"]
+                            s.status_message = "Tausche mit Karte auf Spielfeld"  # <-- Geändert
                         
-                        # Ablagestapel aktualisieren
-                        s.discard_card = ablagestapel
-                    
-                    elif msg.get("update") == "naechster_spieler":
-                        s.current_player = msg["spieler"]
-                        print(f"[DEBUG] Nächster Spieler: {s.current_player}")
-                    elif "message" in msg:
-                        s.status_message = msg["message"]
-                    elif msg.get("update") == "test":
-                        print(f"[DEBUG] Test-Nachricht empfangen: {msg}")
+                        elif msg.get("update") == "karten_getauscht":
+                            spieler = msg["spieler"]
+                            row = msg["karte"]["row"]
+                            col = msg["karte"]["col"]
+                            neue_karte = msg["neue_karte"]
+                            ablagestapel = msg["ablagestapel"]
+                            
+                            # Karte im Spielerlayout aktualisieren
+                            layout = cP.player_cardlayouts.get(spieler)
+                            if layout:
+                                card = layout.cards[row][col]
+                                card.value = neue_karte
+                                card.front_image = pygame.transform.scale(pygame.image.load(f"Karten_png/card_{neue_karte}.png"), (s.CARD_WIDTH, s.CARD_HEIGHT))
+                                card.is_face_up = True
+                            
+                            # Ablagestapel aktualisieren
+                            s.discard_card = ablagestapel
                         
-            except BlockingIOError:
-                pass
+                        elif msg.get("update") == "karte_abgelehnt":
+                            spieler = msg["spieler"]
+                            row = msg["aufgedeckte_karte"]["row"]
+                            col = msg["aufgedeckte_karte"]["col"]
+                            ablagestapel = msg["ablagestapel"]
+                            
+                            # Karte im Spielerlayout aufdecken
+                            layout = cP.player_cardlayouts.get(spieler)
+                            if layout:
+                                card = layout.cards[row][col]
+                                card.is_face_up = True
+                            
+                            # Ablagestapel aktualisieren
+                            s.discard_card = ablagestapel
+                        
+                        elif msg.get("update") == "naechster_spieler":
+                            print(f"[DEBUG] WICHTIG! Nachricht 'naechster_spieler' empfangen: {msg}")
+                            old_player = s.current_player
+                            s.current_player = msg["spieler"]
+                            s.zug_begonnen = False  # Zurücksetzen für den nächsten Spieler
+                            
+                            # Den Namen des Spielers verwenden statt nur die ID
+                            current_player_name = s.player_data.get(s.current_player, f"Spieler{s.current_player}")
+                            s.status_message = f"{current_player_name} ist am Zug"
+                            
+                            print(f"[DEBUG] WICHTIG! Spielerwechsel von {old_player} zu {s.current_player}")
+                        elif "message" in msg:
+                            s.status_message = msg["message"]
+                        elif msg.get("update") == "test":
+                            print(f"[DEBUG] Test-Nachricht empfangen: {msg}")
+                            
+                    except (BlockingIOError, ConnectionError):
+                        # Keine weiteren Nachrichten mehr verfügbar
+                        break
             finally:
                 s.sock.setblocking(True)
 
@@ -283,16 +301,46 @@ def main():
                 if event.type == pygame.QUIT:
                     s.running = False
 
-                # Korrigiere den Event-Handler in main.py (ca. Zeile 220-250):
+                
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = event.pos
                     # Nur eigene Karten dürfen angeklickt werden
                     my_layout = cP.player_cardlayouts.get(s.spieler_id)
                     
+                    # Ablehnen-Button wurde geklickt (HIER EINFÜGEN)
+                    if hasattr(s, "ablehnen_button_rect") and s.ablehnen_button_rect.collidepoint(pos):
+                        if hasattr(s, "gezogene_karte") and s.gezogene_karte is not None:
+                            print("Ablehnen-Button wurde geklickt!")
+                            # Verdeckte Karten finden
+                            verdeckte_karten = []
+                            if my_layout:
+                                for row_idx, row in enumerate(my_layout.cards):
+                                    for col_idx, card in enumerate(row):
+                                        if not card.is_face_up:
+                                            verdeckte_karten.append({"row": row_idx, "col": col_idx})
+        
+                            print(f"[DEBUG] Gefundene verdeckte Karten: {len(verdeckte_karten)}")
+                            if len(verdeckte_karten) == 0:
+                                # Überprüfe, ob alle Karten bereits aufgedeckt sind
+                                all_cards = []
+                                for row_idx, row in enumerate(my_layout.cards):
+                                    for col_idx, card in enumerate(row):
+                                        all_cards.append({"row": row_idx, "col": col_idx, "is_face_up": card.is_face_up})
+                                print(f"[DEBUG] Kartenstatus: {all_cards}")
+        
+                            if verdeckte_karten:
+                                # Zustand für das Aufdecken einer Karte setzen
+                                s.muss_karte_aufdecken = True
+                                # Status-Nachricht anzeigen (DEUTLICHER)
+                                s.status_message = "WÄHLE JETZT EINE VERDECKTE KARTE ZUM AUFDECKEN!"
+                            else:
+                                # Keine verdeckten Karten mehr
+                                print("Keine verdeckten Karten zum Aufdecken übrig!")
+    
                     # Nur der aktuelle Spieler darf Aktionen ausführen
-                    if s.current_player == s.spieler_id:
-                        # Kartenstapel angeklickt
+                    if s.current_player == s.spieler_id and not s.zug_begonnen:
+                        # Kartenstapel angeklickt - nur möglich, wenn noch keine Aktion ausgeführt wurde
                         if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(pos) and not s.warte_auf_entscheidung:
                             print("Kartenstapel wurde angeklickt!")
                             serv.send_data(s.sock, {
@@ -300,12 +348,14 @@ def main():
                                 "spieler_id": s.spieler_id
                             })
                             s.warte_auf_entscheidung = True
+                            s.zug_begonnen = True  # Markiere, dass der Zug begonnen wurde
                         
-                        # Ablagestapel angeklickt
+                        # Ablagestapel angeklickt - nur möglich, wenn noch keine Aktion ausgeführt wurde
                         elif hasattr(s, "discard_stack_rect") and s.discard_stack_rect.collidepoint(pos) and not s.tausche_mit_ablagestapel:
                             print("Ablagestapel wurde angeklickt!")
                             s.tausche_mit_ablagestapel = True
-                            s.status_message = "Wähle eine Karte zum Tauschen mit dem Ablagestapel"
+                            s.status_message = "Wähle eine Karte auf deinem Spielfeld zum Tauschen"  # <-- Diese Nachricht ist für den Ablagestapel
+                            s.zug_begonnen = True  # Markiere, dass der Zug begonnen wurde
                     
                     # Kartenauswahl für das Aufdecken oder Tauschen
                     if my_layout:
@@ -356,9 +406,7 @@ def main():
                                         s.gezogene_karte = None
                                         s.status_message = ""
 
-            # ...nach dem Event-Handling und vor su.draw(screen)...
-            
-
+          
             su.draw(screen)
 
         pygame.display.flip()
