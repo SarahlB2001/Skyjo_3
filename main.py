@@ -195,30 +195,109 @@ def main():
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = event.pos
-                    # Nur eigene Karten dürfen angeklickt werden
+                    
+                    # "Nächste Runde"-Button zwischen den Runden
+                    if hasattr(s, "between_rounds") and s.between_rounds and hasattr(s, "next_round_button"):
+                        if s.next_round_button.collidepoint(pos):
+                            s.between_rounds = False
+                            # Bereit für die nächste Runde
+                            if s.current_round < s.total_rounds:
+                                s.status_message = "Warte auf Beginn der nächsten Runde..."
+                            else:
+                                s.game_over = True
+                    
+                    # "Zurück zum Hauptmenü"-Button am Spielende
+                    if hasattr(s, "game_over") and s.game_over and hasattr(s, "main_menu_button"):
+                        if s.main_menu_button.collidepoint(pos):
+                            # Zurück zum Hauptmenü
+                            s.game_over = False
+                            s.game_mode = None
+                            s.waiting_for_players = False
+                            s.waiting_for_name = False
+                            s.waiting_for_start = False
+                            s.waiting_for_rounds = False
+                            s.entering_ip = False
+                            
+                            # Verbindung schließen
+                            if s.sock:
+                                s.sock.close()
+                                s.sock = None
+                            
+                            # Spieldaten zurücksetzen
+                            s.spieler_id = None
+                            s.current_player = None
+                            s.player_data = {}
+                            if hasattr(s, "karten_matrizen"):
+                                delattr(s, "karten_matrizen")
+                            if hasattr(s, "aufgedeckt_matrizen"):
+                                delattr(s, "aufgedeckt_matrizen")
+                            # Andere relevante Variablen zurücksetzen...
+
+                    # HIER NEUEN CODE EINFÜGEN:
                     my_layout = cP.player_cardlayouts.get(s.spieler_id)
                     
                     # Ablehnen-Button wurde geklickt
-                    if hasattr(s, "ablehnen_button_rect") and s.ablehnen_button_rect.collidepoint(pos):
-                        gp.handle_reject_button(my_layout)
-    
+                    if hasattr(s, "ablehnen_button_rect") and hasattr(s, "gezogene_karte") and s.gezogene_karte is not None:
+                        print(f"[DEBUG] Prüfe Ablehnen-Button: {pos} vs {s.ablehnen_button_rect}")
+                        if s.ablehnen_button_rect.collidepoint(pos):
+                            print("[DEBUG] Ablehnen-Button geklickt!")
+                            gp.handle_reject_button(my_layout)
+                    
                     # Nur der aktuelle Spieler darf Aktionen ausführen
-                    if s.current_player == s.spieler_id and not s.zug_begonnen:
+                    if hasattr(s, "current_player") and s.current_player == s.spieler_id:
                         # Kartenstapel angeklickt
                         if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(pos):
+                            print("[DEBUG] Kartenstapel wurde angeklickt!")
                             gp.handle_draw_pile_click(s.sock, s.spieler_id)
-        
+                        
                         # Ablagestapel angeklickt
                         elif hasattr(s, "discard_stack_rect") and s.discard_stack_rect.collidepoint(pos):
+                            print("[DEBUG] Ablagestapel wurde angeklickt!")
                             gp.handle_discard_pile_click(s.sock, s.spieler_id)
-    
+                    
                     # Kartenauswahl für das Aufdecken oder Tauschen
                     if my_layout:
                         for row_idx, row in enumerate(my_layout.cards):
                             for col_idx, card in enumerate(row):
                                 if card.rect.collidepoint(pos):
-                                    gp.handle_card_click(s.sock, s.spieler_id, my_layout, row_idx, col_idx, card)
-          
+                                    print(f"[DEBUG] Karte an Position ({row_idx}, {col_idx}) wurde angeklickt")
+                                    result = gp.handle_card_click(s.sock, s.spieler_id, my_layout, row_idx, col_idx, card)
+                                    print(f"[DEBUG] Ergebnis des Kartenklicks: {result}")
+
+                if event.type == pygame.KEYDOWN:
+                    if s.entering_ip and s.active:
+                        if event.key == pygame.K_RETURN:
+                            SERVER_IP = s.ip_input.strip()
+                            try:
+                                s.sock, s.spieler_id = c.connect_to_server(SERVER_IP)
+                                s.entering_ip = False
+                                s.waiting_for_name = True
+                                s.ip_input = ""
+                            except Exception as e:
+                                s.status_message = f"Verbindung fehlgeschlagen: {e}"
+                        elif event.key == pygame.K_BACKSPACE:
+                            s.ip_input = s.ip_input[:-1]
+                        else:
+                            s.ip_input += event.unicode
+
+                    elif s.waiting_for_name and s.active:
+                        if event.key == pygame.K_RETURN:
+                            if s.sock:
+                                serv.send_data(s.sock, {"name": s.text_input.strip()})
+                            s.active = False
+                            s.text_input = ""
+                            s.waiting_for_name = False
+                            s.status_message = "Warten auf andere Spieler..."
+                            s.waiting_for_start = True
+                        elif event.key == pygame.K_BACKSPACE:
+                            s.text_input = s.text_input[:-1]
+                        else:
+                            if len(s.text_input) < 12:
+                                s.text_input += event.unicode
+
+            # Hier kannst du die Spiellogik für die Zwischenrunde implementieren
+            # Zum Beispiel das Anzeigen eines "Nächste Runde"-Buttons oder ähnliches
+
             su.draw(screen)
 
         pygame.display.flip()
