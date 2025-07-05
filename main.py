@@ -10,6 +10,7 @@ import settings as s
 import surface as su
 import time
 from dictionaries import cardSetPosition as cP
+from entities import gameprocess as gp
 
 
 def main():
@@ -308,104 +309,26 @@ def main():
                     # Nur eigene Karten dürfen angeklickt werden
                     my_layout = cP.player_cardlayouts.get(s.spieler_id)
                     
-                    # Ablehnen-Button wurde geklickt (HIER EINFÜGEN)
+                    # Ablehnen-Button wurde geklickt
                     if hasattr(s, "ablehnen_button_rect") and s.ablehnen_button_rect.collidepoint(pos):
-                        if hasattr(s, "gezogene_karte") and s.gezogene_karte is not None:
-                            print("Ablehnen-Button wurde geklickt!")
-                            # Verdeckte Karten finden
-                            verdeckte_karten = []
-                            if my_layout:
-                                for row_idx, row in enumerate(my_layout.cards):
-                                    for col_idx, card in enumerate(row):
-                                        if not card.is_face_up:
-                                            verdeckte_karten.append({"row": row_idx, "col": col_idx})
-        
-                            print(f"[DEBUG] Gefundene verdeckte Karten: {len(verdeckte_karten)}")
-                            if len(verdeckte_karten) == 0:
-                                # Überprüfe, ob alle Karten bereits aufgedeckt sind
-                                all_cards = []
-                                for row_idx, row in enumerate(my_layout.cards):
-                                    for col_idx, card in enumerate(row):
-                                        all_cards.append({"row": row_idx, "col": col_idx, "is_face_up": card.is_face_up})
-                                print(f"[DEBUG] Kartenstatus: {all_cards}")
-        
-                            if verdeckte_karten:
-                                # Zustand für das Aufdecken einer Karte setzen
-                                s.muss_karte_aufdecken = True
-                                # Status-Nachricht anzeigen (DEUTLICHER)
-                                s.status_message = "WÄHLE JETZT EINE VERDECKTE KARTE ZUM AUFDECKEN!"
-                            else:
-                                # Keine verdeckten Karten mehr
-                                print("Keine verdeckten Karten zum Aufdecken übrig!")
+                        gp.handle_reject_button(my_layout)
     
                     # Nur der aktuelle Spieler darf Aktionen ausführen
                     if s.current_player == s.spieler_id and not s.zug_begonnen:
-                        # Kartenstapel angeklickt - nur möglich, wenn noch keine Aktion ausgeführt wurde
-                        if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(pos) and not s.warte_auf_entscheidung:
-                            print("Kartenstapel wurde angeklickt!")
-                            serv.send_data(s.sock, {
-                                "aktion": "nehme_nachziehstapel",
-                                "spieler_id": s.spieler_id
-                            })
-                            s.warte_auf_entscheidung = True
-                            s.zug_begonnen = True  # Markiere, dass der Zug begonnen wurde
-                        
-                        # Ablagestapel angeklickt - nur möglich, wenn noch keine Aktion ausgeführt wurde
-                        elif hasattr(s, "discard_stack_rect") and s.discard_stack_rect.collidepoint(pos) and not s.tausche_mit_ablagestapel:
-                            print("Ablagestapel wurde angeklickt!")
-                            s.tausche_mit_ablagestapel = True
-                            s.status_message = "Wähle eine Karte auf deinem Spielfeld zum Tauschen"  # <-- Diese Nachricht ist für den Ablagestapel
-                            s.zug_begonnen = True  # Markiere, dass der Zug begonnen wurde
-                    
+                        # Kartenstapel angeklickt
+                        if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(pos):
+                            gp.handle_draw_pile_click(s.sock, s.spieler_id)
+        
+                        # Ablagestapel angeklickt
+                        elif hasattr(s, "discard_stack_rect") and s.discard_stack_rect.collidepoint(pos):
+                            gp.handle_discard_pile_click(s.sock, s.spieler_id)
+    
                     # Kartenauswahl für das Aufdecken oder Tauschen
                     if my_layout:
                         for row_idx, row in enumerate(my_layout.cards):
                             for col_idx, card in enumerate(row):
                                 if card.rect.collidepoint(pos):
-                                    # Im ersten Zug: max. 2 Karten aufdecken
-                                    if s.cards_flipped_this_turn < 2 and not card.is_face_up:
-                                        serv.send_data(s.sock, {
-                                            "aktion": "karte_aufdecken",
-                                            "spieler_id": s.spieler_id,
-                                            "karte": {"row": row_idx, "col": col_idx}
-                                        })
-                                        s.cards_flipped_this_turn += 1
-                                    
-                                    # Nach Ablehnung einer Nachziehstapelkarte eine eigene Karte aufdecken
-                                    elif s.muss_karte_aufdecken and not card.is_face_up:
-                                        serv.send_data(s.sock, {
-                                            "aktion": "nachziehstapel_ablehnen",
-                                            "spieler_id": s.spieler_id,
-                                            "aufzudeckende_karte": {"row": row_idx, "col": col_idx}
-                                        })
-                                        s.muss_karte_aufdecken = False
-                                        s.warte_auf_entscheidung = False
-                                        s.gezogene_karte = None
-                                        s.status_message = ""
-                                    
-                                    # Eigene Karte angeklickt für Tausch mit Ablagestapel
-                                    elif s.tausche_mit_ablagestapel:
-                                        print(f"Tausche Karte ({row_idx}, {col_idx}) mit Ablagestapel")
-                                        serv.send_data(s.sock, {
-                                            "aktion": "nehme_ablagestapel",
-                                            "spieler_id": s.spieler_id,
-                                            "ziel_karte": {"row": row_idx, "col": col_idx}
-                                        })
-                                        s.tausche_mit_ablagestapel = False
-                                        s.status_message = ""
-                                    
-                                    # Eigene Karte angeklickt für Tausch mit gezogener Karte
-                                    elif s.warte_auf_entscheidung and s.gezogene_karte is not None:
-                                        print(f"Tausche Karte ({row_idx}, {col_idx}) mit gezogener Karte")
-                                        serv.send_data(s.sock, {
-                                            "aktion": "nachziehstapel_tauschen",
-                                            "spieler_id": s.spieler_id,
-                                            "ziel_karte": {"row": row_idx, "col": col_idx}
-                                        })
-                                        s.warte_auf_entscheidung = False
-                                        s.gezogene_karte = None
-                                        s.status_message = ""
-
+                                    gp.handle_card_click(s.sock, s.spieler_id, my_layout, row_idx, col_idx, card)
           
             su.draw(screen)
 
@@ -416,13 +339,6 @@ def main():
     sys.exit()
 
 
-def berechne_punktzahl(layout):
-    punkte = 0
-    for row in layout.cards:
-        for card in row:
-            if card.is_face_up:
-                punkte += card.value
-    return punkte
 
 
 if __name__ == "__main__": 
