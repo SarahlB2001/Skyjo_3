@@ -33,14 +33,14 @@ def client_thread(conn, spieler_id):
                 s.player_count = daten.get("anzahl_spieler", 2)  # <-- Nur noch player_count!
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
-            
+
             daten = recv_data(conn)
             if daten:
-                name = daten.get("name", f"Spieler{spieler_id +1}")  
+                name = daten.get("name", f"Spieler{spieler_id +1}")
                 with s.lock:
                     s.player_data[spieler_id + 1] = name
                 print(f"[INFO] Spieler {spieler_id +1} heißt {name}")
-                
+
         else:
             s.player_count_event.wait()
 
@@ -82,47 +82,52 @@ def client_thread(conn, spieler_id):
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 
             # Nach dem Senden der Startnachricht an alle Spieler:
-            
+
 
         # Hier könntest du später die Spiellogik oder weitere Kommunikation einbauen
         while True:
             daten = recv_data(conn)
             if daten:
                 if daten.get("aktion") == "karte_aufdecken":
-                    # Karte im Server als aufgedeckt markieren!
-                    s.aufgedeckt_matrizen[daten["spieler_id"]][daten["karte"]["row"]][daten["karte"]["col"]] = True
+                    spieler_id = daten["spieler_id"]
+                    karte = daten["karte"]
+                    s.aufgedeckt_matrizen[spieler_id][karte["row"]][karte["col"]] = True  # Karte als aufgedeckt markieren
                     for v in s.connection:
                         send_data(v, {
                             "update": "karte_aufgedeckt",
-                            "spieler": daten["spieler_id"],
-                            "karte": daten["karte"]
+                            "spieler": spieler_id,
+                            "karte": karte
                         })
-                        # Nach dem Aufdecken einer Karte:
-                        if not hasattr(s, "cards_flipped"):
-                            s.cards_flipped = {}
-                        s.cards_flipped[daten["spieler_id"]] = s.cards_flipped.get(daten["spieler_id"], 0) + 1
+                    # Nach dem Aufdecken einer Karte:
+                    if not hasattr(s, "cards_flipped"):
+                        s.cards_flipped = {}
+                    s.cards_flipped[spieler_id] = s.cards_flipped.get(spieler_id, 0) + 1
 
-                        # Prüfen, ob alle Spieler 3 Karten aufgedeckt haben
-                        if all(s.cards_flipped.get(pid, 0) >= 3 for pid in range(1, s.player_count + 1)):
-                            # Punktzahlen berechnen
-                            scores = {}
-                            for pid in range(1, s.player_count + 1):
-                                matrix = s.karten_matrizen[pid]
-                                aufgedeckt_matrix = s.aufgedeckt_matrizen[pid]
-                                scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix)
+                    print(f"[DEBUG] Spieler {spieler_id} hat Karte ({karte['row']}, {karte['col']}) aufgedeckt.")
+                    print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
 
-                            # Spieler mit höchster Punktzahl bestimmen
-                            startspieler = max(scores, key=scores.get)
+                    # Prüfen, ob alle Spieler 3 Karten aufgedeckt haben
+                    if all(s.cards_flipped.get(pid, 0) >= 3 for pid in range(1, s.player_count + 1)):
+                        # Punktzahlen berechnen
+                        scores = {}
+                        for pid in range(1, s.player_count + 1):
+                            matrix = s.karten_matrizen[pid]
+                            aufgedeckt_matrix = s.aufgedeckt_matrizen[pid]
+                            scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix)
 
-                            # Sitzordnung (IDs in der Reihenfolge, wie sie im Kreis sitzen)
-                            sitzordnung = list(range(1, s.player_count + 1))
-                            start_idx = sitzordnung.index(startspieler)
-                            reihenfolge = sitzordnung[start_idx:] + sitzordnung[:start_idx]
+                        # Spieler mit höchster Punktzahl bestimmen
+                        startspieler = max(scores, key=scores.get)
 
-                            print("Spielreihenfolge:", reihenfolge)
-                            print("Scores:", scores)
-                            for v in s.connection:
-                                send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
+                        # Sitzordnung (IDs in der Reihenfolge, wie sie im Kreis sitzen)
+                        sitzordnung = list(range(1, s.player_count + 1))
+                        start_idx = sitzordnung.index(startspieler)
+                        reihenfolge = sitzordnung[start_idx:] + sitzordnung[:start_idx]
+
+                        print("Spielreihenfolge:", reihenfolge)
+                        print("Scores:", scores)
+                        for v in s.connection:
+                            send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
+                            print(f"[DEBUG] Punktzahlen für Spieler {pid}: {scores[pid]}")
             else:
                 break
 
