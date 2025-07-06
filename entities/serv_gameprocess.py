@@ -220,7 +220,7 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     if hat_triplets:
-        import time
+        #import time
         time.sleep(2.0)
     # NEU: Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):

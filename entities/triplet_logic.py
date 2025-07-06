@@ -5,6 +5,7 @@ Wenn eine solche Kombination erkannt wird, werden die Karten automatisch entfern
 und auf den Ablagestapel gelegt.
 """
 import settings as s
+import time
 
 def berechne_punktzahl(matrix, aufgedeckt_matrix, spieler_id):
     """Berechnet die Punktzahl für einen Spieler, entfernt Triplets korrekt"""
@@ -136,7 +137,7 @@ def remove_column_triplets(spieler_id, connection, send_data):
     # Allen Clients mitteilen
     if removed_cards:
         # WICHTIG: Erst eine Pause, damit vorherige Nachrichten verarbeitet werden
-        import time
+        #import time
         time.sleep(0.5)  # Pause vor dem Senden
         
         for v in connection:
@@ -171,7 +172,7 @@ def remove_column_triplets(spieler_id, connection, send_data):
     scores = calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen)
     for v in connection:
         send_data(v, {
-            "update": "punkte_aktualisiert", 
+            "update": "triplet_punkte_aktualisiert",  # NEUER Nachrichtentyp!
             "scores": scores
         })
     

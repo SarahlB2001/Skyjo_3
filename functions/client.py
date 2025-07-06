@@ -238,6 +238,13 @@ def process_messages(sock, screen):
                     s.status_message = "Alle Karten wurden aufgedeckt. Punkte wurden berechnet!"
                     s.points_calculated_time = pygame.time.get_ticks()  # Zeit merken
                 
+                # Nach dem Handler für "triplet_removed":
+                elif msg.get("update") == "triplet_punkte_aktualisiert":
+                    # Punktzahlen aktualisieren, aber keine Rundenende-Meldung anzeigen
+                    s.scores = msg["scores"]
+                    print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
+                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!"
+                
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break
     finally:
