@@ -85,7 +85,7 @@ def handle_card_flip(daten, connection, send_data):
     spieler_id = daten["spieler_id"]
     karte = daten["karte"]
     s.aufgedeckt_matrizen[spieler_id][karte["row"]][karte["col"]] = True
-    
+
     # Allen Clients mitteilen
     for v in connection:
         send_data(v, {
@@ -93,12 +93,12 @@ def handle_card_flip(daten, connection, send_data):
             "spieler": spieler_id,
             "karte": karte
         })
-    
+
     # Zähler aktualisieren
     if not hasattr(s, "cards_flipped"):
         s.cards_flipped = {}
     s.cards_flipped[spieler_id] = s.cards_flipped.get(spieler_id, 0) + 1
-    
+
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
@@ -119,22 +119,22 @@ def check_if_setup_complete(player_count, cards_flipped, connection, send_data):
     if all(cards_flipped.get(pid, 0) >= 2 for pid in range(1, player_count + 1)):
         # Punktzahlen berechnen
         scores = calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen)
-        
+
         # Startspieler bestimmen
         startspieler = determine_starting_player(scores)
-        
+
         # Spielreihenfolge berechnen
         reihenfolge = calculate_player_order(startspieler, player_count)
-        
+
         # Spielreihenfolge speichern
         s.spielreihenfolge = reihenfolge
-        
+
         # Allen Clients mitteilen (mit Wiederholung für Sicherheit)
         for v in connection:
             success = send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
             time.sleep(0.05)
             send_data(v, {"update": "spielreihenfolge", "reihenfolge": reihenfolge, "scores": scores})
-        
+
         return True
     return False
 
@@ -142,33 +142,33 @@ def handle_take_discard_pile(daten, connection, send_data):
     """Verarbeitet das Nehmen einer Karte vom Ablagestapel"""
     spieler_id = daten["spieler_id"]
     ziel_karte = daten["ziel_karte"]
-    
+
     # Aktuelle Karte vom Ablagestapel holen
     discard_value = s.discard_card
-    
+
     # Karte aus der Spielerhand nehmen
     row, col = ziel_karte["row"], ziel_karte["col"]
     alte_karte = s.karten_matrizen[spieler_id][row][col]
-    
+
     # Karten tauschen
     s.karten_matrizen[spieler_id][row][col] = discard_value
     s.aufgedeckt_matrizen[spieler_id][row][col] = True  # Karte ist immer offen
-    
+
     # Ablagestapel aktualisieren
     if not hasattr(s, "discard_pile"):
         s.discard_pile = []
         # Wenn es bereits eine discard_card gibt, aber noch keinen discard_pile
         if s.discard_card is not None:
             s.discard_pile.append(s.discard_card)
-    
+
     # Die oberste Karte vom Stapel entfernen
     if len(s.discard_pile) > 0:
         s.discard_pile.pop()
-    
+
     # Alte Karte auf den Ablagestapel legen
     s.discard_pile.append(alte_karte)
     s.discard_card = alte_karte
-    
+
     # Allen Clients mitteilen
     for v in connection:
         send_data(v, {
@@ -178,7 +178,7 @@ def handle_take_discard_pile(daten, connection, send_data):
             "neue_karte": discard_value,
             "ablagestapel": alte_karte
         })
-    
+
     # Nach dem Tausch:
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
@@ -197,10 +197,10 @@ def handle_take_discard_pile(daten, connection, send_data):
 def handle_take_draw_pile(daten, connection, send_data):
     """Verarbeitet das Nehmen einer Karte vom Nachziehstapel"""
     spieler_id = daten["spieler_id"]
-    
+
     # Neue zufällige Karte generieren
     neue_karte = generate_random_card()
-    
+
     # Nur dem Spieler mitteilen, der die Karte gezogen hat
     for v in connection:
         if connection.index(v) == spieler_id - 1:  # Spieler-ID beginnt bei 1, Index bei 0
@@ -208,26 +208,26 @@ def handle_take_draw_pile(daten, connection, send_data):
                 "update": "nachziehstapel_karte",
                 "karte": neue_karte
             })
-    
+
     # Karte in temporärem Speicher halten
     s.gezogene_karte = neue_karte
-    
+
     return spieler_id, neue_karte
 
 def handle_swap_with_draw_pile(daten, connection, send_data):
     """Verarbeitet den Tausch mit einer Karte vom Nachziehstapel"""
     spieler_id = daten["spieler_id"]
     ziel_karte = daten["ziel_karte"]
-    
+
     # Karte aus der Spielerhand nehmen und auf Ablagestapel legen
     row, col = ziel_karte["row"], ziel_karte["col"]
     alte_karte = s.karten_matrizen[spieler_id][row][col]
-    
+
     # Karten tauschen
     s.karten_matrizen[spieler_id][row][col] = s.gezogene_karte
     s.aufgedeckt_matrizen[spieler_id][row][col] = True  # Karte ist immer offen
     s.discard_card = alte_karte
-    
+
     # Allen Clients mitteilen
     for v in connection:
         send_data(v, {
@@ -237,7 +237,7 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
             "neue_karte": s.gezogene_karte,
             "ablagestapel": alte_karte
         })
-    
+
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     if hat_triplets:
@@ -254,21 +254,21 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
             })
         print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     next_player = update_next_player(spieler_id, connection, send_data)
-    
+
     return spieler_id, alte_karte
 
 def handle_reject_draw_pile(daten, connection, send_data):
     """Verarbeitet das Ablehnen einer Karte vom Nachziehstapel"""
     spieler_id = daten["spieler_id"]
     aufzudeckende_karte = daten["aufzudeckende_karte"]
-    
+
     # Abgelehnte Karte auf den Ablagestapel
     s.discard_card = s.gezogene_karte
-    
+
     # Karte des Spielers aufdecken
     row, col = aufzudeckende_karte["row"], aufzudeckende_karte["col"]
     s.aufgedeckt_matrizen[spieler_id][row][col] = True
-    
+
     # Allen Clients mitteilen
     for v in connection:
         send_data(v, {
@@ -277,7 +277,7 @@ def handle_reject_draw_pile(daten, connection, send_data):
             "ablagestapel": s.gezogene_karte,
             "aufgedeckte_karte": {"row": row, "col": col}
         })
-    
+
     return spieler_id
 
 def update_next_player(spieler_id, connection, send_data):
@@ -314,11 +314,17 @@ def update_next_player(spieler_id, connection, send_data):
                                     "karte": {"row": row, "col": col}
                                 })
 
-        # NEU: 1 Sekunde warten, damit das Aufdecken sichtbar ist
-        time.sleep(1)
+        # KORREKTUR: Längere Wartezeit für die Verarbeitung
+        time.sleep(3)  # 3 Sekunden statt nur 1
 
-        # Punktzahlen berechnen und an alle schicken
-        scores = calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen)
+        # KORREKTUR: Trigger-Spieler explizit übergeben
+        scores = calculate_scores(
+            s.karten_matrizen,
+            s.aufgedeckt_matrizen,
+            ausloeser_id=s.round_end_trigger_player  # Diese wichtige Parameter fehlte!
+        )
+
+        # Allen Clients die finalen Punktzahlen mitteilen
         for v in connection:
             send_data(v, {
                 "update": "punkte_aktualisiert",
