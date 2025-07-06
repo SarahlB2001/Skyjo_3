@@ -6,30 +6,19 @@ from dictionaries import cardSetPosition as cP
 # Karteninteraktion
 def handle_card_click(sock, spieler_id, my_layout, row_idx, col_idx, card):
     """Verarbeitet Klicks auf Karten im Spielfeld"""
-    print(f"[DEBUG] handle_card_click: spieler_id={spieler_id}, current_player={getattr(s, 'current_player', 'None')}")
-    print(f"[DEBUG] setup_phase={getattr(s, 'setup_phase', False)}, cards_flipped={getattr(s, 'cards_flipped_this_turn', 0)}")
-    
-    # Im Setup-Modus oder ersten Zug bis zu 2 Karten aufdecken
-    in_setup = hasattr(s, "setup_phase") and s.setup_phase
-    
-    if (in_setup or getattr(s, "cards_flipped_this_turn", 0) < 2) and not card.is_face_up:
-        print(f"[DEBUG] Sende karte_aufdecken: Reihe {row_idx}, Spalte {col_idx}")
+    # NEUE ZEILE: Prüfen, ob die Karte entfernt wurde
+    if hasattr(card, "removed") and card.removed:
+        return False
         
-        # Nachricht an Server senden
-        result = serv.send_data(sock, {
+    # Im ersten Zug: max. 2 Karten aufdecken
+    if s.cards_flipped_this_turn < 2 and not card.is_face_up:
+        serv.send_data(sock, {
             "aktion": "karte_aufdecken",
             "spieler_id": spieler_id,
             "karte": {"row": row_idx, "col": col_idx}
         })
-        
-        if result:
-            if not hasattr(s, "cards_flipped_this_turn"):
-                s.cards_flipped_this_turn = 0
-            s.cards_flipped_this_turn += 1
-            print(f"[DEBUG] Karte aufgedeckt, neuer Zähler: {s.cards_flipped_this_turn}")
-            return True
-        
-        return False
+        s.cards_flipped_this_turn += 1
+        return True
     
     # Nach Ablehnung einer Nachziehstapelkarte eine eigene Karte aufdecken
     elif s.muss_karte_aufdecken and not card.is_face_up:
@@ -136,29 +125,9 @@ def berechne_punktzahl(layout):
     punkte = 0
     for row in layout.cards:
         for card in row:
-            if card.is_face_up:
+            if card.is_face_up and not getattr(card, "removed", False):
                 punkte += card.value
     return punkte
-
-def check_for_column_triplets(my_layout):
-    """Prüft, ob im eigenen Layout drei gleiche Karten in einer Spalte sind"""
-    if not my_layout or not my_layout.cards:
-        return False
-    
-    # Für jede Spalte
-    for col in range(len(my_layout.cards[0])):
-        # Werte und Status in dieser Spalte sammeln
-        column_values = []
-        for row in range(len(my_layout.cards)):
-            card = my_layout.cards[row][col]
-            if card.is_face_up and not hasattr(card, 'is_removed') or not card.is_removed:
-                column_values.append(card.value)
-        
-        # Wenn 3 aufgedeckte Karten und alle gleich sind
-        if len(column_values) == 3 and len(set(column_values)) == 1:
-            return True
-    
-    return False
 
 
 

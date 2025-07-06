@@ -61,18 +61,8 @@ def card_place_position(screen):
 
     # Wenn eine Ablagestapelkarte existiert, zeige sie an
     if hasattr(s, "discard_card"):
-        # Prüfe, ob es sich um eine "entfernte" Karte handelt (-99)
-        if s.discard_card == -99:
-            # Für entfernte Karten zeigen wir eine leere Fläche oder eine andere Karte an
-            # Option 1: Eine bereits existierende Karte verwenden
-            discard_card_img = pygame.image.load(f"Karten_png/card_0.png")  # Verwende z.B. die 0-Karte
-            
-            # Option 2: Einen leeren Rechteck zeichnen (falls du keine Karte anzeigen möchtest)
-            # In diesem Fall einfach keine Karte laden und nur das Rechteck zeichnen
-        else:
-            # Normaler Fall: Lade das entsprechende Kartenbild
-            discard_card_img = pygame.image.load(f"Karten_png/card_{s.discard_card}.png")
-        
+        # Lade das entsprechende Kartenbild
+        discard_card_img = pygame.image.load(f"Karten_png/card_{s.discard_card}.png")
         discard_card_img = pygame.transform.scale(discard_card_img, (s.CARD_WIDTH, s.CARD_HEIGHT))
         
         # Positioniere sie auf dem Ablagestapel

@@ -21,7 +21,7 @@ CARD_IMAGES = {value: pygame.image.load(f"Karten_png/card_{value}.png") for valu
 CARD_BACK_IMAGE = pygame.image.load("Karten_png/card_back.png")
 
 class Card:
-    def __init__(self, value, x, y,width, height, is_face_up=False):
+    def __init__(self, value, x, y, width, height, is_face_up=False):
         """
         Repräsentiert eine einzelne Karte.
         - value: Der Wert der Karte (z. B. -2 bis 12 in Skyjo).
@@ -33,16 +33,17 @@ class Card:
         self.width = width
         self.height = height
         self.is_face_up = is_face_up
-        self.is_removed = False  # Neue Eigenschaft: Karte wurde entfernt
+        self.removed = False  # NEUE ZEILE: Flag für entfernte Karten
         self.front_image = pygame.transform.scale(CARD_IMAGES[value], (width, height))
         self.back_image = pygame.transform.scale(CARD_BACK_IMAGE, (width, height))
         self.rect = pygame.Rect(x, y, width, height)
     
     def draw(self, screen):
-        if self.is_removed:
-            # Wenn die Karte entfernt wurde, zeichne gar nichts
-            return  # Einfach zurückkehren ohne etwas zu zeichnen
-        elif self.is_face_up:
+        # NEUE ZEILE: Entfernte Karten nicht zeichnen
+        if self.removed:
+            return
+            
+        if self.is_face_up:
             screen.blit(self.front_image, (self.x, self.y))
         else:
             screen.blit(self.back_image, (self.x, self.y))
