@@ -49,7 +49,7 @@ def main():
     su.first_draw()
 
     # Spielernamen abfragen
-    player_name = get_player_name(su.WINDOW)
+    player_name = get_player_name(su.screen)
     print(f"Spielername: {player_name}")
 
     while running:
