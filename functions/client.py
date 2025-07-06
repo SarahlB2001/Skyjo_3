@@ -143,7 +143,17 @@ def process_messages(sock, screen):
                         card.front_image = pygame.transform.scale(pygame.image.load(f"Karten_png/card_{neue_karte}.png"), (s.CARD_WIDTH, s.CARD_HEIGHT))
                         card.is_face_up = True
                     
+                    # Ablagestapel aktualisieren
                     s.discard_card = ablagestapel
+                    
+                    # NEUE ZEILEN: Ablagestapel-Array korrekt aktualisieren
+                    if not hasattr(s, "discard_pile"):
+                        s.discard_pile = []
+                    
+                    # Wenn ein Ablagestapel existiert, die oberste Karte entfernen und neue hinzufügen
+                    if len(s.discard_pile) > 0:
+                        s.discard_pile.pop()
+                    s.discard_pile.append(ablagestapel)
                 
                 elif msg.get("update") == "karte_abgelehnt":
                     spieler = msg["spieler"]
@@ -185,7 +195,6 @@ def process_messages(sock, screen):
                     if "card_values" in msg:
                         card_values = msg["card_values"]
                     elif "card_value" in msg:
-                        # Einzelwert in Liste umwandeln
                         card_values = [msg["card_value"]] * 3
                     else:
                         print("[ERROR] Weder card_values noch card_value in der Nachricht gefunden!")
@@ -196,14 +205,6 @@ def process_messages(sock, screen):
                     # Ablagestapel aktualisieren
                     s.discard_card = discard_value
                     
-                    # Initialisiere discard_pile, falls noch nicht vorhanden
-                    if not hasattr(s, "discard_pile"):
-                        s.discard_pile = []
-                    
-                    # Alle drei Karten auf den Ablagestapel legen
-                    for value in card_values:
-                        s.discard_pile.append(value)
-                    
                     # Karten als entfernt markieren
                     layout = cP.player_cardlayouts.get(spieler)
                     if layout:
@@ -211,20 +212,11 @@ def process_messages(sock, screen):
                             if row < len(layout.cards) and col < len(layout.cards[row]):
                                 card = layout.cards[row][col]
                                 card.removed = True
-                                card.is_face_up = True  # Aufgedeckt darstellen
-                                print(f"[DEBUG] Karte ({row},{col}) als entfernt markiert, removed={card.removed}")
+                                card.is_face_up = True
+                                print(f"[DEBUG] Karte ({row},{col}) als entfernt markiert")
                     
-                    # Statusnachricht anzeigen
-                    player_name = s.player_data.get(spieler, f"Spieler {spieler}")
-                    message = f"{player_name} hat eine Dreierkombination in Spalte {col+1} entfernt!"
-                    s.status_message = message
-                    
-                    # Für temporäre Anzeige
-                    import time
-                    s.triplet_removal_time = time.time()
-                    s.triplet_message = message
-                    
-                    print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}, Werte {card_values}")
+                    # Keine UI-Anzeige mehr
+                    print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}")
                     
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break

@@ -21,7 +21,19 @@ def check_column_for_triplets(matrix, aufgedeckt_matrix):
     rows = len(matrix)
     columns_to_remove = []
     
+    # Überprüfen, ob diese Spalte bereits entfernt wurde
+    removed_columns = set()
+    if hasattr(s, "removed_cards"):
+        for spieler_id, cards in s.removed_cards.items():
+            for card in cards:
+                removed_columns.add(card["col"])
+    
     for col in range(cols):
+        # Spalte überspringen, wenn sie bereits als entfernt markiert wurde
+        if col in removed_columns:
+            print(f"[DEBUG] Spalte {col} wurde bereits entfernt, überspringe")
+            continue
+            
         # Nur aufgedeckte Karten in dieser Spalte sammeln
         column_values = []
         for row in range(rows):
@@ -68,15 +80,15 @@ def remove_column_triplets(spieler_id, connection, send_data):
                 card_value = matrix[row][col]
                 removed_cards.append({"row": row, "col": col, "value": card_value})
                 
-                # Ablagestapel aktualisieren
-                s.discard_card = card_value
+                # Nur EINE Karte auf den Ablagestapel legen (die oberste)
+                s.discard_card = matrix[0][col]
                 
-                # Initialisiere discard_pile, falls noch nicht vorhanden
+                # Ablagestapel aktualisieren
                 if not hasattr(s, "discard_pile"):
                     s.discard_pile = []
                 
-                # Karte auf den Ablagestapel legen
-                s.discard_pile.append(card_value)
+                # Nur eine Karte auf den Ablagestapel legen
+                s.discard_pile.append(s.discard_card)
                 
                 # Markiere die Karte als "entfernt", behalte aber den Wert bei
                 if not hasattr(s, "removed_cards"):
@@ -106,7 +118,7 @@ def remove_column_triplets(spieler_id, connection, send_data):
             print(f"[DEBUG] Triplet-Nachricht gesendet an Client: Erfolg={success}")
             
         # WICHTIG: Zusätzliche Pause nach dem Senden, bevor weitere Nachrichten gesendet werden
-        time.sleep(1.0)  # Längere Pause, damit die Nachricht garantiert ankommt
+        time.sleep(2.0)  # Längere Pause, damit die Nachricht komplett angezeigt wird
     
     return True, columns_to_remove
 
