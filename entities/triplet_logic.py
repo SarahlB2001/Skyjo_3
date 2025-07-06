@@ -6,6 +6,41 @@ und auf den Ablagestapel gelegt.
 """
 import settings as s
 
+def berechne_punktzahl(matrix, aufgedeckt_matrix, spieler_id):
+    """Berechnet die Punktzahl für einen Spieler, entfernt Triplets korrekt"""
+    punkte = 0
+    removed = []
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed = [(card["row"], card["col"]) for card in s.removed_cards[spieler_id]]
+    for row in range(len(matrix)):
+        for col in range(len(matrix[0])):
+            if aufgedeckt_matrix[row][col] and (row, col) not in removed:
+                punkte += matrix[row][col]
+    # Triplets abziehen (jede entfernte Spalte = 3 Karten)
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed_cols = [card["col"] for card in s.removed_cards[spieler_id]]
+        for col in set(removed_cols):
+            triplet_value = matrix[0][col]
+            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen!
+    return punkte
+
+def calculate_scores(karten_matrizen, aufgedeckt_matrizen, ausloeser_id=None):
+    """Berechnet die Scores für alle Spieler. Beim Auslöser ggf. Verdopplung."""
+    scores = {}
+    for pid in karten_matrizen.keys():
+        matrix = karten_matrizen[pid]
+        aufgedeckt_matrix = aufgedeckt_matrizen[pid]
+        scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix, pid)
+
+    # Skyjo-Regel: Wenn Auslöser nicht den niedrigsten Score hat, wird sein Score verdoppelt
+    if ausloeser_id is not None:
+        ausloeser_score = scores[ausloeser_id]
+        min_score = min(scores.values())
+        if any(pid != ausloeser_id and score <= ausloeser_score for pid, score in scores.items()):
+            scores[ausloeser_id] = ausloeser_score * 2
+
+    return scores
+
 def check_column_for_triplets(matrix, aufgedeckt_matrix, spieler_id):
     """
     Prüft, ob drei gleiche aufgedeckte Karten in einer Spalte sind.
@@ -131,6 +166,15 @@ def remove_column_triplets(spieler_id, connection, send_data):
                 "spieler": spieler_id
             })
         print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
+    
+    # Punkte nach dem Entfernen eines Triplets aktualisieren
+    scores = calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen)
+    for v in connection:
+        send_data(v, {
+            "update": "punkte_aktualisiert", 
+            "scores": scores
+        })
+    
     return True, columns_to_remove
 
 def is_affected_by_triplet_removal(spieler_id, row, col):

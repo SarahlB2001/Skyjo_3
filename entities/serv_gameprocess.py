@@ -6,6 +6,7 @@ import random
 import time
 import settings as s
 from entities import triplet_logic  # Neuer Import
+from entities.triplet_logic import berechne_punktzahl, calculate_scores  # Diese Funktionen importieren
 
 def create_card_matrices(player_count, rows, cols):
     """Erzeugt die Kartenmatrizen für alle Spieler"""
@@ -27,42 +28,6 @@ def create_flipped_matrices(player_count, rows, cols):
 def generate_random_card():
     """Generiert eine zufällige Karte für den Nachziehstapel"""
     return random.randint(-2, 12)
-
-def berechne_punktzahl(matrix, aufgedeckt_matrix, spieler_id):
-    """Berechnet die Punktzahl für einen Spieler, entfernt Triplets korrekt"""
-    punkte = 0
-    removed = []
-    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
-        removed = [(card["row"], card["col"]) for card in s.removed_cards[spieler_id]]
-    for row in range(len(matrix)):
-        for col in range(len(matrix[0])):
-            if aufgedeckt_matrix[row][col] and (row, col) not in removed:
-                punkte += matrix[row][col]
-    # Triplets abziehen (jede entfernte Spalte = 3 Karten)
-    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
-        removed_cols = [card["col"] for card in s.removed_cards[spieler_id]]
-        for col in set(removed_cols):
-            triplet_value = matrix[0][col]
-            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen!
-    return punkte
-
-def calculate_scores(karten_matrizen, aufgedeckt_matrizen, ausloeser_id=None):
-    """Berechnet die Scores für alle Spieler. Beim Auslöser ggf. Verdopplung."""
-    scores = {}
-    for pid in karten_matrizen.keys():
-        matrix = karten_matrizen[pid]
-        aufgedeckt_matrix = aufgedeckt_matrizen[pid]
-        # KORREKT: Nutze die Triplet-fähige Funktion!
-        scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix, pid)
-
-    # Skyjo-Regel: Wenn Auslöser nicht den niedrigsten Score hat, wird sein Score verdoppelt
-    if ausloeser_id is not None:
-        ausloeser_score = scores[ausloeser_id]
-        min_score = min(scores.values())
-        if any(pid != ausloeser_id and score <= ausloeser_score for pid, score in scores.items()):
-            scores[ausloeser_id] = ausloeser_score * 2
-
-    return scores
 
 def determine_starting_player(scores):
     """Bestimmt den Startspieler basierend auf den Punktzahlen"""

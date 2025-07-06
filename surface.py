@@ -86,7 +86,12 @@ def draw(screen):
             layout = cP.player_cardlayouts.get(idx + 1)
             punkte = 0
             if layout:
-                punkte = sum(card.value for row in layout.cards for card in row if card.is_face_up)
+                punkte = sum(
+    card.value
+    for row in layout.cards
+    for card in row
+    if card.is_face_up and not getattr(card, "removed", False)
+)
             
             # Farbe bestimmen
             name_color = (0, 0, 255) if (idx + 1) == s.spieler_id else s.PLAYER_FONT_COLOR
@@ -182,7 +187,7 @@ def draw(screen):
         now = pygame.time.get_ticks()
         if now - s.round_end_triggered_time < 2000:  # 2 Sekunden
             font = pygame.font.SysFont(None, 30)
-            text = font.render("Rundenende ausgelöst. Alle Spieler haben noch einen Zug!", True, (255, 0, 0))
+            text = font.render("Rundenende ausgelöst. Restliche Spieler haben noch einen Zug!", True, (255, 0, 0))
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 50))
         else:
             s.round_end_triggered = False
