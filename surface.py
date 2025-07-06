@@ -177,6 +177,15 @@ def draw(screen):
         text = font.render(s.status_message, True, (0, 128, 0))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
 
+        if hasattr(s, "scores"):
+            y = 120
+            font = pygame.font.SysFont(None, 28)
+            for pid, punkte in s.scores.items():
+                name = s.player_data.get(pid, f"Spieler{pid}")
+                text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
+                screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+                y += 30
+
     # Zeige die Rundenende-Nachricht für 2 Sekunden, dann wieder normale Statusmeldung
     if getattr(s, "round_end_triggered", False) and hasattr(s, "round_end_triggered_time"):
         now = pygame.time.get_ticks()

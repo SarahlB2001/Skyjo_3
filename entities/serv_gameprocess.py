@@ -275,9 +275,37 @@ def update_next_player(spieler_id, connection, send_data):
                 "update": "round_ended"
             })
         print("[INFO] Runde beendet!")
+
+        # NEU: Alle verdeckten Karten aufdecken und Punktzahlen berechnen
+        for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
+            for row in range(len(aufgedeckt_matrix)):
+                for col in range(len(aufgedeckt_matrix[row])):
+                    # Nur aufdecken, wenn nicht schon aufgedeckt oder entfernt
+                    if not aufgedeckt_matrix[row][col]:
+                        # Prüfe, ob Karte entfernt wurde
+                        entfernt = False
+                        if hasattr(s, "removed_cards") and pid in s.removed_cards:
+                            entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
+                        if not entfernt:
+                            aufgedeckt_matrix[row][col] = True
+                            # Allen Clients mitteilen
+                            for v in connection:
+                                send_data(v, {
+                                    "update": "karte_aufgedeckt",
+                                    "spieler": pid,
+                                    "karte": {"row": row, "col": col}
+                                })
+
+        # Optional: Neue Punktzahlen berechnen und an alle schicken
+        scores = calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen)
+        for v in connection:
+            send_data(v, {
+                "update": "punkte_aktualisiert",
+                "scores": scores
+            })
+
         s.round_end_triggered = False
         s.round_end_trigger_player = None
-        # Hier ggf. neue Runde starten oder Spiel beenden
         return s.current_player
 
     # Normal weitermachen
