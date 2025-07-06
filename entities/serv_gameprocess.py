@@ -118,13 +118,27 @@ def handle_take_discard_pile(daten, connection, send_data):
     # Aktuelle Karte vom Ablagestapel holen
     discard_value = s.discard_card
     
-    # Karte aus der Spielerhand nehmen und auf Ablagestapel legen
+    # Karte aus der Spielerhand nehmen
     row, col = ziel_karte["row"], ziel_karte["col"]
     alte_karte = s.karten_matrizen[spieler_id][row][col]
     
     # Karten tauschen
     s.karten_matrizen[spieler_id][row][col] = discard_value
     s.aufgedeckt_matrizen[spieler_id][row][col] = True  # Karte ist immer offen
+    
+    # Ablagestapel aktualisieren
+    if not hasattr(s, "discard_pile"):
+        s.discard_pile = []
+        # Wenn es bereits eine discard_card gibt, aber noch keinen discard_pile
+        if s.discard_card is not None:
+            s.discard_pile.append(s.discard_card)
+    
+    # Die oberste Karte vom Stapel entfernen
+    if len(s.discard_pile) > 0:
+        s.discard_pile.pop()
+    
+    # Alte Karte auf den Ablagestapel legen
+    s.discard_pile.append(alte_karte)
     s.discard_card = alte_karte
     
     # Allen Clients mitteilen
@@ -137,7 +151,7 @@ def handle_take_discard_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
     
-    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    # Auf Dreierkombinationen prüfen
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     
     return spieler_id, s.discard_card
@@ -187,7 +201,15 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
         })
     
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
-    triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+    hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+    
+    # Wenn eine Dreierkombination gefunden wurde, kurz warten
+    if hat_triplets:
+        import time
+        time.sleep(2.0)  # Warten, damit die Triplet-Nachricht verarbeitet wird
+    
+    # Nächster Spieler
+    next_player = update_next_player(spieler_id, connection, send_data)
     
     return spieler_id, alte_karte
 

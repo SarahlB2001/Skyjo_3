@@ -143,7 +143,17 @@ def process_messages(sock, screen):
                         card.front_image = pygame.transform.scale(pygame.image.load(f"Karten_png/card_{neue_karte}.png"), (s.CARD_WIDTH, s.CARD_HEIGHT))
                         card.is_face_up = True
                     
+                    # Ablagestapel aktualisieren
                     s.discard_card = ablagestapel
+                    
+                    # NEUE ZEILEN: Ablagestapel-Array korrekt aktualisieren
+                    if not hasattr(s, "discard_pile"):
+                        s.discard_pile = []
+                    
+                    # Wenn ein Ablagestapel existiert, die oberste Karte entfernen und neue hinzufügen
+                    if len(s.discard_pile) > 0:
+                        s.discard_pile.pop()
+                    s.discard_pile.append(ablagestapel)
                 
                 elif msg.get("update") == "karte_abgelehnt":
                     spieler = msg["spieler"]
@@ -221,8 +231,11 @@ def process_messages(sock, screen):
                     
                     # Für temporäre Anzeige
                     import time
-                    s.triplet_removal_time = time.time()
-                    s.triplet_message = message
+                    # Nur setzen, wenn noch nicht vorhanden
+                    if not hasattr(s, "triplet_removal_time") or s.triplet_removal_time is None:
+                        print("[DEBUG] Setze neue Triplet-Benachrichtigung")
+                        s.triplet_removal_time = time.time()
+                        s.triplet_message = message
                     
                     print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}, Werte {card_values}")
                     

@@ -142,7 +142,7 @@ def draw(screen):
         # Tauschoption anzeigen
         font = pygame.font.SysFont(None, 22)  
         text = font.render("Klicke auf eine Karte zum Tauschen oder auf 'Ablehnen'", True, (0, 0, 0))
-        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y + card_img.get_height() + 10))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, button_y - 30))
 
     # Statusnachricht nur für nicht-aktive Spieler anzeigen
     if s.status_message and s.current_player != s.spieler_id:
@@ -170,17 +170,24 @@ def draw(screen):
         if text:
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
             
-    # NEUER CODE: Anzeige für Dreierkombinationen (temporäre Meldung)
+    # Anzeige für Dreierkombinationen (temporäre Meldung)
     if hasattr(s, "triplet_removal_time") and time.time() - s.triplet_removal_time < 3:
-        # 3 Sekunden anzeigen
-        font = pygame.font.SysFont(None, 36)
-        text = font.render(s.triplet_message, True, (255, 0, 0))  # Rote Schrift
+        # Text im gleichen Format wie andere Nachrichten
+        font = pygame.font.SysFont(None, 22)
+        text = font.render(s.triplet_message, True, (0, 0, 0))
         
-        # Hintergrund für bessere Sichtbarkeit
-        text_rect = text.get_rect(center=(screen.get_width()//2, 50))
-        bg_rect = text_rect.inflate(20, 10)  # Etwas größer für Padding
-        pygame.draw.rect(screen, (255, 255, 200), bg_rect)  # Heller Hintergrund
-        pygame.draw.rect(screen, (0, 0, 0), bg_rect, 2)     # Schwarzer Rahmen
+        # An der gleichen Position wie andere Nachrichten
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
         
-        # Text darüber
-        screen.blit(text, text_rect)
+        # Benachrichtigung nach Ablauf der Zeit entfernen
+        if time.time() - s.triplet_removal_time >= 2.0:
+            try:
+                # Debug-Ausgabe hinzufügen
+                print("[DEBUG] Entferne Triplet-Benachrichtigung")
+                # Attribute explizit auf None setzen und dann entfernen
+                s.triplet_removal_time = None
+                s.triplet_message = None
+                delattr(s, "triplet_removal_time")
+                delattr(s, "triplet_message")
+            except Exception as e:
+                print(f"[ERROR] Fehler beim Entfernen der Triplet-Attribute: {e}")
