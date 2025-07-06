@@ -10,7 +10,11 @@ def recv_data(conn):
         data = conn.recv(4096)
         if data:
             return pickle.loads(data)
-    except (EOFError, pickle.UnpicklingError, ConnectionResetError):
+    except (EOFError, pickle.UnpicklingError, ConnectionResetError, TimeoutError):
+        # Added TimeoutError to the exception list
+        return None
+    except BlockingIOError:
+        # Diese Exception explizit behandeln für non-blocking sockets
         return None
     return None
 

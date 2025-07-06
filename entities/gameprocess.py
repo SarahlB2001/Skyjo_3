@@ -6,6 +6,10 @@ from dictionaries import cardSetPosition as cP
 # Karteninteraktion
 def handle_card_click(sock, spieler_id, my_layout, row_idx, col_idx, card):
     """Verarbeitet Klicks auf Karten im Spielfeld"""
+    # NEUE ZEILE: Prüfen, ob die Karte entfernt wurde
+    if hasattr(card, "removed") and card.removed:
+        return False
+        
     # Im ersten Zug: max. 2 Karten aufdecken
     if s.cards_flipped_this_turn < 2 and not card.is_face_up:
         serv.send_data(sock, {
@@ -121,7 +125,7 @@ def berechne_punktzahl(layout):
     punkte = 0
     for row in layout.cards:
         for card in row:
-            if card.is_face_up:
+            if card.is_face_up and not getattr(card, "removed", False):
                 punkte += card.value
     return punkte
 

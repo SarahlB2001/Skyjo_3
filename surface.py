@@ -1,24 +1,30 @@
 import settings as s
 from dictionaries import plaPosition as pl
 from dictionaries import cardSetPosition as cP
-# import server as serv
 import pygame
-pygame.init()
 import layout as l
+import time
 
 player_fields = {
     2: ['1', '3'],
     3: ['1', '3', '5'],
-    4: ['1', '3', '4', '6'],
+    4: ['1', '3', '4', '5', '6'],
     5: ['1', '3', '4', '5', '6'],
     6: ['1', '2', '3', '4', '5', '6']
 }
 
-WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
-PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
+# Move these global variables to initialization function
+WINDOW = None
+PLAYER_FONT = None
+BACKGROUND_IMAGE = None
 
-BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
-BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
+# Add initialization function
+def initialize():
+    global WINDOW, PLAYER_FONT, BACKGROUND_IMAGE
+    WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
+    PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
+    BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
+    BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
 
 def first_draw():
     WINDOW.fill(s.WINDOW_COLOR)
@@ -136,7 +142,7 @@ def draw(screen):
         # Tauschoption anzeigen
         font = pygame.font.SysFont(None, 22)  
         text = font.render("Klicke auf eine Karte zum Tauschen oder auf 'Ablehnen'", True, (0, 0, 0))
-        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y + card_img.get_height() + 10))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, button_y - 30))
 
     # Statusnachricht nur für nicht-aktive Spieler anzeigen
     if s.status_message and s.current_player != s.spieler_id:

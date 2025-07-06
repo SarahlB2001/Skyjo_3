@@ -65,7 +65,9 @@ def process_messages(sock, screen):
         return
 
     try:
-        sock.setblocking(False)
+        # Wichtig: Höheres Timeout für bessere Nachrichtenverarbeitung
+        sock.settimeout(0.1)  # 100ms Timeout statt non-blocking
+        
         # Mehrere Nachrichten in einer Schleife verarbeiten!
         while True:
             try:
@@ -73,7 +75,10 @@ def process_messages(sock, screen):
                 if not msg:
                     break
                 
-                print(f"[DEBUG] Client empfängt Nachricht: {msg}")
+                # WICHTIG: Detailliertere Debug-Ausgabe
+                print(f"[DEBUG] Client empfängt Nachricht vom Typ: {msg.get('update', 'unknown')}")
+                if msg.get('update') == "triplet_removed":
+                    print(f"[DEBUG] !! TRIPLET NACHRICHT EMPFANGEN !!: {msg}")
                 
                 # Startnachricht behandeln
                 if "message" in msg and ("startet" in msg["message"].lower() or "starten" in msg["message"].lower()):
@@ -138,7 +143,17 @@ def process_messages(sock, screen):
                         card.front_image = pygame.transform.scale(pygame.image.load(f"Karten_png/card_{neue_karte}.png"), (s.CARD_WIDTH, s.CARD_HEIGHT))
                         card.is_face_up = True
                     
+                    # Ablagestapel aktualisieren
                     s.discard_card = ablagestapel
+                    
+                    # NEUE ZEILEN: Ablagestapel-Array korrekt aktualisieren
+                    if not hasattr(s, "discard_pile"):
+                        s.discard_pile = []
+                    
+                    # Wenn ein Ablagestapel existiert, die oberste Karte entfernen und neue hinzufügen
+                    if len(s.discard_pile) > 0:
+                        s.discard_pile.pop()
+                    s.discard_pile.append(ablagestapel)
                 
                 elif msg.get("update") == "karte_abgelehnt":
                     spieler = msg["spieler"]
@@ -169,8 +184,41 @@ def process_messages(sock, screen):
                 
                 elif msg.get("update") == "test":
                     print(f"[DEBUG] Test-Nachricht empfangen: {msg}")
+                
+                # Im process_messages, nach dem Handler für karte_abgelehnt:
+                elif msg.get("update") == "triplet_removed":
+                    print(f"[DEBUG] TRIPLET ENTFERNT! Vollständige Nachricht: {msg}")
+                    spieler = msg["spieler"]
+                    col = msg["col"]
                     
-            except (BlockingIOError, ConnectionError):
+                    # Überprüfen, ob card_values oder card_value in der Nachricht ist
+                    if "card_values" in msg:
+                        card_values = msg["card_values"]
+                    elif "card_value" in msg:
+                        card_values = [msg["card_value"]] * 3
+                    else:
+                        print("[ERROR] Weder card_values noch card_value in der Nachricht gefunden!")
+                        card_values = [0, 0, 0]  # Fallback
+                    
+                    discard_value = msg["discard_value"]
+                    
+                    # Ablagestapel aktualisieren
+                    s.discard_card = discard_value
+                    
+                    # Karten als entfernt markieren
+                    layout = cP.player_cardlayouts.get(spieler)
+                    if layout:
+                        for row in range(len(layout.cards)):
+                            if row < len(layout.cards) and col < len(layout.cards[row]):
+                                card = layout.cards[row][col]
+                                card.removed = True
+                                card.is_face_up = True
+                                print(f"[DEBUG] Karte ({row},{col}) als entfernt markiert")
+                    
+                    # Keine UI-Anzeige mehr
+                    print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}")
+                    
+            except (BlockingIOError, ConnectionError, TimeoutError):
                 break
     finally:
         sock.setblocking(True)
