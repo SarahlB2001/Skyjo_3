@@ -112,6 +112,13 @@ def handle_card_flip(daten, connection, send_data):
                 "spieler": spieler_id
             })
         print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
+        time.sleep(0.2)  # Kleine Pause
+        # Wiederhole die Nachricht für alle Clients
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
     return spieler_id, karte
 
 def check_if_setup_complete(player_count, cards_flipped, connection, send_data):
@@ -192,6 +199,13 @@ def handle_take_discard_pile(daten, connection, send_data):
                 "spieler": spieler_id
             })
         print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
+        time.sleep(0.2)  # Kleine Pause
+        # Wiederhole die Nachricht für alle Clients
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
     return spieler_id, s.discard_card
 
 def handle_take_draw_pile(daten, connection, send_data):
@@ -253,6 +267,13 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
                 "spieler": spieler_id
             })
         print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
+        time.sleep(0.2)  # Kleine Pause
+        # Wiederhole die Nachricht für alle Clients
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
     next_player = update_next_player(spieler_id, connection, send_data)
 
     return spieler_id, alte_karte
@@ -295,7 +316,7 @@ def update_next_player(spieler_id, connection, send_data):
         print("[INFO] Runde beendet!")
 
         # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
-        time.sleep(4)
+        time.sleep(3)
 
         # Alle verdeckten Karten aufdecken
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():

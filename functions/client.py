@@ -66,7 +66,7 @@ def process_messages(sock, screen):
 
     try:
         # Wichtig: Höheres Timeout für bessere Nachrichtenverarbeitung
-        sock.settimeout(0.1)  # 100ms Timeout statt non-blocking
+        sock.settimeout(0.3)  # 100ms Timeout statt non-blocking
         
         # Mehrere Nachrichten in einer Schleife verarbeiten!
         while True:

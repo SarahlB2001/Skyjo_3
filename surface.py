@@ -177,15 +177,6 @@ def draw(screen):
         text = font.render(s.status_message, True, (0, 128, 0))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
 
-        if hasattr(s, "scores"):
-            y = 120
-            font = pygame.font.SysFont(None, 28)
-            for pid, punkte in s.scores.items():
-                name = s.player_data.get(pid, f"Spieler{pid}")
-                text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
-                screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
-                y += 30
-
     # Zeige die Rundenende-Nachricht für 2 Sekunden für ALLE Spieler
     if getattr(s, "round_end_triggered", False) and hasattr(s, "round_end_triggered_time"):
         now = pygame.time.get_ticks()
@@ -203,23 +194,35 @@ def draw(screen):
             font = pygame.font.SysFont(None, 36)
             text = font.render("Runde beendet!", True, (0, 128, 0))
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
-            # WICHTIG: In dieser Zeit KEINE weiteren Statusmeldungen anzeigen!
-            return  # Restliche Statusanzeigen überspringen
+            # Andere Status-Nachrichten unterdrücken ohne return zu verwenden
+            display_other_messages = False
+        else:
+            display_other_messages = True
+    else:
+        display_other_messages = True
 
-    # Zeige "Alle Karten wurden aufgedeckt..." für 3 Sekunden nach Punkteberechnung
-    elif hasattr(s, "points_calculated_time"):
-        now = pygame.time.get_ticks()
-        if now - s.points_calculated_time < 3000:
-            font = pygame.font.SysFont(None, 30)
-            text = font.render("Alle Karten wurden aufgedeckt. Punkte wurden berechnet!", True, (0, 0, 255))
-            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
-            # Optional: Punktzahlen anzeigen
-            if hasattr(s, "scores"):
-                y = 160
-                font = pygame.font.SysFont(None, 28)
-                for pid, punkte in s.scores.items():
-                    name = s.player_data.get(pid, f"Spieler{pid}")
-                    text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
-                    screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
-                    y += 30
-            return  # Restliche Statusanzeigen überspringen
+    if display_other_messages:
+        # Zeige "Alle Karten wurden aufgedeckt..." für 3 Sekunden nach Punkteberechnung
+        if hasattr(s, "points_calculated_time"):
+            now = pygame.time.get_ticks()
+            if now - s.points_calculated_time < 3000:
+                font = pygame.font.SysFont(None, 30)
+                text = font.render("Alle Karten wurden aufgedeckt. Punkte wurden berechnet!", True, (0, 0, 255))
+                screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
+                # Optional: Punktzahlen anzeigen
+                if hasattr(s, "scores"):
+                    y = 160
+                    font = pygame.font.SysFont(None, 28)
+                    for pid, punkte in s.scores.items():
+                        name = s.player_data.get(pid, f"Spieler{pid}")
+                        text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
+                        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+                        y += 30
+                display_other_messages = False #return  # Restliche Statusanzeigen überspringen
+
+    # Nur wenn keine spezielle Statusmeldung aktiv ist, zeige normale Statusmeldungen
+    # Nur wenn keine spezielle Statusmeldung aktiv ist UND der Spieler NICHT am Zug ist
+    if display_other_messages and s.status_message and s.current_player != s.spieler_id:
+        font = pygame.font.SysFont(None, 22)
+        text = font.render(s.status_message, True, (0, 0, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
