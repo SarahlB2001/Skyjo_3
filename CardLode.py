@@ -3,7 +3,6 @@ import layout as l
 import surface as su
 from dictionaries import setcard as sc
 
-''''
 start_x = 1
 start_y = 1
 
@@ -41,7 +40,6 @@ bild11 = pygame.transform.scale(bild11, ( sc.card_width, sc.card_height))
 bild12 = pygame.transform.scale(bild12, ( sc.card_width, sc.card_height))
 bildb = pygame.transform.scale(bildb, ( sc.card_width, sc.card_height))
 
-'''
 su.WINDOW.blit(bild_2, (start_x + sc.card_2["x"], start_y + sc.card2-["y"]))
 su.WINDOW.blit(bild_1, (start_x + sc.card_1["x"], start_y + sc.card1-["y"]))
 su.WINDOW.blit(bild0, (start_x + sc.card0["x"], start_y + sc.card0["y"]))
