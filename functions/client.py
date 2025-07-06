@@ -237,6 +237,16 @@ def process_messages(sock, screen):
                     print("[DEBUG] Neue Punktzahlen:", s.scores)
                     s.status_message = "Alle Karten wurden aufgedeckt. Punkte wurden berechnet!"
                     s.points_calculated_time = pygame.time.get_ticks()  # Zeit merken
+
+                    # --- NEU: Final-Score-Berechnung nach Skyjo-Regel ---
+                    ausloeser_id = getattr(s, "round_end_trigger_player", None)
+                    s.final_round_scores = s.scores.copy()
+                    if ausloeser_id is not None and ausloeser_id in s.scores:
+                        ausloeser_score = s.scores[ausloeser_id]
+                        min_score = min(s.scores.values())
+                        # Nur wenn der Auslöser NICHT den niedrigsten Score hat, verdoppeln
+                        if ausloeser_score > min_score:
+                            s.final_round_scores[ausloeser_id] = ausloeser_score * 2
                 
                 # Nach dem Handler für "triplet_removed":
                 elif msg.get("update") == "triplet_punkte_aktualisiert":

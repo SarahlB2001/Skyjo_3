@@ -288,6 +288,9 @@ def update_next_player(spieler_id, connection, send_data):
             for row in range(len(aufgedeckt_matrix)):
                 for col in range(len(aufgedeckt_matrix[row])):
                     if not aufgedeckt_matrix[row][col]:
+                        # Karte aufdecken...
+                        # HINZUFÜGEN: Kleine Pause nach jeder Karte
+                        time.sleep(0.1)  # Pause zwischen Karten
                         entfernt = False
                         if hasattr(s, "removed_cards") and pid in s.removed_cards:
                             entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
