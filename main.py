@@ -7,6 +7,10 @@ import functions.client as c
 import server as serv
 import layout as l
 import settings as s
+import surface as su
+import time
+from dictionaries import cardSetPosition as cP
+from entities import gameprocess as gp
 
 
 def main():
@@ -23,215 +27,278 @@ def main():
     join_button = pygame.Rect(500, 490, 200, 50)
 
     input_box = pygame.Rect(450, 470, 300, 50)
-    
-
     ip_input_box = pygame.Rect(450, 470, 300, 50)
-    
-    # Hintergrundbild des Menüs
-    background = pygame.image.load("Skyjo_Menü.png") 
-    
-    # Buttons für Spieleranzahl (auf Höhe des Host-Buttons)
-    player_count_buttons = [pygame.Rect(0, 420, 50, 50) for i in range(4)]
-    # Buttons für Rundenzahl (auf Höhe des Host-Buttons)
-    round_count_buttons = [pygame.Rect(0, 420, 50, 50) for i in range(5)]
-    
+
+    background = pygame.image.load("Skyjo_Menü.png")
+
+    player_count_buttons = [pygame.Rect(0, 420, 50, 50) for _ in range(3)]  # Nur 3 Buttons für 2, 3, 4 Spieler
+    round_count_buttons = [pygame.Rect(0, 420, 50, 50) for _ in range(5)]
 
     while s.running:
-        
-        screen.blit(background, (0, 0))
-        layout = l.CardLayout(start_x=100, start_y=200)
-        layout.draw(screen)
-        # Zeige die IP-Adresse an, wenn Host ausgewählt wurde
-        if s.game_mode == "host":
-            ip_text = small_font.render(f"Deine IP: {c.get_local_ip()}", True, (0, 0, 0))
-            screen.blit(ip_text, (10, 10))
+        # NACHRICHTEN EMPFANGEN - IMMER!
+        if s.sock:
+            c.process_messages(s.sock, screen)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                s.running = False
+        # Der Rest des Codes bleibt unverändert
+        if (
+            s.game_mode is None
+            or s.waiting_for_players
+            or s.waiting_for_rounds
+            or s.waiting_for_name
+            or s.entering_ip
+            or s.waiting_for_start
+        ):
+            screen.blit(background, (0, 0))
 
-            
+            if s.game_mode == "host":
+                ip_text = small_font.render(f"Deine IP: {c.get_local_ip()}", True, (0, 0, 0))
+                screen.blit(ip_text, (10, 10))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    s.running = False
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if s.game_mode is None:
+                        if host_button.collidepoint(event.pos):
+                            s.game_mode = "host"
+                            s.waiting_for_players = True
+                        elif join_button.collidepoint(event.pos):
+                            s.game_mode = "join"
+                            s.entering_ip = True
+
+                    elif s.waiting_for_players:
+                        for i, button in enumerate(player_count_buttons):
+                            if button.collidepoint(event.pos):
+                                s.player_count = i + 2  # Jetzt 2, 3 oder 4
+                                s.PL_ANZAHL = s.player_count  # <--- HIER hinzufügen!
+                                s.sock, s.spieler_id = c.connect_to_server()
+                                serv.send_data(s.sock, {"anzahl_spieler": s.player_count})
+                                s.waiting_for_players = False
+                                s.waiting_for_rounds = True
+                                break
+
+                    elif s.waiting_for_rounds:
+                        for i, button in enumerate(round_count_buttons):
+                            if button.collidepoint(event.pos):
+                                s.round_count = i + 1
+                                serv.send_data(s.sock, {"anzahl_runden": s.round_count})
+                                s.waiting_for_rounds = False
+                                s.waiting_for_name = True
+                                break
+
+                    elif s.entering_ip:
+                        if ip_input_box.collidepoint(event.pos):
+                            s.active = True
+                        else:
+                            s.active = False
+
+                    elif s.waiting_for_name:
+                        if input_box.collidepoint(event.pos):
+                            s.active = True
+                        else:
+                            s.active = False
+
+                    # Beispiel im Event-Loop:
+                    if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(event.pos):
+                        print("Kartenstapel wurde angeklickt!")
+                        # Hier kannst du die Logik für das Aufdecken/Abheben implementieren
+
+                if event.type == pygame.KEYDOWN:
+                    if s.entering_ip and s.active:
+                        if event.key == pygame.K_RETURN:
+                            SERVER_IP = s.ip_input.strip()
+                            try:
+                                s.sock, s.spieler_id = c.connect_to_server(SERVER_IP)
+                                s.entering_ip = False
+                                s.waiting_for_name = True
+                                s.ip_input = ""
+                            except Exception as e:
+                                s.status_message = f"Verbindung fehlgeschlagen: {e}"
+                        elif event.key == pygame.K_BACKSPACE:
+                            s.ip_input = s.ip_input[:-1]
+                        else:
+                            s.ip_input += event.unicode
+
+                    elif s.waiting_for_name and s.active:
+                        if event.key == pygame.K_RETURN:
+                            if s.sock:
+                                serv.send_data(s.sock, {"name": s.text_input.strip()})
+                            s.active = False
+                            s.text_input = ""
+                            s.waiting_for_name = False
+                            s.status_message = "Warten auf andere Spieler..."
+                            s.waiting_for_start = True
+                        elif event.key == pygame.K_BACKSPACE:
+                            s.text_input = s.text_input[:-1]
+                        else:
+                            if len(s.text_input) < 12:
+                                s.text_input += event.unicode
+
+            # Menü-UI
+            if s.game_mode is None:
+                pygame.draw.rect(screen, (0, 200, 0), host_button)
+                pygame.draw.rect(screen, (200, 0, 0), join_button)
+                screen.blit(font.render("Spiel Hosten", True, (255, 255, 255)), (host_button.x + 20, host_button.y + 10))
+                screen.blit(font.render("Spiel Beitreten", True, (255, 255, 255)), (join_button.x + 20, join_button.y + 10))
+
+            if s.waiting_for_players:
+                headline = font.render("Spieleranzahl wählen", True, (0, 0, 0))
+                screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 420))
+                total_width = len(player_count_buttons) * 60 - 10
+                start_x = screen.get_width() // 2 - total_width // 2
+                y = 480
+                for i, button in enumerate(player_count_buttons):
+                    button.x = start_x + i * 60
+                    button.y = y
+                    pygame.draw.rect(screen, (0, 0, 255), button)
+                    text = small_font.render(f"{i+2}", True, (255, 255, 255))  # Buttons zeigen 2, 3, 4
+                    screen.blit(text, (button.x + button.width // 2 - text.get_width() // 2, button.y + 10))
+
+            if s.waiting_for_rounds:
+                headline = font.render("Rundenanzahl wählen", True, (0, 0, 0))
+                screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 420))
+                total_width = len(round_count_buttons) * 60 - 10
+                start_x = screen.get_width() // 2 - total_width // 2
+                y = 480
+                for i, button in enumerate(round_count_buttons):
+                    button.x = start_x + i * 60
+                    button.y = y
+                    pygame.draw.rect(screen, (255, 140, 0), button)
+                    text = small_font.render(f"{i+1}", True, (255, 255, 255))
+                    screen.blit(text, (button.x + button.width // 2 - text.get_width() // 2, button.y + 10))
+
+            if s.waiting_for_name:
+                screen.blit(small_font.render("Bitte Namen eingeben:", True, (0, 0, 0)), (500, 420))
+                txt_surface = font.render(s.text_input, True, (0, 0, 0))
+                screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+                pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
+
+            if s.game_mode == "join" and s.entering_ip:
+                screen.blit(small_font.render("Host-IP eingeben:", True, (0, 0, 0)), (500, 420))
+                ip_surface = font.render(s.ip_input, True, (0, 0, 0))
+                screen.blit(ip_surface, (ip_input_box.x + 5, ip_input_box.y + 5))
+                pygame.draw.rect(screen, (0, 0, 0), ip_input_box, 2)
+
+            if s.status_message:
+                status_surface = font.render(s.status_message, True, (0, 0, 0))
+                screen.blit(status_surface, (screen.get_width() // 2 - status_surface.get_width() // 2, 100))
+
            
+                
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    s.running = False
 
-            
-           
+                
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if s.game_mode is None:
-                    # Spielmodus wählen: Host oder Join
-                    if host_button.collidepoint(event.pos):
-                        s.game_mode = "host"
-                        s.waiting_for_players = True
-                        print("[DEBUG] Game mode set to 'host'")
-                    elif join_button.collidepoint(event.pos):
-                        s.game_mode = "join"
-                        s.entering_ip = True  # IP wird jetzt eingegeben
-                        print("[DEBUG] Game mode set to 'join'")
-
-                elif s.waiting_for_players:
-                    # Spieleranzahl wählen (Host)
-                    for i, button in enumerate(player_count_buttons):
-                        if button.collidepoint(event.pos):
-                            s.player_count = i + 1
-                            print(f"[DEBUG] Player count set to {s.player_count}")
-                            s.sock, s.spieler_id = c.connect_to_server()
-                            serv.send_data(s.sock, {"anzahl_spieler": s.player_count})
-                            s.waiting_for_players = False
-                            s.waiting_for_rounds = True
-                            break
-
-                elif s.waiting_for_rounds:
-                    # Rundenzahl wählen (Host)
-                    for i, button in enumerate(round_count_buttons):
-                        if button.collidepoint(event.pos):
-                            s.round_count = i + 1
-                            print(f"[DEBUG] Round count set to {s.round_count}")
-                            serv.send_data(s.sock, {"anzahl_runden": s.round_count})
-                            s.waiting_for_rounds = False
-                            s.waiting_for_name = True
-                            break
-
-                elif s.entering_ip:
-                    # IP-Eingabefeld aktivieren/deaktivieren
-                    if ip_input_box.collidepoint(event.pos):
-                        s.active = True
-                        print("[DEBUG] IP input box activated")
-                    else:
-                        s.active = False
-                        print("[DEBUG] IP input box deactivated")
-
-                elif s.waiting_for_name:
-                    # Namenseingabefeld aktivieren/deaktivieren
-                    if input_box.collidepoint(event.pos):
-                        s.active = True
-                        print("[DEBUG] Input box activated")
-                    else:
-                        s.active = False
-                        print("[DEBUG] Input box deactivated")
-
-            if event.type == pygame.KEYDOWN:
-                if s.entering_ip and s.active:
-                    if event.key == pygame.K_RETURN:
-                        SERVER_IP = s.ip_input.strip()
-                        try:
-                            s.sock, s.spieler_id = c.connect_to_server(SERVER_IP)
-                            s.entering_ip = False
-                            s.waiting_for_name = True
-                            s.ip_input = ""
-                        except Exception as e:
-                            s.status_message = f"Verbindung fehlgeschlagen: {e}"
-                            print(f"[ERROR] Verbindung zum Server fehlgeschlagen: {e}")
-                    elif event.key == pygame.K_BACKSPACE:
-                        s.ip_input = s.ip_input[:-1]
-                    else:
-                        s.ip_input += event.unicode
-
-                elif s.waiting_for_name and s.active:
-                    if event.key == pygame.K_RETURN:
-                        # Name absenden
-                        if s.sock:
-                            serv.send_data(s.sock, {"name": s.text_input.strip()})
-                            print(f"[DEBUG] Name sent: {s.text_input.strip()}")
-                        s.active = False
-                        s.text_input = ""
-                        s.waiting_for_name = False  # Namen eingegeben, keine Eingabe mehr notwendig
-
-                        # Status sofort setzen
-                        s.status_message = "Warten auf andere Spieler..."
-                        s.waiting_for_start = True
-
-                        # Nachricht vom Server abwarten
-                        msg = serv.recv_data(s.sock)
-                        if msg and "message" in msg:
-                            if "starten" in msg["message"].lower():
-                                s.status_message = "Spiel startet"
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = event.pos
+                    
+                    # "Nächste Runde"-Button zwischen den Runden
+                    if hasattr(s, "between_rounds") and s.between_rounds and hasattr(s, "next_round_button"):
+                        if s.next_round_button.collidepoint(pos):
+                            s.between_rounds = False
+                            # Bereit für die nächste Runde
+                            if s.current_round < s.total_rounds:
+                                s.status_message = "Warte auf Beginn der nächsten Runde..."
                             else:
-                                s.status_message = msg["message"]
+                                s.game_over = True
+                    
+                    # "Zurück zum Hauptmenü"-Button am Spielende
+                    if hasattr(s, "game_over") and s.game_over and hasattr(s, "main_menu_button"):
+                        if s.main_menu_button.collidepoint(pos):
+                            # Zurück zum Hauptmenü
+                            s.game_over = False
+                            s.game_mode = None
+                            s.waiting_for_players = False
+                            s.waiting_for_name = False
+                            s.waiting_for_start = False
+                            s.waiting_for_rounds = False
+                            s.entering_ip = False
+                            
+                            # Verbindung schließen
+                            if s.sock:
+                                s.sock.close()
+                                s.sock = None
+                            
+                            # Spieldaten zurücksetzen
+                            s.spieler_id = None
+                            s.current_player = None
+                            s.player_data = {}
+                            if hasattr(s, "karten_matrizen"):
+                                delattr(s, "karten_matrizen")
+                            if hasattr(s, "aufgedeckt_matrizen"):
+                                delattr(s, "aufgedeckt_matrizen")
+                            # Andere relevante Variablen zurücksetzen...
 
-                    elif event.key == pygame.K_BACKSPACE:
-                        s.text_input = s.text_input[:-1]
-                    else:
-                        if len(s.text_input) < 12:  # Maximal 12 Zeichen erlauben
-                            s.text_input += event.unicode
+                    # HIER NEUEN CODE EINFÜGEN:
+                    my_layout = cP.player_cardlayouts.get(s.spieler_id)
+                    
+                    # Ablehnen-Button wurde geklickt
+                    if hasattr(s, "ablehnen_button_rect") and hasattr(s, "gezogene_karte") and s.gezogene_karte is not None:
+                        print(f"[DEBUG] Prüfe Ablehnen-Button: {pos} vs {s.ablehnen_button_rect}")
+                        if s.ablehnen_button_rect.collidepoint(pos):
+                            print("[DEBUG] Ablehnen-Button geklickt!")
+                            gp.handle_reject_button(my_layout)
+                    
+                    # Nur der aktuelle Spieler darf Aktionen ausführen
+                    if hasattr(s, "current_player") and s.current_player == s.spieler_id:
+                        # Kartenstapel angeklickt
+                        if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(pos):
+                            print("[DEBUG] Kartenstapel wurde angeklickt!")
+                            gp.handle_draw_pile_click(s.sock, s.spieler_id)
+                        
+                        # Ablagestapel angeklickt
+                        elif hasattr(s, "discard_stack_rect") and s.discard_stack_rect.collidepoint(pos):
+                            print("[DEBUG] Ablagestapel wurde angeklickt!")
+                            gp.handle_discard_pile_click(s.sock, s.spieler_id)
+                    
+                    # Kartenauswahl für das Aufdecken oder Tauschen
+                    if my_layout:
+                        for row_idx, row in enumerate(my_layout.cards):
+                            for col_idx, card in enumerate(row):
+                                if card.rect.collidepoint(pos):
+                                    print(f"[DEBUG] Karte an Position ({row_idx}, {col_idx}) wurde angeklickt")
+                                    result = gp.handle_card_click(s.sock, s.spieler_id, my_layout, row_idx, col_idx, card)
+                                    print(f"[DEBUG] Ergebnis des Kartenklicks: {result}")
 
-        # Menü: Spielmodi Auswahl
-        if s.game_mode is None:
-            pygame.draw.rect(screen, (0, 200, 0), host_button)
-            pygame.draw.rect(screen, (200, 0, 0), join_button)
+                if event.type == pygame.KEYDOWN:
+                    if s.entering_ip and s.active:
+                        if event.key == pygame.K_RETURN:
+                            SERVER_IP = s.ip_input.strip()
+                            try:
+                                s.sock, s.spieler_id = c.connect_to_server(SERVER_IP)
+                                s.entering_ip = False
+                                s.waiting_for_name = True
+                                s.ip_input = ""
+                            except Exception as e:
+                                s.status_message = f"Verbindung fehlgeschlagen: {e}"
+                        elif event.key == pygame.K_BACKSPACE:
+                            s.ip_input = s.ip_input[:-1]
+                        else:
+                            s.ip_input += event.unicode
 
-            host_text = font.render("Spiel Hosten", True, (255, 255, 255))
-            join_text = font.render("Spiel Beitreten", True, (255, 255, 255))
+                    elif s.waiting_for_name and s.active:
+                        if event.key == pygame.K_RETURN:
+                            if s.sock:
+                                serv.send_data(s.sock, {"name": s.text_input.strip()})
+                            s.active = False
+                            s.text_input = ""
+                            s.waiting_for_name = False
+                            s.status_message = "Warten auf andere Spieler..."
+                            s.waiting_for_start = True
+                        elif event.key == pygame.K_BACKSPACE:
+                            s.text_input = s.text_input[:-1]
+                        else:
+                            if len(s.text_input) < 12:
+                                s.text_input += event.unicode
 
-            screen.blit(host_text, (host_button.x + 20, host_button.y + 10))
-            screen.blit(join_text, (join_button.x + 20, join_button.y + 10))
+            # Hier kannst du die Spiellogik für die Zwischenrunde implementieren
+            # Zum Beispiel das Anzeigen eines "Nächste Runde"-Buttons oder ähnliches
 
-        # Spieleranzahl auswählen (Host)
-        if s.waiting_for_players:
-            headline = font.render("Spieleranzahl wählen", True, (0, 0, 0))
-            screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 420))
-            total_width = len(player_count_buttons) * 60 - 10
-            start_x = screen.get_width() // 2 - total_width // 2
-            y = 480
-            for i, button in enumerate(player_count_buttons):
-                button.x = start_x + i * 60
-                button.y = y
-                pygame.draw.rect(screen, (0, 0, 255), button)
-                player_text = small_font.render(f"{i+1}", True, (255, 255, 255))
-                screen.blit(player_text, (button.x + button.width // 2 - player_text.get_width() // 2, button.y + 10))
-
-        # Rundenzahl auswählen (Host)
-        if s.waiting_for_rounds:
-            headline = font.render("Rundenanzahl wählen", True, (0, 0, 0))
-            screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 420))
-            total_width = len(round_count_buttons) * 60 - 10
-            start_x = screen.get_width() // 2 - total_width // 2
-            y = 480
-            for i, button in enumerate(round_count_buttons):
-                button.x = start_x + i * 60
-                button.y = y
-                pygame.draw.rect(screen, (255, 140, 0), button)
-                round_text = small_font.render(f"{i+1}", True, (255, 255, 255))
-                screen.blit(round_text, (button.x + button.width // 2 - round_text.get_width() // 2, button.y + 10))
-
-        # Namenseingabe
-        if s.waiting_for_name:
-            prompt_text = small_font.render(f"Bitte Namen eingeben:", True, (0, 0, 0))
-            screen.blit(prompt_text, (500, 420))
-            txt_surface = font.render(s.text_input, True, (0, 0, 0))
-            screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
-            pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
-
-        # IP Eingabe beim Join
-        if s.game_mode == "join" and s.entering_ip:
-            prompt = small_font.render("Host-IP eingeben:", True, (0, 0, 0))
-            screen.blit(prompt, (500, 420))
-            ip_surface = font.render(s.ip_input, True, (0, 0, 0))
-            screen.blit(ip_surface, (ip_input_box.x + 5, ip_input_box.y + 5))
-            pygame.draw.rect(screen, (0, 0, 0), ip_input_box, 2)
-
-        # Statusmeldung anzeigen
-        if s.status_message:
-            status_surface = font.render(s.status_message, True, (0, 0, 0))
-            screen.blit(status_surface, (screen.get_width() // 2 - status_surface.get_width() // 2, 100))
-
-        # Auf Startnachricht vom Server warten
-        if s.waiting_for_start and s.sock:
-            s.sock.setblocking(False)
-            try:
-                msg = serv.recv_data(s.sock)
-                if msg and "message" in msg:
-                    s.status_message = msg["message"]
-                    if "startet" in s.status_message.lower():
-                        s.waiting_for_start = False
-            except BlockingIOError:
-                # Kein neuer Input, einfach ignorieren
-                pass
-            except Exception as e:
-                print(f"[FEHLER] Empfangsfehler: {e}")
-                s.status_message = "Verbindungsfehler!"
-                s.waiting_for_start = False
-            finally:
-                s.sock.setblocking(True)
+            su.draw(screen)
 
         pygame.display.flip()
         clock.tick(30)
@@ -239,5 +306,8 @@ def main():
     pygame.quit()
     sys.exit()
 
-if __name__ == "__main__":
+
+
+
+if __name__ == "__main__": 
     main()

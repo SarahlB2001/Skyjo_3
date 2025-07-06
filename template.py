@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print(f"Bildschirmbreite: {width} Pixel")
     print(f"Bildschirmhöhe: {height} Pixel")
 
-
+''''
 class CardLayout:
     def __init__( self, start_x, start_y, rows=s.ROWS, cols=s.COLS):
         pygame.draw.rect(su.WINDOW, s.BLACK, (start_x + sc.card1 ["x"], start_y + sc.card1 ["y"], sc.card_width, sc.card_height))
@@ -54,3 +54,5 @@ class CardLayout:
         for row in self.cards:
             for card in row:
                 card.draw(surface)
+
+            '''

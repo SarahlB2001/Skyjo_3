@@ -33,18 +33,10 @@ PL_NAME_POS = 1.3 * PLAYER_SIZE
 #PLAYER_FONT = pygame.font.SysFont("comicsans", PLAYER_SIZE)
 PLAYER_FONT_COLOR = BLACK
 
-PL_ANZAHL = 6
-# PL_ANZAHL = serv.anzahl_spieler
-
 # Variablen für den Server
 player_data = {}
+player_daten = {}
 
-player_daten = {'Spieler 1': 'eins',
-                'Spieler 2': 'zwei',
-                'Spieler 3': 'drei',
-                'Spieler 4': 'vier',
-                'Spieler 5': 'funf',
-                'Spieler 6': 'sechs'}
 
 connection = []
 player_count = None
@@ -70,13 +62,37 @@ spieler_id = None
 ROWS = 3
 COLS = 4
 
-CARD_WIDTH = 50
-CARD_HEIGHT = 90
-gap_width = 10
-gap_height = 10
+CARD_WIDTH = 40
+CARD_HEIGHT = 70
+gap_width = 45
+gap_height = 3
 
+cards_flipped_this_turn = 0 
+current_player = None  # Der Spieler, der gerade am Zug ist
 
 
 CARD_IMAGES= {
     i: f"img/card_{i}.png" for i in range ( -2, 13)
 }
+
+# Zustandsvariablen für Spielzüge
+tausche_mit_ablagestapel = False
+warte_auf_entscheidung = False
+gezogene_karte = None
+muss_karte_aufdecken = False
+setup_phase = True  # Phase in der 2 Karten aufgedeckt werden
+zug_begonnen = False  # Zeigt an, ob der Spieler bereits eine Aktion in diesem Zug begonnen hat
+
+# Rundenspezifische Variablen
+round_count = None  # Anzahl der zu spielenden Runden
+current_round = 1   # Aktuelle Rundenummer
+round_ending = False  # Flag für Rundenende
+between_rounds = False  # Flag für Anzeige zwischen Runden
+game_over = False  # Flag für Spielende
+round_end_trigger = None  # Spieler, der das Rundenende ausgelöst hat
+total_scores = {}  # Gesamtpunktzahlen aller Spieler
+round_scores = {}  # Punktzahlen nach Runden
+
+# Temporäre Nachrichteneinstellungen
+temp_message = ""
+temp_message_time = 0

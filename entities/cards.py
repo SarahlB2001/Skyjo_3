@@ -33,12 +33,19 @@ class Card:
         self.width = width
         self.height = height
         self.is_face_up = is_face_up
-        self.front_image = pygame.transform.scale(CARD_IMAGES[value], (77, 54))
+        self.is_removed = False  # Neue Eigenschaft: Karte wurde entfernt
+        self.front_image = pygame.transform.scale(CARD_IMAGES[value], (width, height))
         self.back_image = pygame.transform.scale(CARD_BACK_IMAGE, (width, height))
         self.rect = pygame.Rect(x, y, width, height)
     
     def draw(self, screen):
-        return 
+        if self.is_removed:
+            # Wenn die Karte entfernt wurde, zeichne gar nichts
+            return  # Einfach zurückkehren ohne etwas zu zeichnen
+        elif self.is_face_up:
+            screen.blit(self.front_image, (self.x, self.y))
+        else:
+            screen.blit(self.back_image, (self.x, self.y))
 
     def flip(self):
         """Dreht die Karte um (verdeckt <-> offen) und löst ein Event aus."""

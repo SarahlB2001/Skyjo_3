@@ -16,21 +16,40 @@ drei = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
         'y': s.WIDTH // 16}
 
 vier = {'x': s.HEIGHT * 3 // 4 - s.HEIGHT // 16,
-        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
+        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9}
 
 funf = {'x': s.HEIGHT // 8 + s.HEIGHT // 4,
-        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
+        'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9}
 
 sechs = {'x': s.HEIGHT // 16,
-         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//16}
+         'y': s.WIDTH - s.WIDTH//4 - s.WIDTH//9}
 
 size = {'height': s.WIDTH // 4,
         'width': s.HEIGHT // 4}
 
-carddeck = {'x': (s.HEIGHT - (2*s.HEIGHT // 16 + s.HEIGHT // 4)) // 2,
-            'y': s.WIDTH // 2 - (s.WIDTH // 4) // 2,
-            'width': 2 * s.HEIGHT // 16 + s.HEIGHT // 4,
-            'height': s.WIDTH // 4}
+stapel_width = 80
+stapel_height = 120
+abstand = 30
+
+gesamt_breite = stapel_width * 2 + abstand
+center_x = s.HEIGHT // 2
+center_y = s.WIDTH // 2
+
+verschiebung_nach_oben = 70
+
+carddeck = {
+    'x': center_x - gesamt_breite // 2,
+    'y': center_y - stapel_height // 2 - verschiebung_nach_oben,
+    'width': stapel_width,
+    'height': stapel_height
+}
+
+discarddeck = {
+    'x': center_x - gesamt_breite // 2 + stapel_width + abstand,
+    'y': center_y - stapel_height // 2 - verschiebung_nach_oben,
+    'width': stapel_width,
+    'height': stapel_height
+}
 
 field_pos = {'1': eins,
              '2': zwei,
@@ -39,7 +58,8 @@ field_pos = {'1': eins,
              '5': funf,
              '6': sechs,
              'size': size,
-             'carddeck': carddeck}
+             'carddeck': carddeck,
+             'discarddeck': discarddeck}
 
 player_pos = {2: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS)],
               3: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (funf ['x'], funf['y'] - s.PL_NAME_POS)],

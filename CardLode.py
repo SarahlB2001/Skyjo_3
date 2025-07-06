@@ -1,8 +1,11 @@
-import pygame 
+import pygame
 import layout as l
 import surface as su
 from dictionaries import setcard as sc
 
+''''
+start_x = 1
+start_y = 1
 
 bild_2 = pygame.image.load("Karten_png/card_-2.png")
 bild_1 = pygame.image.load("Karten_png/card_-1.png")
@@ -55,4 +58,3 @@ su.WINDOW.blit(bild10, (start_x + sc.card10["x"], start_y + sc.card10["y"]))
 su.WINDOW.blit(bild11, (start_x + sc.card11["x"], start_y + sc.card11["y"]))
 su.WINDOW.blit(bild12, (start_x + sc.card12["x"], start_y + sc.card12["y"]))
 su.WINDOW.blit(bildb, (start_x + sc.cardb["x"], start_y + sc.cardb["y"]))
-'''
