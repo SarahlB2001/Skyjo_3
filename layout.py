@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
 class CardLayout:
     def __init__( self, start_x, start_y, rows=s.ROWS, cols=s.COLS):
-        pygame.draw.rect(su.WINDOW, s.BLACK, (start_x + sc.card1 ["x"], start_y + sc.card1 ["y"], sc.card_width, sc.card_height))
+        pygame.draw.rect(su.WINDOW, s.GREEN, (start_x + sc.card1 ["x"], start_y + sc.card1 ["y"], sc.card_width, sc.card_height))
         pygame.draw.rect(su.WINDOW, s.BLACK, (start_x + sc.card2 ["x"], start_y + sc.card2 ["y"], sc.card_width, sc.card_height))
         pygame.draw.rect(su.WINDOW, s.BLACK, (start_x + sc.card3 ["x"], start_y + sc.card3 ["y"], sc.card_width, sc.card_height))
         pygame.draw.rect(su.WINDOW, s.BLACK, (start_x + sc.card4 ["x"], start_y + sc.card4 ["y"], sc.card_width, sc.card_height))
@@ -40,7 +40,7 @@ class CardLayout:
         pygame.draw.rect(su.WINDOW, s.BLACK, (start_x + sc.card11 ["x"], start_y + sc.card11 ["y"], sc.card_width, sc.card_height))
         pygame.draw.rect(su.WINDOW, s.BLACK, (start_x + sc.card12 ["x"], start_y + sc.card12 ["y"], sc.card_width, sc.card_height))
 
-        
+
             #     card = Card(0, x, y, s.CARD_WIDTH, s.CARD_HEIGHT, is_face_up=False)
             #     row_cards.append(card)
             # self.cards.append(row_cards) 

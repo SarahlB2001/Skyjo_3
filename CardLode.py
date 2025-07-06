@@ -38,6 +38,7 @@ bild11 = pygame.transform.scale(bild11, ( sc.card_width, sc.card_height))
 bild12 = pygame.transform.scale(bild12, ( sc.card_width, sc.card_height))
 bildb = pygame.transform.scale(bildb, ( sc.card_width, sc.card_height))
 
+'''
 su.WINDOW.blit(bild_2, (start_x + sc.card_2["x"], start_y + sc.card2-["y"]))
 su.WINDOW.blit(bild_1, (start_x + sc.card_1["x"], start_y + sc.card1-["y"]))
 su.WINDOW.blit(bild0, (start_x + sc.card0["x"], start_y + sc.card0["y"]))
@@ -54,3 +55,4 @@ su.WINDOW.blit(bild10, (start_x + sc.card10["x"], start_y + sc.card10["y"]))
 su.WINDOW.blit(bild11, (start_x + sc.card11["x"], start_y + sc.card11["y"]))
 su.WINDOW.blit(bild12, (start_x + sc.card12["x"], start_y + sc.card12["y"]))
 su.WINDOW.blit(bildb, (start_x + sc.cardb["x"], start_y + sc.cardb["y"]))
+'''
