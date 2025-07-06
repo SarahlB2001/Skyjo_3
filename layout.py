@@ -18,7 +18,7 @@ class CardLayout:
                 row_cards.append(card)
             self.cards.append(row_cards)
 
-    def draw ( self, surface):
+    def draw (self, surface):
         for row in self.cards:
             for card in row:
                 card.draw(surface)

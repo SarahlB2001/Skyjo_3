@@ -14,14 +14,14 @@ player_fields = {
     6: ['1', '2', '3', '4', '5', '6']
 }
 
-WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
+screen = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
 PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
 
 BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
 BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
 
 def first_draw():
-    WINDOW.fill(s.WINDOW_COLOR)
+    screen.fill(s.WINDOW_COLOR)
 
     pygame.display.flip()
 
@@ -34,7 +34,7 @@ def draw_player_names():
             y = pl.field_pos[f]['y']
             name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)
             text_rect = name_text.get_rect(center=(x + pl.field_pos['size']['width'] // 2, y - 25))
-            WINDOW.blit(name_text, text_rect)
+            screen.blit(name_text, text_rect)
 
 '''''
 def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
@@ -54,10 +54,10 @@ def player_place_position():
         if index < len(pl.player_pos[s.player_count]):
             x_pos, y_pos = pl.player_pos[s.player_count][index]
             name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)
-            WINDOW.blit(name_text, (x_pos, y_pos))
+            screen.blit(name_text, (x_pos, y_pos))
 
 
-def draw(screen):
+def draw():
     screen.blit(BACKGROUND_IMAGE, (0, 0))
     cP.card_place_position(screen)
 

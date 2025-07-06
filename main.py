@@ -15,7 +15,7 @@ from entities import gameprocess as gp
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
+    screen = su.screen
     pygame.display.set_caption("Mehrspieler Spiel")
 
     font = pygame.font.SysFont(None, 36)
