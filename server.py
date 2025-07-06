@@ -234,6 +234,14 @@ def client_thread(conn, spieler_id):
             else:
                 break
 
+        # nach dem Aufdecken aller Karten und vor dem Senden der Punkte:
+        scores = sgp.calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen, ausloeser_id=s.round_end_trigger_player)
+        for v in s.connection:
+            send_data(v, {
+                "update": "punkte_aktualisiert",
+                "scores": scores
+            })
+
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")
 

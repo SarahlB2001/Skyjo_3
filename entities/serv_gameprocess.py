@@ -28,22 +28,40 @@ def generate_random_card():
     """Generiert eine zufällige Karte für den Nachziehstapel"""
     return random.randint(-2, 12)
 
-def berechne_punktzahl(matrix, aufgedeckt_matrix):
-    """Berechnet die Punktzahl für einen Spieler"""
+def berechne_punktzahl(matrix, aufgedeckt_matrix, spieler_id):
+    """Berechnet die Punktzahl für einen Spieler, entfernt Triplets korrekt"""
     punkte = 0
+    removed = []
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed = [(card["row"], card["col"]) for card in s.removed_cards[spieler_id]]
     for row in range(len(matrix)):
         for col in range(len(matrix[0])):
-            if aufgedeckt_matrix[row][col]:
+            if aufgedeckt_matrix[row][col] and (row, col) not in removed:
                 punkte += matrix[row][col]
+    # Triplets abziehen (jede entfernte Spalte = 3 Karten)
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed_cols = [card["col"] for card in s.removed_cards[spieler_id]]
+        for col in set(removed_cols):
+            triplet_value = matrix[0][col]
+            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen!
     return punkte
 
-def calculate_scores(karten_matrizen, aufgedeckt_matrizen):
-    """Berechnet die Punktzahl für alle Spieler"""
+def calculate_scores(karten_matrizen, aufgedeckt_matrizen, ausloeser_id=None):
+    """Berechnet die Scores für alle Spieler. Beim Auslöser ggf. Verdopplung."""
     scores = {}
     for pid in karten_matrizen.keys():
         matrix = karten_matrizen[pid]
         aufgedeckt_matrix = aufgedeckt_matrizen[pid]
-        scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix)
+        # KORREKT: Nutze die Triplet-fähige Funktion!
+        scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix, pid)
+
+    # Skyjo-Regel: Wenn Auslöser nicht den niedrigsten Score hat, wird sein Score verdoppelt
+    if ausloeser_id is not None:
+        ausloeser_score = scores[ausloeser_id]
+        min_score = min(scores.values())
+        if any(pid != ausloeser_id and score <= ausloeser_score for pid, score in scores.items()):
+            scores[ausloeser_id] = ausloeser_score * 2
+
     return scores
 
 def determine_starting_player(scores):
@@ -84,6 +102,16 @@ def handle_card_flip(daten, connection, send_data):
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
+    # NEU: Rundenende prüfen
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     return spieler_id, karte
 
 def check_if_setup_complete(player_count, cards_flipped, connection, send_data):
@@ -151,9 +179,19 @@ def handle_take_discard_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
 
-    # Auf Dreierkombinationen prüfen
+    # Nach dem Tausch:
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
+    # NEU: Rundenende prüfen
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     return spieler_id, s.discard_card
 
 def handle_take_draw_pile(daten, connection, send_data):
@@ -202,13 +240,19 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
 
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
-
-    # Wenn eine Dreierkombination gefunden wurde, kurz warten
     if hat_triplets:
         import time
-        time.sleep(2.0)  # Warten, damit die Triplet-Nachricht verarbeitet wird
-
-    # Nächster Spieler
+        time.sleep(2.0)
+    # NEU: Rundenende prüfen
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     next_player = update_next_player(spieler_id, connection, send_data)
 
     return spieler_id, alte_karte
@@ -241,13 +285,62 @@ def update_next_player(spieler_id, connection, send_data):
     # Nächster Spieler ist dran
     s.current_player = get_next_player(spieler_id, s.spielreihenfolge)
 
-    # Allen Clients den nächsten Spieler mitteilen
+    # NEU: Rundenende prüfen
+    if s.round_end_triggered and s.current_player == s.round_end_trigger_player:
+        # Rundenende wirklich durchführen!
+        for v in connection:
+            send_data(v, {
+                "update": "round_ended"
+            })
+        print("[INFO] Runde beendet!")
+
+        # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
+        time.sleep(4)
+
+        # Alle verdeckten Karten aufdecken
+        for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
+            for row in range(len(aufgedeckt_matrix)):
+                for col in range(len(aufgedeckt_matrix[row])):
+                    if not aufgedeckt_matrix[row][col]:
+                        entfernt = False
+                        if hasattr(s, "removed_cards") and pid in s.removed_cards:
+                            entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
+                        if not entfernt:
+                            aufgedeckt_matrix[row][col] = True
+                            for v in connection:
+                                send_data(v, {
+                                    "update": "karte_aufgedeckt",
+                                    "spieler": pid,
+                                    "karte": {"row": row, "col": col}
+                                })
+
+        # KORREKTUR: Längere Wartezeit für die Verarbeitung
+        time.sleep(3)  # 3 Sekunden statt nur 1
+
+        # KORREKTUR: Trigger-Spieler explizit übergeben
+        scores = calculate_scores(
+            s.karten_matrizen,
+            s.aufgedeckt_matrizen,
+            ausloeser_id=s.round_end_trigger_player  # Diese wichtige Parameter fehlte!
+        )
+
+        # Allen Clients die finalen Punktzahlen mitteilen
+        for v in connection:
+            send_data(v, {
+                "update": "punkte_aktualisiert",
+                "scores": scores
+            })
+
+        s.round_end_triggered = False
+        s.round_end_trigger_player = None
+        return s.current_player
+
+    # Normal weitermachen
     for v in connection:
         send_data(v, {
             "update": "naechster_spieler",
             "spieler": s.current_player
         })
-
     return s.current_player
 
 # Die bestehende check_if_all_cards_revealed Funktion ersetzen
@@ -255,100 +348,19 @@ def check_if_all_cards_revealed(spieler_id):
     """Prüft, ob ein Spieler alle seine Karten aufgedeckt hat"""
     return triplet_logic.check_if_all_cards_revealed_with_triplets(spieler_id)
 
+def all_cards_visible_or_removed(spieler_id):
+    """True, wenn alle Karten aufgedeckt oder entfernt sind."""
+    aufgedeckt = s.aufgedeckt_matrizen[spieler_id]
+    removed = set()
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed = {(c["row"], c["col"]) for c in s.removed_cards[spieler_id]}
+    for r, row in enumerate(aufgedeckt):
+        for c, is_up in enumerate(row):
+            if not is_up and (r, c) not in removed:
+                return False
+    return True
+
 def remove_column_triplets(spieler_id, connection, send_data):
     """Entfernt Dreierkombinationen in den Spalten (delegiert an triplet_logic)"""
     # Einfach die Funktion aus dem triplet_logic Modul aufrufen
     return triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
-
-def handle_round_end(connection, send_data):
-    """Verarbeitet das Rundenende, wenn ein Spieler alle Karten aufgedeckt hat"""
-    print("[DEBUG] Rundenende wird eingeleitet...")
-
-    # Prüfen, ob bereits ein Rundenende im Gang ist
-    if hasattr(s, "round_ending") and s.round_ending:
-        print("[DEBUG] Rundenende bereits im Gang - Spieler für letzte Züge:", s.last_turn_players)
-        return False
-
-    # Flag setzen, dass Rundenende im Gang ist
-    s.round_ending = True
-
-    trigger_player = int(s.current_player)
-    s.round_end_trigger = trigger_player  # Spieler, der das Rundenende ausgelöst hat
-
-    # Spieler, die noch einen letzten Zug haben (alle außer dem Auslöser)
-    s.last_turn_players = [p for p in s.spielreihenfolge if int(p) != s.round_end_trigger]
-    print(f"[DEBUG] Spieler für letzte Züge: {s.last_turn_players}")
-
-    # Allen Clients mitteilen, dass das Rundenende begonnen hat
-    for v in connection:
-        send_data(v, {
-            "update": "round_end_started",
-            "trigger_player": s.round_end_trigger,
-            "last_turn_players": s.last_turn_players
-        })
-
-    # FIXED: Direkt den ersten Spieler aus last_turn_players als nächsten Spieler setzen
-    # statt find_next_last_turn_player zu verwenden
-    if s.last_turn_players:
-        s.current_player = s.last_turn_players[0]
-        print(f"[DEBUG] Erster Spieler für letzten Zug: {s.current_player}")
-
-        # Allen Clients den nächsten Spieler mitteilen
-        for v in connection:
-            send_data(v, {
-                "update": "naechster_spieler",
-                "spieler": s.current_player
-            })
-    else:
-        # Wenn keine weiteren Spieler vorhanden sind, Runde beenden
-        finalize_round(connection, send_data)
-
-    return True
-
-def find_next_last_turn_player(current_player):
-    """Findet den nächsten Spieler, der seinen letzten Zug machen muss"""
-    if not hasattr(s, "last_turn_players") or not s.last_turn_players:
-        print("[DEBUG] Keine weiteren Spieler für letzten Zug")
-        return None
-
-    # FIXED: Sicherstellen, dass wir nicht denselben Spieler nochmal wählen
-    for player in s.last_turn_players:
-        if player != current_player:
-            print(f"[DEBUG] Nächster Spieler für letzten Zug: {player} (aus Liste: {s.last_turn_players})")
-            return player
-
-    # Wenn kein anderer Spieler gefunden wird (unwahrscheinlich), ersten nehmen
-    next_player = s.last_turn_players[0]
-    print(f"[DEBUG] Nächster Spieler für letzten Zug: {next_player} (aus Liste: {s.last_turn_players})")
-    return next_player
-
-def finalize_round(connection, send_data):
-    """Beendet die Runde und deckt alle Karten auf"""
-    print("[DEBUG] Runde wird beendet...")
-
-    # Alle verbleibenden Karten aufdecken
-    for pid in range(1, s.player_count + 1):
-        for row in range(len(s.aufgedeckt_matrizen[pid])):
-            for col in range(len(s.aufgedeckt_matrizen[pid][row])):
-                s.aufgedeckt_matrizen[pid][row][col] = True
-
-    # Punktzahlen berechnen
-    scores = calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen)
-
-    # Prüfen, ob der Auslöser die niedrigste Punktzahl hat
-    min_score = min(scores.values())
-    min_players = [pid for pid, score in scores.items() if score == min_score]
-
-    # Bei Gleichstand zählt der Auslöser nicht als niedrigste Punktzahl
-    if s.round_end_trigger not in min_players or len(min_players) > 1:
-        print(f"[DEBUG] Auslöser {s.round_end_trigger} hat nicht die niedrigste Punktzahl. Punkte werden verdoppelt!")
-        scores[s.round_end_trigger] *= 2
-
-    # Allen Clients das Rundenende mitteilen
-    for v in connection:
-        send_data(v, {
-            "update": "round_end",
-            "final_scores": scores,
-            "trigger_player": s.round_end_trigger,
-            "aufgedeckt_matrizen": s.aufgedeckt_matrizen
-        })

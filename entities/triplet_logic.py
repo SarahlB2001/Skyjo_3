@@ -6,7 +6,7 @@ und auf den Ablagestapel gelegt.
 """
 import settings as s
 
-def check_column_for_triplets(matrix, aufgedeckt_matrix):
+def check_column_for_triplets(matrix, aufgedeckt_matrix, spieler_id):
     """
     Prüft, ob drei gleiche aufgedeckte Karten in einer Spalte sind.
     
@@ -21,17 +21,17 @@ def check_column_for_triplets(matrix, aufgedeckt_matrix):
     rows = len(matrix)
     columns_to_remove = []
     
-    # Überprüfen, ob diese Spalte bereits entfernt wurde
+    # Überprüfen, ob Spalten bereits entfernt wurden, 
+    # aber NUR für den aktuellen Spieler!
     removed_columns = set()
-    if hasattr(s, "removed_cards"):
-        for spieler_id, cards in s.removed_cards.items():
-            for card in cards:
-                removed_columns.add(card["col"])
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        for card in s.removed_cards[spieler_id]:  # Nur die Karten des aktuellen Spielers
+            removed_columns.add(card["col"])
     
     for col in range(cols):
-        # Spalte überspringen, wenn sie bereits als entfernt markiert wurde
+        # Spalte überspringen, wenn sie bereits für DIESEN Spieler entfernt wurde
         if col in removed_columns:
-            print(f"[DEBUG] Spalte {col} wurde bereits entfernt, überspringe")
+            print(f"[DEBUG] Spalte {col} wurde bereits bei Spieler {spieler_id} entfernt, überspringe")
             continue
             
         # Nur aufgedeckte Karten in dieser Spalte sammeln
@@ -63,7 +63,7 @@ def remove_column_triplets(spieler_id, connection, send_data):
     aufgedeckt_matrix = s.aufgedeckt_matrizen[spieler_id]
     
     # Spalten mit Dreierkombinationen finden
-    columns_to_remove = check_column_for_triplets(matrix, aufgedeckt_matrix)
+    columns_to_remove = check_column_for_triplets(matrix, aufgedeckt_matrix, spieler_id)  # spieler_id als Parameter übergeben
     
     if not columns_to_remove:
         return False, None  # Keine Dreierkombinationen gefunden
@@ -120,6 +120,17 @@ def remove_column_triplets(spieler_id, connection, send_data):
         # WICHTIG: Zusätzliche Pause nach dem Senden, bevor weitere Nachrichten gesendet werden
         time.sleep(2.0)  # Längere Pause, damit die Nachricht komplett angezeigt wird
     
+    # Nach dem Entfernen:
+    from entities.serv_gameprocess import all_cards_visible_or_removed
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     return True, columns_to_remove
 
 def is_affected_by_triplet_removal(spieler_id, row, col):
