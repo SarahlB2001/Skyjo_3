@@ -132,7 +132,24 @@ def handle_take_discard_pile(daten, connection, send_data):
             "neue_karte": discard_value,
             "ablagestapel": alte_karte
         })
-    
+
+    # Letzter-Zug-Logik für Rundenende
+    if hasattr(s, "round_ending") and s.round_ending and hasattr(s, "last_turn_players") and spieler_id in s.last_turn_players:
+        s.last_turn_players.remove(spieler_id)
+        if not s.last_turn_players:
+            finalize_round(connection, send_data)
+            return spieler_id, s.discard_card
+        else:
+            next_player = find_next_last_turn_player(spieler_id)
+            if next_player:
+                s.current_player = next_player
+                for v in connection:
+                    send_data(v, {
+                        "update": "naechster_spieler",
+                        "spieler": s.current_player
+                    })
+            return spieler_id, s.discard_card
+
     return spieler_id, s.discard_card
 
 def handle_take_draw_pile(daten, connection, send_data):
@@ -159,16 +176,16 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
     """Verarbeitet den Tausch mit einer Karte vom Nachziehstapel"""
     spieler_id = daten["spieler_id"]
     ziel_karte = daten["ziel_karte"]
-    
+
     # Karte aus der Spielerhand nehmen und auf Ablagestapel legen
     row, col = ziel_karte["row"], ziel_karte["col"]
     alte_karte = s.karten_matrizen[spieler_id][row][col]
-    
+
     # Karten tauschen
     s.karten_matrizen[spieler_id][row][col] = s.gezogene_karte
     s.aufgedeckt_matrizen[spieler_id][row][col] = True  # Karte ist immer offen
     s.discard_card = alte_karte
-    
+
     # Allen Clients mitteilen
     for v in connection:
         send_data(v, {
@@ -178,21 +195,38 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
             "neue_karte": s.gezogene_karte,
             "ablagestapel": alte_karte
         })
-    
+
+    # Letzter-Zug-Logik für Rundenende
+    if hasattr(s, "round_ending") and s.round_ending and hasattr(s, "last_turn_players") and spieler_id in s.last_turn_players:
+        s.last_turn_players.remove(spieler_id)
+        if not s.last_turn_players:
+            finalize_round(connection, send_data)
+            return spieler_id, alte_karte
+        else:
+            next_player = find_next_last_turn_player(spieler_id)
+            if next_player:
+                s.current_player = next_player
+                for v in connection:
+                    send_data(v, {
+                        "update": "naechster_spieler",
+                        "spieler": s.current_player
+                    })
+            return spieler_id, alte_karte
+
     return spieler_id, alte_karte
 
 def handle_reject_draw_pile(daten, connection, send_data):
     """Verarbeitet das Ablehnen einer Karte vom Nachziehstapel"""
     spieler_id = daten["spieler_id"]
     aufzudeckende_karte = daten["aufzudeckende_karte"]
-    
+
     # Abgelehnte Karte auf den Ablagestapel
     s.discard_card = s.gezogene_karte
-    
+
     # Karte des Spielers aufdecken
     row, col = aufzudeckende_karte["row"], aufzudeckende_karte["col"]
     s.aufgedeckt_matrizen[spieler_id][row][col] = True
-    
+
     # Allen Clients mitteilen
     for v in connection:
         send_data(v, {
@@ -201,7 +235,24 @@ def handle_reject_draw_pile(daten, connection, send_data):
             "ablagestapel": s.gezogene_karte,
             "aufgedeckte_karte": {"row": row, "col": col}
         })
-    
+
+    # Letzter-Zug-Logik für Rundenende
+    if hasattr(s, "round_ending") and s.round_ending and hasattr(s, "last_turn_players") and spieler_id in s.last_turn_players:
+        s.last_turn_players.remove(spieler_id)
+        if not s.last_turn_players:
+            finalize_round(connection, send_data)
+            return spieler_id
+        else:
+            next_player = find_next_last_turn_player(spieler_id)
+            if next_player:
+                s.current_player = next_player
+                for v in connection:
+                    send_data(v, {
+                        "update": "naechster_spieler",
+                        "spieler": s.current_player
+                    })
+            return spieler_id
+
     return spieler_id
 
 def update_next_player(spieler_id, connection, send_data):
@@ -217,3 +268,24 @@ def update_next_player(spieler_id, connection, send_data):
         })
     
     return s.current_player
+
+def find_next_last_turn_player(current_player):
+    if not hasattr(s, "last_turn_players") or not s.last_turn_players:
+        return None
+
+    player_order = s.spielreihenfolge
+    current_idx = player_order.index(current_player) if current_player in player_order else -1
+
+    for i in range(1, len(player_order) + 1):
+        next_idx = (current_idx + i) % len(player_order)
+        next_player = player_order[next_idx]
+
+        # Wenn der Auslöser wieder dran wäre, Runde beenden
+        if next_player == s.round_end_trigger:
+            s.last_turn_players.clear()
+            return None
+
+        if next_player in s.last_turn_players:
+            return next_player
+
+    return None
