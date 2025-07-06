@@ -7,7 +7,7 @@ import functions.client as c
 import server as serv
 import layout as l
 import settings as s
-import surface as su
+#import surface as su
 import time
 from dictionaries import cardSetPosition as cP
 from entities import gameprocess as gp
@@ -17,6 +17,10 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
     pygame.display.set_caption("Mehrspieler Spiel")
+
+    # Initialize surface module
+    import surface as su
+    su.initialize()
 
     font = pygame.font.SysFont(None, 36)
     small_font = pygame.font.SysFont(None, 28)

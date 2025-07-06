@@ -1,24 +1,30 @@
 import settings as s
 from dictionaries import plaPosition as pl
 from dictionaries import cardSetPosition as cP
-# import server as serv
 import pygame
-pygame.init()
 import layout as l
+import time
 
 player_fields = {
     2: ['1', '3'],
     3: ['1', '3', '5'],
-    4: ['1', '3', '4', '6'],
+    4: ['1', '3', '4', '5', '6'],
     5: ['1', '3', '4', '5', '6'],
     6: ['1', '2', '3', '4', '5', '6']
 }
 
-WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
-PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
+# Move these global variables to initialization function
+WINDOW = None
+PLAYER_FONT = None
+BACKGROUND_IMAGE = None
 
-BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
-BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
+# Add initialization function
+def initialize():
+    global WINDOW, PLAYER_FONT, BACKGROUND_IMAGE
+    WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
+    PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
+    BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
+    BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
 
 def first_draw():
     WINDOW.fill(s.WINDOW_COLOR)
@@ -163,3 +169,18 @@ def draw(screen):
         
         if text:
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+            
+    # NEUER CODE: Anzeige für Dreierkombinationen (temporäre Meldung)
+    if hasattr(s, "triplet_removal_time") and time.time() - s.triplet_removal_time < 3:
+        # 3 Sekunden anzeigen
+        font = pygame.font.SysFont(None, 36)
+        text = font.render(s.triplet_message, True, (255, 0, 0))  # Rote Schrift
+        
+        # Hintergrund für bessere Sichtbarkeit
+        text_rect = text.get_rect(center=(screen.get_width()//2, 50))
+        bg_rect = text_rect.inflate(20, 10)  # Etwas größer für Padding
+        pygame.draw.rect(screen, (255, 255, 200), bg_rect)  # Heller Hintergrund
+        pygame.draw.rect(screen, (0, 0, 0), bg_rect, 2)     # Schwarzer Rahmen
+        
+        # Text darüber
+        screen.blit(text, text_rect)

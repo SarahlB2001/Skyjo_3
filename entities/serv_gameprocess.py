@@ -5,6 +5,7 @@ This avoids UI-related imports and window creation
 import random
 import time
 import settings as s
+from entities import triplet_logic  # Neuer Import
 
 def create_card_matrices(player_count, rows, cols):
     """Erzeugt die Kartenmatrizen für alle Spieler"""
@@ -80,6 +81,9 @@ def handle_card_flip(daten, connection, send_data):
         s.cards_flipped = {}
     s.cards_flipped[spieler_id] = s.cards_flipped.get(spieler_id, 0) + 1
     
+    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+    
     return spieler_id, karte
 
 def check_if_setup_complete(player_count, cards_flipped, connection, send_data):
@@ -133,6 +137,9 @@ def handle_take_discard_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
     
+    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+    
     return spieler_id, s.discard_card
 
 def handle_take_draw_pile(daten, connection, send_data):
@@ -179,6 +186,9 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
     
+    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+    
     return spieler_id, alte_karte
 
 def handle_reject_draw_pile(daten, connection, send_data):
@@ -217,3 +227,13 @@ def update_next_player(spieler_id, connection, send_data):
         })
     
     return s.current_player
+
+# Die bestehende check_if_all_cards_revealed Funktion ersetzen
+def check_if_all_cards_revealed(spieler_id):
+    """Prüft, ob ein Spieler alle seine Karten aufgedeckt hat"""
+    return triplet_logic.check_if_all_cards_revealed_with_triplets(spieler_id)
+
+def remove_column_triplets(spieler_id, connection, send_data):
+    """Entfernt Dreierkombinationen in den Spalten (delegiert an triplet_logic)"""
+    # Einfach die Funktion aus dem triplet_logic Modul aufrufen
+    return triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
