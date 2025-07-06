@@ -169,25 +169,3 @@ def draw(screen):
         
         if text:
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
-            
-    # Anzeige für Dreierkombinationen (temporäre Meldung)
-    if hasattr(s, "triplet_removal_time") and time.time() - s.triplet_removal_time < 3:
-        # Text im gleichen Format wie andere Nachrichten
-        font = pygame.font.SysFont(None, 22)
-        text = font.render(s.triplet_message, True, (0, 0, 0))
-        
-        # An der gleichen Position wie andere Nachrichten
-        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
-        
-        # Benachrichtigung nach Ablauf der Zeit entfernen
-        if time.time() - s.triplet_removal_time >= 2.0:
-            try:
-                # Debug-Ausgabe hinzufügen
-                print("[DEBUG] Entferne Triplet-Benachrichtigung")
-                # Attribute explizit auf None setzen und dann entfernen
-                s.triplet_removal_time = None
-                s.triplet_message = None
-                delattr(s, "triplet_removal_time")
-                delattr(s, "triplet_message")
-            except Exception as e:
-                print(f"[ERROR] Fehler beim Entfernen der Triplet-Attribute: {e}")
