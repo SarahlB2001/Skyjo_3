@@ -28,22 +28,40 @@ def generate_random_card():
     """Generiert eine zufällige Karte für den Nachziehstapel"""
     return random.randint(-2, 12)
 
-def berechne_punktzahl(matrix, aufgedeckt_matrix):
-    """Berechnet die Punktzahl für einen Spieler"""
+def berechne_punktzahl(matrix, aufgedeckt_matrix, spieler_id):
+    """Berechnet die Punktzahl für einen Spieler, entfernt Triplets korrekt"""
     punkte = 0
+    removed = []
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed = [(card["row"], card["col"]) for card in s.removed_cards[spieler_id]]
     for row in range(len(matrix)):
         for col in range(len(matrix[0])):
-            if aufgedeckt_matrix[row][col]:
+            if aufgedeckt_matrix[row][col] and (row, col) not in removed:
                 punkte += matrix[row][col]
+    # Triplets abziehen (jede entfernte Spalte = 3 Karten)
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed_cols = [card["col"] for card in s.removed_cards[spieler_id]]
+        for col in set(removed_cols):
+            triplet_value = matrix[0][col]
+            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen!
     return punkte
 
-def calculate_scores(karten_matrizen, aufgedeckt_matrizen):
-    """Berechnet die Punktzahl für alle Spieler"""
+def calculate_scores(karten_matrizen, aufgedeckt_matrizen, ausloeser_id=None):
+    """Berechnet die Scores für alle Spieler. Beim Auslöser ggf. Verdopplung."""
     scores = {}
     for pid in karten_matrizen.keys():
         matrix = karten_matrizen[pid]
         aufgedeckt_matrix = aufgedeckt_matrizen[pid]
-        scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix)
+        # KORREKT: Nutze die Triplet-fähige Funktion!
+        scores[pid] = berechne_punktzahl(matrix, aufgedeckt_matrix, pid)
+
+    # Skyjo-Regel: Wenn Auslöser nicht den niedrigsten Score hat, wird sein Score verdoppelt
+    if ausloeser_id is not None:
+        ausloeser_score = scores[ausloeser_id]
+        min_score = min(scores.values())
+        if any(pid != ausloeser_id and score <= ausloeser_score for pid, score in scores.items()):
+            scores[ausloeser_id] = ausloeser_score * 2
+
     return scores
 
 def determine_starting_player(scores):
@@ -276,19 +294,19 @@ def update_next_player(spieler_id, connection, send_data):
             })
         print("[INFO] Runde beendet!")
 
-        # NEU: Alle verdeckten Karten aufdecken und Punktzahlen berechnen
+        # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
+        time.sleep(4)
+
+        # Alle verdeckten Karten aufdecken
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
             for row in range(len(aufgedeckt_matrix)):
                 for col in range(len(aufgedeckt_matrix[row])):
-                    # Nur aufdecken, wenn nicht schon aufgedeckt oder entfernt
                     if not aufgedeckt_matrix[row][col]:
-                        # Prüfe, ob Karte entfernt wurde
                         entfernt = False
                         if hasattr(s, "removed_cards") and pid in s.removed_cards:
                             entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
                         if not entfernt:
                             aufgedeckt_matrix[row][col] = True
-                            # Allen Clients mitteilen
                             for v in connection:
                                 send_data(v, {
                                     "update": "karte_aufgedeckt",
@@ -296,7 +314,10 @@ def update_next_player(spieler_id, connection, send_data):
                                     "karte": {"row": row, "col": col}
                                 })
 
-        # Optional: Neue Punktzahlen berechnen und an alle schicken
+        # NEU: 1 Sekunde warten, damit das Aufdecken sichtbar ist
+        time.sleep(1)
+
+        # Punktzahlen berechnen und an alle schicken
         scores = calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen)
         for v in connection:
             send_data(v, {

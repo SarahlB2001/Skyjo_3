@@ -230,13 +230,13 @@ def process_messages(sock, screen):
                     s.status_message = "Runde beendet!"
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
-                    print("[DEBUG] Runde wurde vom Server als beendet gemeldet.")
-                
+                    s.round_ended_time = pygame.time.get_ticks()  # Zeit merken
+
                 elif msg.get("update") == "punkte_aktualisiert":
                     s.scores = msg["scores"]
                     print("[DEBUG] Neue Punktzahlen:", s.scores)
-                    # Optional: Statusmeldung anzeigen
                     s.status_message = "Alle Karten wurden aufgedeckt. Punkte wurden berechnet!"
+                    s.points_calculated_time = pygame.time.get_ticks()  # Zeit merken
                 
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break
