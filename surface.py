@@ -87,25 +87,25 @@ def draw(screen):
             punkte = 0
             if layout:
                 punkte = sum(card.value for row in layout.cards for card in row if card.is_face_up)
-            
+
             # Farbe bestimmen
             name_color = (0, 0, 255) if (idx + 1) == s.spieler_id else s.PLAYER_FONT_COLOR
             name_text = PLAYER_FONT.render(name, True, name_color)
             score_text = PLAYER_FONT.render(f"   Score: {punkte}", True, s.PLAYER_FONT_COLOR)
-            
+
             # Position berechnen
             name_rect = name_text.get_rect()
             score_rect = score_text.get_rect()
             total_width = name_rect.width + 30 + score_rect.width
             x_start = rect['x'] + pl.field_pos['size']['width']//2 - total_width//2
             y_pos = rect['y'] - 28
-            
+
             # Grüner Punkt für aktuellen Spieler
           #  print(f"[DEBUG] Prüfe current_player: {getattr(s, 'current_player', 'NICHT GESETZT')}")
             if hasattr(s, 'current_player') and s.current_player == (idx + 1):
               #  print(f"[DEBUG] Zeichne grünen Punkt für Spieler {s.current_player} an Position ({x_start - 20}, {y_pos + 10})")
                 pygame.draw.circle(screen, (0, 255, 0), (x_start - 20, y_pos + 10), 8)  # Grüner Punkt
-            
+
             screen.blit(name_text, (x_start, y_pos))
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
 
@@ -119,28 +119,28 @@ def draw(screen):
         x = screen.get_width() // 2 - card_img.get_width() // 2
         y = screen.get_height() // 2 - card_img.get_height() // 2
         screen.blit(card_img, (x, y))
-        
+
         # Ablehnen-Button über den Stapeln
         button_width = 120
         button_height = 40
         button_x = screen.get_width() // 2 - button_width // 2
         button_y = pl.field_pos['carddeck']['y'] - button_height - 10  # 10px Abstand über den Stapeln
-        
+
         # Button-Rechteck zeichnen
         ablehnen_button = pygame.Rect(button_x, button_y, button_width, button_height)
         pygame.draw.rect(screen, (255, 0, 0), ablehnen_button)  # Roter Button
-        
+
         # Button-Text
         font = pygame.font.SysFont(None, 30)
         button_text = font.render("Ablehnen", True, (255, 255, 255))  # Weißer Text
-        screen.blit(button_text, (button_x + button_width // 2 - button_text.get_width() // 2, 
+        screen.blit(button_text, (button_x + button_width // 2 - button_text.get_width() // 2,
                                  button_y + button_height // 2 - button_text.get_height() // 2))
-        
+
         # Button-Rechteck in settings speichern für Klick-Erkennung
         s.ablehnen_button_rect = ablehnen_button
-        
+
         # Tauschoption anzeigen
-        font = pygame.font.SysFont(None, 22)  
+        font = pygame.font.SysFont(None, 22)
         text = font.render("Klicke auf eine Karte zum Tauschen oder auf 'Ablehnen'", True, (0, 0, 0))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, button_y - 30))
 
@@ -153,7 +153,7 @@ def draw(screen):
     # Spielanweisungen für den aktiven Spieler oder Karte aufdecken
     if s.current_player == s.spieler_id:
         font = pygame.font.SysFont(None, 22)  # Konsistente Schriftgröße
-        
+
         if hasattr(s, "muss_karte_aufdecken") and s.muss_karte_aufdecken:
             # Aufdecken-Nachricht hat Priorität über andere Anweisungen
             text = font.render("WÄHLE EINE VERDECKTE KARTE ZUM AUFDECKEN", True, (255, 0, 0))
@@ -166,6 +166,59 @@ def draw(screen):
         else:
             # Kein Text, wenn der Zug bereits begonnen hat
             text = None
-        
+
         if text:
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+        # Nach der regulären Spielanzeige hinzufügen (vor dem "show_final_scores" Block):
+
+        # Temporäre Anzeige für Rundenende (nur kurz sichtbar)
+    if hasattr(s, "round_ending") and s.round_ending:
+        # Nur temporär anzeigen wenn gerade erst aktiviert
+        if not hasattr(s, "round_end_notice_time"):
+            s.round_end_notice_time = pygame.time.get_ticks()
+
+        # Für 3 Sekunden anzeigen
+        if pygame.time.get_ticks() - s.round_end_notice_time < 3000:  # 3 seconds
+            font = pygame.font.SysFont(None, 22)  # Kleinere Schriftgröße
+
+            if hasattr(s, "round_end_trigger"):
+                trigger_name = s.player_data.get(s.round_end_trigger, f"Spieler {s.round_end_trigger}")
+
+                if s.spieler_id == s.round_end_trigger:
+                    message = "Du hast alle Karten aufgedeckt! Die anderen haben noch einen letzten Zug."
+                elif hasattr(s, "last_turn_players") and s.spieler_id in s.last_turn_players:
+                    message = f"{trigger_name} hat alle Karten aufgedeckt! Du hast noch einen letzten Zug."
+                else:
+                    message = f"{trigger_name} hat alle Karten aufgedeckt! Warte auf die letzten Züge."
+
+                text = font.render(message, True, (0, 0, 0))  # Schwarze Farbe
+                screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 40))
+    # Nach der regulären Spielanzeige hinzufügen:
+    if hasattr(s, "show_final_scores") and s.show_final_scores:
+        # Hintergrund für Punkteanzeige
+        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))  # Halbtransparentes Schwarz
+        screen.blit(overlay, (0, 0))
+
+        # Überschrift
+        font_title = pygame.font.SysFont(None, 48)
+        title = font_title.render("RUNDENENDE", True, (255, 255, 255))
+        screen.blit(title, (screen.get_width()//2 - title.get_width()//2, 100))
+
+        # Punktzahlen anzeigen
+        font_scores = pygame.font.SysFont(None, 36)
+        y_pos = 180
+        sorted_scores = sorted(s.final_scores.items(), key=lambda x: x[1])
+
+        for pid, score in sorted_scores:
+            name = s.player_data.get(pid, f"Spieler {pid}")
+            is_winner = pid == sorted_scores[0][0]
+            is_trigger = pid == s.round_end_trigger
+
+            # Farbe basierend auf Status
+            color = (0, 255, 0) if is_winner else (255, 0, 0) if is_trigger and not is_winner else (255, 255, 255)
+
+            text = f"{name}: {score} Punkte" + (" (Auslöser)" if is_trigger else "")
+            score_text = font_scores.render(text, True, color)
+            screen.blit(score_text, (screen.get_width()//2 - score_text.get_width()//2, y_pos))
+            y_pos += 50
