@@ -91,7 +91,9 @@ def process_messages(sock, screen):
                     cP.card_set_positions(screen)
                     s.waiting_for_start = False
                     s.game_started = True
-                    print("[DEBUG] Spiel gestartet!")
+                    s.setup_phase = True  # Explizit den Setup-Modus aktivieren
+                    s.cards_flipped_this_turn = 0  # Zähler zurücksetzen
+                    print("[DEBUG] Spiel gestartet! Setup-Modus aktiviert.")
                     s.status_message = "Decke zwei Karten auf"
                 
                 # Andere Nachrichten behandeln
@@ -99,10 +101,20 @@ def process_messages(sock, screen):
                     spieler = msg["spieler"]
                     row = msg["karte"]["row"]
                     col = msg["karte"]["col"]
+                    print(f"[DEBUG] Nachricht karte_aufgedeckt empfangen: Spieler {spieler}, Reihe {row}, Spalte {col}")
+                    
                     layout = cP.player_cardlayouts.get(spieler)
                     if layout:
-                        card = layout.cards[row][col]
-                        card.flip()
+                        if row < len(layout.cards) and col < len(layout.cards[0]):
+                            card = layout.cards[row][col]
+                            print(f"[DEBUG] Karte vor flip(): is_face_up={card.is_face_up}")
+                            card.is_face_up = True  # Direkt setzen statt flip() aufrufen
+                            print(f"[DEBUG] Karte nach Setzen: is_face_up={card.is_face_up}")
+                        else:
+                            print(f"[DEBUG] Ungültige Kartenindizes: {row}, {col}")
+                    else:
+                        print(f"[DEBUG] Layout für Spieler {spieler} nicht gefunden")
+                        
                     if hasattr(s, "aufgedeckt_matrizen"):
                         s.aufgedeckt_matrizen[spieler][row][col] = True
                 
@@ -164,12 +176,106 @@ def process_messages(sock, screen):
                     
                     print(f"[DEBUG] WICHTIG! Spielerwechsel von {old_player} zu {s.current_player}")
                 
+                elif msg.get("update") == "spalte_entfernt":
+                    spieler = msg["spieler"]
+                    entfernte_karten = msg["entfernte_karten"]
+                    ablagestapel = msg["ablagestapel"]
+                    
+                    # Karten im lokalen Layout "entfernen"
+                    layout = cP.player_cardlayouts.get(spieler)
+                    if layout:
+                        for karte in entfernte_karten:
+                            row, col = karte["row"], karte["col"]
+                            value = karte["value"]  # Originaler Wert der Karte
+                            if row < len(layout.cards) and col < len(layout.cards[0]):
+                                # Karte als "entfernt" markieren, aber Wert beibehalten
+                                card = layout.cards[row][col]
+                                card.is_removed = True  # Markieren als entfernt
+    
+                    # Ablagestapel aktualisieren
+                    s.discard_card = ablagestapel
+                
                 elif "message" in msg:
                     s.status_message = msg["message"]
                 
                 elif msg.get("update") == "test":
                     print(f"[DEBUG] Test-Nachricht empfangen: {msg}")
+                
+                # Neue Nachrichten für Rundenende und -wechsel
+                elif msg.get("update") == "round_end_started":
+                    trigger_player = msg["trigger_player"]
+                    trigger_name = s.player_data.get(trigger_player, f"Spieler {trigger_player}")
+                    s.status_message = f"{trigger_name} hat alle Karten aufgedeckt! Letzter Zug für alle anderen Spieler."
                     
+                    # Wichtig: Sicherstellen, dass der Rundenendzustand korrekt gesetzt wird
+                    s.round_ending = True
+                    s.round_end_trigger = trigger_player
+                    
+                    # Zurücksetzen von zug_begonnen für alle Spieler
+                    s.zug_begonnen = False
+                    if hasattr(s, "cards_flipped_this_turn"):
+                        s.cards_flipped_this_turn = 0
+                        
+                    print(f"[DEBUG] Rundenende gestartet! Auslöser: {trigger_name}")
+
+                elif msg.get("update") == "round_end":
+                    final_scores = msg["final_scores"]
+                    trigger_player = msg["trigger_player"]
+                    doubled = msg["doubled"]
+                    current_round = msg["current_round"]
+                    total_rounds = msg["total_rounds"]
+                    total_scores = msg["total_scores"]
+                    round_scores = msg["round_scores"]
+                    game_over = msg["game_over"]
+                    
+                    # Daten im Settings speichern
+                    s.final_scores = final_scores
+                    s.current_round = current_round
+                    s.total_rounds = total_rounds
+                    s.total_scores = total_scores
+                    s.round_scores = round_scores
+                    
+                    # Status-Nachricht festlegen
+                    trigger_name = s.player_data.get(trigger_player, f"Spieler {trigger_player}")
+                    if doubled:
+                        s.status_message = f"Rundenende! {trigger_name} hat nicht die niedrigste Punktzahl und bekommt doppelte Punkte!"
+                    else:
+                        s.status_message = f"Rundenende! {trigger_name} hat die niedrigste Punktzahl."
+                    
+                    # Spiel- oder Rundenende-Modus aktivieren
+                    if game_over:
+                        s.game_over = True
+                        s.status_message = "Spiel beendet! Gesamtergebnis wird angezeigt."
+                    else:
+                        s.round_ending = False
+                        s.between_rounds = True
+
+                elif msg.get("update") == "new_round":
+                    current_round = msg["current_round"]
+                    total_rounds = msg["total_rounds"]
+                    karten_matrizen = msg["karten_matrizen"]
+                    aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
+                    discard_card = msg["discard_card"]
+                    current_player = msg["current_player"]
+                    
+                    # Daten im Settings speichern
+                    s.current_round = current_round
+                    s.total_rounds = total_rounds
+                    s.karten_matrizen = karten_matrizen
+                    s.aufgedeckt_matrizen = aufgedeckt_matrizen
+                    s.discard_card = discard_card
+                    s.current_player = current_player
+                    
+                    # Status-Nachricht festlegen
+                    s.status_message = f"Neue Runde beginnt! (Runde {current_round}/{total_rounds})"
+                    
+                    # Spielerlayouts neu erstellen
+                    cP.card_set_positions(screen)
+                    
+                    # Zwischen-Runden-Modus deaktivieren
+                    s.between_rounds = False
+                    s.cards_flipped_this_turn = 0
+                
             except (BlockingIOError, ConnectionError):
                 break
     finally:
