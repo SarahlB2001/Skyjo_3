@@ -81,3 +81,6 @@ gezogene_karte = None
 muss_karte_aufdecken = False
 setup_phase = True  # Phase in der 2 Karten aufgedeckt werden
 zug_begonnen = False  # Zeigt an, ob der Spieler bereits eine Aktion in diesem Zug begonnen hat
+
+round_end_triggered = False
+round_end_trigger_player = None

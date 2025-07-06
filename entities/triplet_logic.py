@@ -120,6 +120,17 @@ def remove_column_triplets(spieler_id, connection, send_data):
         # WICHTIG: Zusätzliche Pause nach dem Senden, bevor weitere Nachrichten gesendet werden
         time.sleep(2.0)  # Längere Pause, damit die Nachricht komplett angezeigt wird
     
+    # Nach dem Entfernen:
+    from entities.serv_gameprocess import all_cards_visible_or_removed
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     return True, columns_to_remove
 
 def is_affected_by_triplet_removal(spieler_id, row, col):

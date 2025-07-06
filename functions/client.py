@@ -217,7 +217,21 @@ def process_messages(sock, screen):
                     
                     # Keine UI-Anzeige mehr
                     print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}")
-                    
+                
+                elif msg.get("update") == "round_end_triggered":
+                    ausloeser = msg["spieler"]
+                    s.round_end_triggered = True
+                    s.round_end_trigger_player = ausloeser
+                    s.status_message = "Rundenende ausgelöst. Alle Spieler haben noch einen Zug!"
+                    # NEU: Zeit merken, wann die Nachricht angezeigt wurde
+                    s.round_end_triggered_time = pygame.time.get_ticks()
+                
+                elif msg.get("update") == "round_ended":
+                    s.status_message = "Runde beendet!"
+                    s.round_end_triggered = False
+                    s.round_end_trigger_player = None
+                    print("[DEBUG] Runde wurde vom Server als beendet gemeldet.")
+                
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break
     finally:

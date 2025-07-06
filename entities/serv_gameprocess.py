@@ -83,7 +83,17 @@ def handle_card_flip(daten, connection, send_data):
     
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
-    
+
+    # NEU: Rundenende prüfen
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     return spieler_id, karte
 
 def check_if_setup_complete(player_count, cards_flipped, connection, send_data):
@@ -151,9 +161,19 @@ def handle_take_discard_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
     
-    # Auf Dreierkombinationen prüfen
+    # Nach dem Tausch:
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
-    
+
+    # NEU: Rundenende prüfen
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     return spieler_id, s.discard_card
 
 def handle_take_draw_pile(daten, connection, send_data):
@@ -202,13 +222,19 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
     
     # NEUE ZEILE: Auf Dreierkombinationen prüfen
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
-    
-    # Wenn eine Dreierkombination gefunden wurde, kurz warten
     if hat_triplets:
         import time
-        time.sleep(2.0)  # Warten, damit die Triplet-Nachricht verarbeitet wird
-    
-    # Nächster Spieler
+        time.sleep(2.0)
+    # NEU: Rundenende prüfen
+    if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
+        s.round_end_triggered = True
+        s.round_end_trigger_player = spieler_id
+        for v in connection:
+            send_data(v, {
+                "update": "round_end_triggered",
+                "spieler": spieler_id
+            })
+        print(f"[INFO] Rundenende ausgelöst von Spieler {spieler_id}!")
     next_player = update_next_player(spieler_id, connection, send_data)
     
     return spieler_id, alte_karte
@@ -240,20 +266,44 @@ def update_next_player(spieler_id, connection, send_data):
     """Aktualisiert den nächsten Spieler"""
     # Nächster Spieler ist dran
     s.current_player = get_next_player(spieler_id, s.spielreihenfolge)
-    
-    # Allen Clients den nächsten Spieler mitteilen
+
+    # NEU: Rundenende prüfen
+    if s.round_end_triggered and s.current_player == s.round_end_trigger_player:
+        # Rundenende wirklich durchführen!
+        for v in connection:
+            send_data(v, {
+                "update": "round_ended"
+            })
+        print("[INFO] Runde beendet!")
+        s.round_end_triggered = False
+        s.round_end_trigger_player = None
+        # Hier ggf. neue Runde starten oder Spiel beenden
+        return s.current_player
+
+    # Normal weitermachen
     for v in connection:
         send_data(v, {
             "update": "naechster_spieler",
             "spieler": s.current_player
         })
-    
     return s.current_player
 
 # Die bestehende check_if_all_cards_revealed Funktion ersetzen
 def check_if_all_cards_revealed(spieler_id):
     """Prüft, ob ein Spieler alle seine Karten aufgedeckt hat"""
     return triplet_logic.check_if_all_cards_revealed_with_triplets(spieler_id)
+
+def all_cards_visible_or_removed(spieler_id):
+    """True, wenn alle Karten aufgedeckt oder entfernt sind."""
+    aufgedeckt = s.aufgedeckt_matrizen[spieler_id]
+    removed = set()
+    if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
+        removed = {(c["row"], c["col"]) for c in s.removed_cards[spieler_id]}
+    for r, row in enumerate(aufgedeckt):
+        for c, is_up in enumerate(row):
+            if not is_up and (r, c) not in removed:
+                return False
+    return True
 
 def remove_column_triplets(spieler_id, connection, send_data):
     """Entfernt Dreierkombinationen in den Spalten (delegiert an triplet_logic)"""

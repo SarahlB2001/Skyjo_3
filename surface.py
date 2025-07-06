@@ -169,3 +169,21 @@ def draw(screen):
         
         if text:
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
+    
+    # Zeige die Runden-Ende-Nachricht, wenn sie in status_message steht
+    if s.status_message and "Runde beendet" in s.status_message:
+        font = pygame.font.SysFont(None, 36)
+        text = font.render(s.status_message, True, (0, 128, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
+
+    # Zeige die Rundenende-Nachricht für 2 Sekunden, dann wieder normale Statusmeldung
+    if getattr(s, "round_end_triggered", False) and hasattr(s, "round_end_triggered_time"):
+        now = pygame.time.get_ticks()
+        if now - s.round_end_triggered_time < 2000:  # 2000 ms = 2 Sekunden
+            font = pygame.font.SysFont(None, 30)
+            text = font.render("Rundenende ausgelöst. Alle Spieler haben noch einen Zug!", True, (255, 0, 0))
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 50))
+        else:
+            # Nach 2 Sekunden: round_end_triggered zurücksetzen, damit wieder die normale Statusmeldung kommt
+            s.round_end_triggered = False
