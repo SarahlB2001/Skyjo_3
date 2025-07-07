@@ -74,22 +74,33 @@ def card_place_position(screen):
         screen.blit(discard_card_img, (discard_x, discard_y))
 
 
-def card_set_positions(screen, force_redraw=False):
+def card_set_positions(screen):
+    print("[DEBUG] card_set_positions wurde aufgerufen")
     global player_cardlayouts
-    if not player_cardlayouts or force_redraw:
-        player_cardlayouts = {}
-        fields = player_fields.get(s.player_count, [])
-        for idx, f in enumerate(fields, 1):
-            matrix = None
-            if hasattr(s, "karten_matrizen"):
-                if isinstance(list(s.karten_matrizen.keys())[0], int):
-                    matrix = s.karten_matrizen.get(idx)
-                else:
-                    matrix = s.karten_matrizen.get(str(idx))
-            if matrix is None:
-                matrix = [[0 for _ in range(s.COLS)] for _ in range(s.ROWS)]
-            player_cardlayouts[idx] = l.CardLayout(pl.field_pos[f]['x'], pl.field_pos[f]['y'], idx, matrix)
-    # Zeichnen:
+    player_cardlayouts = {}
+
+    fields = player_fields.get(s.player_count, [])
+    for idx, f in enumerate(fields, 1):
+        # Matrix vom Server verwenden!
+        matrix = None
+        if hasattr(s, "karten_matrizen"):
+            # Keys können int oder str sein
+            if isinstance(list(s.karten_matrizen.keys())[0], int):
+                matrix = s.karten_matrizen.get(idx)
+            else:
+                matrix = s.karten_matrizen.get(str(idx))
+        if matrix is None:
+            # Fallback: Dummy-Matrix falls noch keine Daten da sind
+            matrix = [[0 for _ in range(s.COLS)] for _ in range(s.ROWS)]
+        player_cardlayouts[idx] = l.CardLayout(pl.field_pos[f]['x'], pl.field_pos[f]['y'], idx, matrix)
+
+    # Kartenstapel zeichnen
+    pygame.draw.rect(
+        screen, s.BLACK,
+        (pl.field_pos['carddeck']['x'], pl.field_pos['carddeck']['y'],
+         pl.field_pos['carddeck']['width'], pl.field_pos['carddeck']['height'])
+    )
+
     for layout in player_cardlayouts.values():
         layout.draw(screen)
 
