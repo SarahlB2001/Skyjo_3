@@ -283,7 +283,7 @@ def update_next_player(spieler_id, connection, send_data):
         print("[INFO] Runde beendet!")
 
         # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
-        time.sleep(2) #############war 3
+        time.sleep(3) #############war 3
 
         # Alle verdeckten Karten aufdecken
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
@@ -303,7 +303,7 @@ def update_next_player(spieler_id, connection, send_data):
                         time.sleep(0.05)  # Sehr kurze Pause reicht!
 
         # KORREKTUR: Längere Wartezeit für die Verarbeitung
-        time.sleep(1)  # 3 Sekunden statt nur 1 ###########################
+        time.sleep(2)  # 3 Sekunden statt nur 1 ###########################
 
         # KORREKTUR: Trigger-Spieler explizit übergeben
         scores = calculate_scores(

@@ -216,16 +216,29 @@ def draw(screen):
                 screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
                 # Endgültige Punktzahlen anzeigen UNTER der Meldung
                 if hasattr(cP, "player_cardlayouts"):
-                    y = 160
-                    font = pygame.font.SysFont(None, 28)
+                    # Lokale Punkte berechnen
+                    punkte_dict = {}
                     for pid, layout in cP.player_cardlayouts.items():
-                        # Lokale Punkteberechnung (wie über dem Spielfeld)
                         punkte = sum(
                             card.value
                             for row in layout.cards
                             for card in row
                             if card.is_face_up and not getattr(card, "removed", False)
                         )
+                        punkte_dict[pid] = punkte
+
+                    # Auslöser-ID holen
+                    ausloeser_id = getattr(s, "round_end_trigger_player", None)
+                    if ausloeser_id is not None and ausloeser_id in punkte_dict:
+                        ausloeser_score = punkte_dict[ausloeser_id]
+                        min_score = min(punkte_dict.values())
+                        # Nur wenn der Auslöser NICHT den niedrigsten Score hat, verdoppeln
+                        if ausloeser_score > min_score:
+                            punkte_dict[ausloeser_id] = ausloeser_score * 2
+
+                    y = 160
+                    font = pygame.font.SysFont(None, 28)
+                    for pid, punkte in punkte_dict.items():
                         name = s.player_data.get(pid, f"Spieler{pid}")
                         text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
                         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
