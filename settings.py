@@ -1,19 +1,15 @@
 # Datei für die Settings (Konstanten, Globale Variablen etc.)
-import pygame
 import server as serv
 import threading
 
 # Fürs Fenster:
 HEIGHT, WIDTH = 1200, 600
 
-# pygame.display.set_caption(" ")
 WINDOW_COLOR = "SILVER"
 
 # FPS
 FPS = 60
 
-# Uhr
-#clock = pygame.time.Clock()
 
 # Farben
 WHITE = (255, 255, 255)
