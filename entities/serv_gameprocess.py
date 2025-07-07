@@ -319,6 +319,28 @@ def update_next_player(spieler_id, connection, send_data):
                 "scores": scores
             })
 
+        # ...nach Punkteberechnung und Senden der Punktzahlen...
+        if hasattr(s, "current_round") and hasattr(s, "round_count"):
+            if s.current_round < s.round_count:
+                s.current_round += 1
+                reset_for_new_round()
+                for v in connection:
+                    send_data(v, {
+                        "update": "new_round_starting",
+                        "message": f"Runde {s.current_round} beginnt!",
+                        "karten_matrizen": s.karten_matrizen,
+                        "aufgedeckt_matrizen": s.aufgedeckt_matrizen,
+                        "discard_card": s.discard_card,
+                        "current_round": s.current_round,      # <--- NEU
+                        "round_count": s.round_count           # <--- NEU
+                    })
+            else:
+                for v in connection:
+                    send_data(v, {
+                        "update": "game_ended",
+                        "message": "Alle Runden beendet. Spielende!"
+                    })
+
         s.round_end_triggered = False
         s.round_end_trigger_player = None
         return s.current_player
@@ -352,3 +374,16 @@ def remove_column_triplets(spieler_id, connection, send_data):
     """Entfernt Dreierkombinationen in den Spalten (delegiert an triplet_logic)"""
     # Einfach die Funktion aus dem triplet_logic Modul aufrufen
     return triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+
+def reset_for_new_round():
+    s.karten_matrizen = create_card_matrices(s.player_count, s.ROWS, s.COLS)
+    s.aufgedeckt_matrizen = create_flipped_matrices(s.player_count, s.ROWS, s.COLS)
+    s.removed_cards = {}
+    s.cards_flipped = {}
+    s.round_end_triggered = False
+    s.round_end_trigger_player = None
+    s.discard_card = generate_random_card()
+    s.cards_flipped_this_turn = 0
+    s.setup_phase = True
+    s.waiting_for_start = False
+    s.zug_begonnen = False

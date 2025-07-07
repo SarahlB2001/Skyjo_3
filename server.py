@@ -39,6 +39,12 @@ def client_thread(conn, spieler_id):
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
 
+            # NEU: Rundenanzahl abfragen
+            daten = recv_data(conn)
+            if daten and "anzahl_runden" in daten:
+                s.round_count = daten["anzahl_runden"]
+                print(f"[INFO] Rundenanzahl festgelegt auf {s.round_count}")
+
             daten = recv_data(conn)
             if daten:
                 name = daten.get("name", f"Spieler{spieler_id +1}")
@@ -81,7 +87,9 @@ def client_thread(conn, spieler_id):
                     "spielernamen": s.player_data,
                     "karten_matrizen": karten_matrizen,
                     "aufgedeckt_matrizen": aufgedeckt_matrizen,
-                    "discard_card": discard_card_value
+                    "discard_card": discard_card_value,
+                    "current_round": s.current_round,      # <--- NEU
+                    "round_count": s.round_count           # <--- NEU
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 

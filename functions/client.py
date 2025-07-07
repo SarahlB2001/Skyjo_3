@@ -93,6 +93,10 @@ def process_messages(sock, screen):
                         s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
                     if "discard_card" in msg:
                         s.discard_card = msg["discard_card"]
+                    if "current_round" in msg:
+                         s.current_round = msg["current_round"]
+                    if "round_count" in msg:
+                       s.round_count = msg["round_count"]
                     cP.card_set_positions(screen)
                     s.waiting_for_start = False
                     s.game_started = True
@@ -234,17 +238,21 @@ def process_messages(sock, screen):
 
                 elif msg.get("update") == "punkte_aktualisiert":
                     s.scores = msg["scores"]
-                    print("[DEBUG] Neue Punktzahlen:", s.scores)
-                    s.status_message = "Alle Karten wurden aufgedeckt. Punkte wurden berechnet!"
-                    s.points_calculated_time = pygame.time.get_ticks()  # Zeit merken
-
-                    # --- NEU: Final-Score-Berechnung nach Skyjo-Regel ---
+                    if not hasattr(s, "score_history"):
+                        s.score_history = {}
+                    for pid, score in msg["scores"].items():
+                        pid_key = str(pid)
+                        if pid_key not in s.score_history:
+                            s.score_history[pid_key] = []
+                        s.score_history[pid_key].append(score)
+                    # --- NEU: Zeitpunkt merken für die Anzeige ---
+                    s.points_calculated_time = pygame.time.get_ticks()
+                    # --- Rest wie gehabt ---
                     ausloeser_id = getattr(s, "round_end_trigger_player", None)
                     s.final_round_scores = s.scores.copy()
                     if ausloeser_id is not None and ausloeser_id in s.scores:
                         ausloeser_score = s.scores[ausloeser_id]
                         min_score = min(s.scores.values())
-                        # Nur wenn der Auslöser NICHT den niedrigsten Score hat, verdoppeln
                         if ausloeser_score > min_score:
                             s.final_round_scores[ausloeser_id] = ausloeser_score * 2
                 
@@ -254,6 +262,35 @@ def process_messages(sock, screen):
                     s.scores = msg["scores"]
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
                     s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!"
+                
+                elif msg.get("update") == "new_round_starting":
+                    s.status_message = msg["message"]
+                    if "karten_matrizen" in msg:
+                        s.karten_matrizen = msg["karten_matrizen"]
+                        cP.player_cardlayouts = {}  # Layouts wirklich löschen!
+                        cP.card_set_positions(screen, force_redraw=True)
+                    if "aufgedeckt_matrizen" in msg:
+                        s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
+                    if "discard_card" in msg:
+                        s.discard_card = msg["discard_card"]
+                    if "current_round" in msg:
+                        s.current_round = msg["current_round"]
+                    if "round_count" in msg:
+                        s.round_count = msg["round_count"]
+                    print(f"[DEBUG] Neue Runde: {s.current_round}/{s.round_count}")
+                    # Statusvariablen für Setup-Phase zurücksetzen
+                    s.setup_phase = True
+                    s.cards_flipped_this_turn = 0
+                    s.waiting_for_start = False
+                    s.zug_begonnen = False
+                    s.gezogene_karte = None
+                    s.muss_karte_aufdecken = False
+                    s.tausche_mit_ablagestapel = False
+                    s.warte_auf_entscheidung = False
+                    s.round_end_triggered = False
+                    s.round_end_trigger_player = None
+                    if hasattr(s, "points_calculated_time"):
+                        del s.points_calculated_time
                 
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break

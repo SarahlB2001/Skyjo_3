@@ -114,6 +114,14 @@ def draw(screen):
             screen.blit(name_text, (x_start, y_pos))
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
 
+            # Score-Historie (lila) anzeigen
+            if hasattr(s, "score_history") and str(idx + 1) in s.score_history:
+                history = s.score_history[str(idx + 1)]
+                if len(history) > 0:
+                    last_score = history[-1]
+                    score_hist_text = PLAYER_FONT.render(f"({last_score})", True, (128, 0, 128))
+                    screen.blit(score_hist_text, (x_start + name_rect.width + 30 + score_rect.width + 10, y_pos))
+
     for layout in cP.player_cardlayouts.values():
         layout.draw(screen)
 
@@ -251,3 +259,12 @@ def draw(screen):
         font = pygame.font.SysFont(None, 22)
         text = font.render(s.status_message, True, (0, 0, 0))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
+     
+     # Am Ende der draw() Funktion:
+    if hasattr(s, "current_round") and hasattr(s, "round_count"):
+        font = pygame.font.SysFont(None, 28)
+        text = font.render(f"Runde {s.current_round}/{s.round_count}", True, (128, 0, 128))
+        screen.blit(text, (10, screen.get_height() - 40))
+
+
