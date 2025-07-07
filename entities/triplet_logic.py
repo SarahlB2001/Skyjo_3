@@ -154,7 +154,7 @@ def remove_column_triplets(spieler_id, connection, send_data):
             print(f"[DEBUG] Triplet-Nachricht gesendet an Client: Erfolg={success}")
             
         # WICHTIG: Zusätzliche Pause nach dem Senden, bevor weitere Nachrichten gesendet werden
-        time.sleep(2.0)  # Längere Pause, damit die Nachricht komplett angezeigt wird
+        time.sleep(0.5)  # Längere Pause, damit die Nachricht komplett angezeigt wird # war 2.0
     
     # Nach dem Entfernen:
     from entities.serv_gameprocess import all_cards_visible_or_removed

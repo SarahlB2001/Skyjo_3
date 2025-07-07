@@ -221,7 +221,7 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     if hat_triplets:
         #import time
-        time.sleep(2.0)
+        time.sleep(0.5) ############################war 2
     # NEU: Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
@@ -264,6 +264,8 @@ def handle_reject_draw_pile(daten, connection, send_data):
             "aufgedeckte_karte": {"row": row, "col": col}
         })
 
+    triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+
     return spieler_id
 
 def update_next_player(spieler_id, connection, send_data):
@@ -281,30 +283,27 @@ def update_next_player(spieler_id, connection, send_data):
         print("[INFO] Runde beendet!")
 
         # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
-        time.sleep(3)
+        time.sleep(2) #############war 3
 
         # Alle verdeckten Karten aufdecken
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
             for row in range(len(aufgedeckt_matrix)):
                 for col in range(len(aufgedeckt_matrix[row])):
-                    if not aufgedeckt_matrix[row][col]:
-                        # Karte aufdecken...
-                        # HINZUFÜGEN: Kleine Pause nach jeder Karte
-                        time.sleep(0.1)  # Pause zwischen Karten
-                        entfernt = False
-                        if hasattr(s, "removed_cards") and pid in s.removed_cards:
-                            entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
-                        if not entfernt:
-                            aufgedeckt_matrix[row][col] = True
-                            for v in connection:
-                                send_data(v, {
-                                    "update": "karte_aufgedeckt",
-                                    "spieler": pid,
-                                    "karte": {"row": row, "col": col}
-                                })
+                    entfernt = False
+                    if hasattr(s, "removed_cards") and pid in s.removed_cards:
+                        entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
+                    if not entfernt:
+                        aufgedeckt_matrix[row][col] = True
+                        for v in connection:
+                            send_data(v, {
+                                "update": "karte_aufgedeckt",
+                                "spieler": pid,
+                                "karte": {"row": row, "col": col}
+                            })
+                        time.sleep(0.05)  # Sehr kurze Pause reicht!
 
         # KORREKTUR: Längere Wartezeit für die Verarbeitung
-        time.sleep(3)  # 3 Sekunden statt nur 1
+        time.sleep(1)  # 3 Sekunden statt nur 1 ###########################
 
         # KORREKTUR: Trigger-Spieler explizit übergeben
         scores = calculate_scores(

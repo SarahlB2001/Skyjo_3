@@ -107,7 +107,7 @@ def process_messages(sock, screen):
                     layout = cP.player_cardlayouts.get(spieler)
                     if layout:
                         card = layout.cards[row][col]
-                        card.flip()
+                        card.is_face_up = True
                     if hasattr(s, "aufgedeckt_matrizen"):
                         s.aufgedeckt_matrizen[spieler][row][col] = True
                 
@@ -164,7 +164,7 @@ def process_messages(sock, screen):
                     layout = cP.player_cardlayouts.get(spieler)
                     if layout:
                         card = layout.cards[row][col]
-                        card.is_face_up = True
+                        card.is_face_up = True  # Immer aufgedeckt setzen!
                     
                     s.discard_card = ablagestapel
                 

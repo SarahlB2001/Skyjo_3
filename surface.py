@@ -214,11 +214,18 @@ def draw(screen):
                 font = pygame.font.SysFont(None, 30)
                 text = font.render("Alle Karten wurden aufgedeckt. Punkte wurden berechnet!", True, (0, 0, 255))
                 screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
-                # Endgültige Punktzahlen anzeigen
-                if hasattr(s, "final_round_scores"):
+                # Endgültige Punktzahlen anzeigen UNTER der Meldung
+                if hasattr(cP, "player_cardlayouts"):
                     y = 160
                     font = pygame.font.SysFont(None, 28)
-                    for pid, punkte in s.final_round_scores.items():
+                    for pid, layout in cP.player_cardlayouts.items():
+                        # Lokale Punkteberechnung (wie über dem Spielfeld)
+                        punkte = sum(
+                            card.value
+                            for row in layout.cards
+                            for card in row
+                            if card.is_face_up and not getattr(card, "removed", False)
+                        )
                         name = s.player_data.get(pid, f"Spieler{pid}")
                         text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
                         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
