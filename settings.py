@@ -83,16 +83,5 @@ muss_karte_aufdecken = False
 setup_phase = True  # Phase in der 2 Karten aufgedeckt werden
 zug_begonnen = False  # Zeigt an, ob der Spieler bereits eine Aktion in diesem Zug begonnen hat
 
-# Rundenspezifische Variablen
-round_count = None  # Anzahl der zu spielenden Runden
-current_round = 1   # Aktuelle Rundenummer
-round_ending = False  # Flag für Rundenende
-between_rounds = False  # Flag für Anzeige zwischen Runden
-game_over = False  # Flag für Spielende
-round_end_trigger = None  # Spieler, der das Rundenende ausgelöst hat
-total_scores = {}  # Gesamtpunktzahlen aller Spieler
-round_scores = {}  # Punktzahlen nach Runden
-
-# Temporäre Nachrichteneinstellungen
-temp_message = ""
-temp_message_time = 0
+round_end_triggered = False
+round_end_trigger_player = None

@@ -3,6 +3,7 @@ import surface as su
 from dictionaries import plaPosition as pl
 import pygame
 import layout as l
+import time  # <-- Diese Zeile hinzufügen, um das time-Modul zu importieren
 
 player_fields = {
     2: ['1', '3'],
@@ -60,24 +61,16 @@ def card_place_position(screen):
     s.discard_stack_rect = discard_rect
 
     # Wenn eine Ablagestapelkarte existiert, zeige sie an
-    if hasattr(s, "discard_card"):
-        # Prüfe, ob es sich um eine "entfernte" Karte handelt (-99)
-        if s.discard_card == -99:
-            # Für entfernte Karten zeigen wir eine leere Fläche oder eine andere Karte an
-            # Option 1: Eine bereits existierende Karte verwenden
-            discard_card_img = pygame.image.load(f"Karten_png/card_0.png")  # Verwende z.B. die 0-Karte
-            
-            # Option 2: Einen leeren Rechteck zeichnen (falls du keine Karte anzeigen möchtest)
-            # In diesem Fall einfach keine Karte laden und nur das Rechteck zeichnen
-        else:
-            # Normaler Fall: Lade das entsprechende Kartenbild
-            discard_card_img = pygame.image.load(f"Karten_png/card_{s.discard_card}.png")
-        
+    if hasattr(s, "discard_card") and s.discard_card is not None:
+        # Einfache Darstellung der obersten Karte
+        discard_card_img = pygame.image.load(f"Karten_png/card_{s.discard_card}.png")
         discard_card_img = pygame.transform.scale(discard_card_img, (s.CARD_WIDTH, s.CARD_HEIGHT))
         
-        # Positioniere sie auf dem Ablagestapel
+        # Position für die Karte
         discard_x = discard_rect.x + discard_rect.width // 2 - s.CARD_WIDTH // 2
         discard_y = discard_rect.y + discard_rect.height // 2 - s.CARD_HEIGHT // 2
+        
+        # Oberste Karte auf den Stapel zeichnen
         screen.blit(discard_card_img, (discard_x, discard_y))
 
 
