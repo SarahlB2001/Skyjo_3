@@ -217,7 +217,7 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
 
-    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    # NE
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     if hat_triplets:
         #import time
@@ -319,6 +319,33 @@ def update_next_player(spieler_id, connection, send_data):
                 "scores": scores
             })
 
+        # --- NEU: Für neue Runde alles zurücksetzen und neue Matrizen senden ---
+        if hasattr(s, "current_round") and hasattr(s, "round_count"):
+            s.current_round += 1
+            if s.current_round <= s.round_count:
+                print(f"[INFO] Starte Runde {s.current_round} von {s.round_count}...")
+                # Matrizen für neue Runde erzeugen
+                s.karten_matrizen = create_card_matrices(s.player_count, s.ROWS, s.COLS)
+                s.aufgedeckt_matrizen = create_flipped_matrices(s.player_count, s.ROWS, s.COLS)
+                s.removed_cards = {}
+                s.cards_flipped = {}
+                s.round_end_triggered = False
+                s.round_end_trigger_player = None
+                s.gezogene_karte = None
+                s.discard_card = generate_random_card()
+                # Allen Clients neue Runde ankündigen
+                for v in connection:
+                    send_data(v, {
+                        "message": f"Runde {s.current_round} beginnt!",
+                        "karten_matrizen": s.karten_matrizen,
+                        "aufgedeckt_matrizen": s.aufgedeckt_matrizen,
+                        "discard_card": s.discard_card,
+                        "current_round": s.current_round,      # <--- NEU
+                        "round_count": s.round_count           # <--- NEU
+                    })
+            else:
+                print("[INFO] Alle Runden gespielt. Spielende!")
+                # Hier könntest du eine Endstand-Nachricht an alle Clients senden
         s.round_end_triggered = False
         s.round_end_trigger_player = None
         return s.current_player

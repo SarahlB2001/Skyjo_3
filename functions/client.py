@@ -89,6 +89,8 @@ def process_messages(sock, screen):
                         s.player_count = int(msg["anzahl_spieler"])
                     if "karten_matrizen" in msg:
                         s.karten_matrizen = msg["karten_matrizen"]
+                        cP.player_cardlayouts = {}  # <--- Layouts wirklich löschen!
+                        cP.card_set_positions(screen, force_redraw=True)
                     if "aufgedeckt_matrizen" in msg:
                         s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
                     if "discard_card" in msg:
@@ -254,6 +256,11 @@ def process_messages(sock, screen):
                     s.scores = msg["scores"]
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
                     s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!"
+                
+                if "current_round" in msg:
+                    s.current_round = msg["current_round"]
+                if "round_count" in msg:
+                    s.round_count = msg["round_count"]
                 
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break

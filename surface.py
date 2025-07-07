@@ -74,6 +74,9 @@ def player_place_position():
 def draw(screen):
     screen.blit(BACKGROUND_IMAGE, (0, 0))
     cP.card_place_position(screen)
+    # Nur zeichnen, nicht neu erzeugen!
+    for layout in cP.player_cardlayouts.values():
+        layout.draw(screen)
 
     # Spielerfelder und Namen zeichnen
     fields = cP.player_fields.get(s.player_count, [])
@@ -113,9 +116,6 @@ def draw(screen):
             
             screen.blit(name_text, (x_start, y_pos))
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
-
-    for layout in cP.player_cardlayouts.values():
-        layout.draw(screen)
 
     # Gezogene Karte anzeigen, wenn vorhanden
     if hasattr(s, "gezogene_karte") and s.gezogene_karte is not None:
@@ -251,3 +251,9 @@ def draw(screen):
         font = pygame.font.SysFont(None, 22)
         text = font.render(s.status_message, True, (0, 0, 0))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
+    # Aktuelle Rundenzahl links unten anzeigen
+    if hasattr(s, "current_round") and hasattr(s, "round_count"):
+        font = pygame.font.SysFont(None, 28)
+        text = font.render(f"Runde {s.current_round}/{s.round_count}", True, (128, 0, 128))
+        screen.blit(text, (10, screen.get_height() - 40))

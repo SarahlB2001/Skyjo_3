@@ -40,6 +40,11 @@ def client_thread(conn, spieler_id):
                 s.player_count_event.set()
 
             daten = recv_data(conn)
+            if daten and "anzahl_runden" in daten:
+                s.round_count = daten["anzahl_runden"]
+                print(f"[INFO] Rundenanzahl festgelegt auf {s.round_count}")
+
+            daten = recv_data(conn)
             if daten:
                 name = daten.get("name", f"Spieler{spieler_id +1}")
                 with s.lock:
@@ -63,6 +68,9 @@ def client_thread(conn, spieler_id):
         if spieler_id == s.player_count - 1:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
 
+            # --- NEU: Rundenzähler initialisieren ---
+            s.current_round = 1
+
             # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen (aus serv_gameprocess)
             karten_matrizen = sgp.create_card_matrices(s.player_count, s.ROWS, s.COLS)
             s.karten_matrizen = karten_matrizen
@@ -81,7 +89,9 @@ def client_thread(conn, spieler_id):
                     "spielernamen": s.player_data,
                     "karten_matrizen": karten_matrizen,
                     "aufgedeckt_matrizen": aufgedeckt_matrizen,
-                    "discard_card": discard_card_value
+                    "discard_card": discard_card_value,
+                    "current_round": s.current_round,      # <--- NEU
+                    "round_count": s.round_count           # <--- NEU
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 
