@@ -86,7 +86,12 @@ def draw(screen):
             layout = cP.player_cardlayouts.get(idx + 1)
             punkte = 0
             if layout:
-                punkte = sum(card.value for row in layout.cards for card in row if card.is_face_up)
+                punkte = sum(
+    card.value
+    for row in layout.cards
+    for card in row
+    if card.is_face_up and not getattr(card, "removed", False)
+)
             
             # Farbe bestimmen
             name_color = (0, 0, 255) if (idx + 1) == s.spieler_id else s.PLAYER_FONT_COLOR
@@ -145,10 +150,10 @@ def draw(screen):
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, button_y - 30))
 
     # Statusnachricht nur für nicht-aktive Spieler anzeigen
-    if s.status_message and s.current_player != s.spieler_id:
+    '''if s.status_message and s.current_player != s.spieler_id:
         font = pygame.font.SysFont(None, 22)  # Kleinere Schriftgröße (war 30)
         text = font.render(s.status_message, True, (0, 0, 0))
-        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))'''
 
     # Spielanweisungen für den aktiven Spieler oder Karte aufdecken
     if s.current_player == s.spieler_id:
@@ -169,3 +174,80 @@ def draw(screen):
         
         if text:
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
+    
+    # Zeige die Runden-Ende-Nachricht, wenn sie in status_message steht
+    if s.status_message and "Runde beendet" in s.status_message:
+        font = pygame.font.SysFont(None, 36)
+        text = font.render(s.status_message, True, (0, 128, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
+
+    # Zeige die Rundenende-Nachricht für 2 Sekunden für ALLE Spieler
+    if getattr(s, "round_end_triggered", False) and hasattr(s, "round_end_triggered_time"):
+        now = pygame.time.get_ticks()
+        if now - s.round_end_triggered_time < 2000:  # 2 Sekunden
+            font = pygame.font.SysFont(None, 30)
+            text = font.render("Rundenende ausgelöst. Restliche Spieler haben noch einen Zug!", True, (255, 0, 0))
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 50))
+        else:
+            s.round_end_triggered = False
+
+    # Zeige "Runde beendet!" für 2 Sekunden nach Rundenende
+    if hasattr(s, "round_ended_time"):
+        now = pygame.time.get_ticks()
+        if now - s.round_ended_time < 2000:
+            font = pygame.font.SysFont(None, 36)
+            text = font.render("Runde beendet!", True, (0, 128, 0))
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
+            # Andere Status-Nachrichten unterdrücken ohne return zu verwenden
+            display_other_messages = False
+        else:
+            display_other_messages = True
+    else:
+        display_other_messages = True
+
+    if display_other_messages:
+        # Zeige "Alle Karten wurden aufgedeckt..." für 3 Sekunden nach Punkteberechnung
+        if hasattr(s, "points_calculated_time"):
+            now = pygame.time.get_ticks()
+            if now - s.points_calculated_time < 3000:
+                font = pygame.font.SysFont(None, 30)
+                text = font.render("Alle Karten wurden aufgedeckt. Punkte wurden berechnet!", True, (0, 0, 255))
+                screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
+                # Endgültige Punktzahlen anzeigen UNTER der Meldung
+                if hasattr(cP, "player_cardlayouts"):
+                    # Lokale Punkte berechnen
+                    punkte_dict = {}
+                    for pid, layout in cP.player_cardlayouts.items():
+                        punkte = sum(
+                            card.value
+                            for row in layout.cards
+                            for card in row
+                            if card.is_face_up and not getattr(card, "removed", False)
+                        )
+                        punkte_dict[pid] = punkte
+
+                    # Auslöser-ID holen
+                    ausloeser_id = getattr(s, "round_end_trigger_player", None)
+                    if ausloeser_id is not None and ausloeser_id in punkte_dict:
+                        ausloeser_score = punkte_dict[ausloeser_id]
+                        min_score = min(punkte_dict.values())
+                        # Nur wenn der Auslöser NICHT den niedrigsten Score hat, verdoppeln
+                        if ausloeser_score > min_score:
+                            punkte_dict[ausloeser_id] = ausloeser_score * 2
+
+                    y = 160
+                    font = pygame.font.SysFont(None, 28)
+                    for pid, punkte in punkte_dict.items():
+                        name = s.player_data.get(pid, f"Spieler{pid}")
+                        text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
+                        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+                        y += 30
+                display_other_messages = False  # Restliche Statusanzeigen überspringen
+
+    # Nur wenn keine spezielle Statusmeldung aktiv ist, zeige normale Statusmeldungen
+    # Nur wenn keine spezielle Statusmeldung aktiv ist UND der Spieler NICHT am Zug ist
+    if display_other_messages and s.status_message and s.current_player != s.spieler_id:
+        font = pygame.font.SysFont(None, 22)
+        text = font.render(s.status_message, True, (0, 0, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))

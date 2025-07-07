@@ -66,7 +66,7 @@ def process_messages(sock, screen):
 
     try:
         # Wichtig: Höheres Timeout für bessere Nachrichtenverarbeitung
-        sock.settimeout(0.1)  # 100ms Timeout statt non-blocking
+        sock.settimeout(0.3)  # 100ms Timeout statt non-blocking
         
         # Mehrere Nachrichten in einer Schleife verarbeiten!
         while True:
@@ -107,7 +107,7 @@ def process_messages(sock, screen):
                     layout = cP.player_cardlayouts.get(spieler)
                     if layout:
                         card = layout.cards[row][col]
-                        card.flip()
+                        card.is_face_up = True
                     if hasattr(s, "aufgedeckt_matrizen"):
                         s.aufgedeckt_matrizen[spieler][row][col] = True
                 
@@ -164,7 +164,7 @@ def process_messages(sock, screen):
                     layout = cP.player_cardlayouts.get(spieler)
                     if layout:
                         card = layout.cards[row][col]
-                        card.is_face_up = True
+                        card.is_face_up = True  # Immer aufgedeckt setzen!
                     
                     s.discard_card = ablagestapel
                 
@@ -217,7 +217,44 @@ def process_messages(sock, screen):
                     
                     # Keine UI-Anzeige mehr
                     print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}")
-                    
+                
+                elif msg.get("update") == "round_end_triggered":
+                    ausloeser = msg["spieler"]
+                    s.round_end_triggered = True
+                    s.round_end_trigger_player = ausloeser
+                    s.status_message = "Rundenende ausgelöst. Alle Spieler haben noch einen Zug!"
+                    # NEU: Zeit merken, wann die Nachricht angezeigt wurde
+                    s.round_end_triggered_time = pygame.time.get_ticks()
+                
+                elif msg.get("update") == "round_ended":
+                    s.status_message = "Runde beendet!"
+                    s.round_end_triggered = False
+                    s.round_end_trigger_player = None
+                    s.round_ended_time = pygame.time.get_ticks()  # Zeit merken
+
+                elif msg.get("update") == "punkte_aktualisiert":
+                    s.scores = msg["scores"]
+                    print("[DEBUG] Neue Punktzahlen:", s.scores)
+                    s.status_message = "Alle Karten wurden aufgedeckt. Punkte wurden berechnet!"
+                    s.points_calculated_time = pygame.time.get_ticks()  # Zeit merken
+
+                    # --- NEU: Final-Score-Berechnung nach Skyjo-Regel ---
+                    ausloeser_id = getattr(s, "round_end_trigger_player", None)
+                    s.final_round_scores = s.scores.copy()
+                    if ausloeser_id is not None and ausloeser_id in s.scores:
+                        ausloeser_score = s.scores[ausloeser_id]
+                        min_score = min(s.scores.values())
+                        # Nur wenn der Auslöser NICHT den niedrigsten Score hat, verdoppeln
+                        if ausloeser_score > min_score:
+                            s.final_round_scores[ausloeser_id] = ausloeser_score * 2
+                
+                # Nach dem Handler für "triplet_removed":
+                elif msg.get("update") == "triplet_punkte_aktualisiert":
+                    # Punktzahlen aktualisieren, aber keine Rundenende-Meldung anzeigen
+                    s.scores = msg["scores"]
+                    print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
+                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!"
+                
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break
     finally:
