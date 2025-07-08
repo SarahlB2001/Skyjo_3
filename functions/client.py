@@ -93,10 +93,10 @@ def process_messages(sock, screen):
                         s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
                     if "discard_card" in msg:
                         s.discard_card = msg["discard_card"]
-                    if "current_round" in msg:
-                         s.current_round = msg["current_round"]
-                    if "round_count" in msg:
-                       s.round_count = msg["round_count"]
+                    if "current_round" in msg and msg["current_round"] is not None:
+                        s.current_round = msg["current_round"]
+                    if "round_count" in msg and msg["round_count"] is not None:
+                        s.round_count = msg["round_count"]
                     cP.card_set_positions(screen)
                     s.waiting_for_start = False
                     s.game_started = True
