@@ -11,12 +11,13 @@ import settings as s
 import time
 from dictionaries import cardSetPosition as cP
 from entities import gameprocess as gp
+import threading
 
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
-    pygame.display.set_caption("Mehrspieler Spiel")
+    pygame.display.set_caption("Skyjo Multiplayer")
 
     # Initialize surface module
     import surface as su
@@ -200,7 +201,7 @@ def main():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = event.pos
                     # Nur eigene Karten dürfen angeklickt werden
-                    my_layout = cP.player_cardlayouts.get(s.spieler_id)
+                    my_layout = s.player_cardlayouts.get(s.spieler_id)
                     
                     # Ablehnen-Button wurde geklickt
                     if hasattr(s, "ablehnen_button_rect") and s.ablehnen_button_rect.collidepoint(pos):

@@ -39,6 +39,12 @@ def client_thread(conn, spieler_id):
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
 
+            # NEU: Rundenanzahl abfragen
+            daten = recv_data(conn)
+            if daten and "anzahl_runden" in daten:
+                s.round_count = daten["anzahl_runden"]
+                print(f"[INFO] Rundenanzahl festgelegt auf {s.round_count}")
+
             daten = recv_data(conn)
             if daten:
                 name = daten.get("name", f"Spieler{spieler_id +1}")
@@ -81,7 +87,9 @@ def client_thread(conn, spieler_id):
                     "spielernamen": s.player_data,
                     "karten_matrizen": karten_matrizen,
                     "aufgedeckt_matrizen": aufgedeckt_matrizen,
-                    "discard_card": discard_card_value
+                    "discard_card": discard_card_value,
+                    "current_round": s.current_round,      # <--- NEU
+                    "round_count": s.round_count           # <--- NEU
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 
@@ -233,14 +241,6 @@ def client_thread(conn, spieler_id):
                     print(f"[DEBUG] Nächster Spieler: {next_player}")
             else:
                 break
-
-        # nach dem Aufdecken aller Karten und vor dem Senden der Punkte:
-        scores = sgp.calculate_scores(s.karten_matrizen, s.aufgedeckt_matrizen, ausloeser_id=s.round_end_trigger_player)
-        for v in s.connection:
-            send_data(v, {
-                "update": "punkte_aktualisiert",
-                "scores": scores
-            })
 
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")

@@ -13,7 +13,7 @@ player_fields = {
     6: ['1', '2', '3', '4', '5', '6']
 }
 
-player_cardlayouts = {}
+s.player_cardlayouts = {}
 
 # Position von den Plätzen auf dem Spielfeld
 
@@ -76,8 +76,10 @@ def card_place_position(screen):
 
 def card_set_positions(screen):
     print("[DEBUG] card_set_positions wurde aufgerufen")
-    global player_cardlayouts
-    player_cardlayouts = {}
+    print(f"[DEBUG] s.player_count: {s.player_count}")
+    print(f"[DEBUG] s.karten_matrizen: {s.karten_matrizen}")
+
+    s.player_cardlayouts = {}
 
     fields = player_fields.get(s.player_count, [])
     for idx, f in enumerate(fields, 1):
@@ -92,7 +94,7 @@ def card_set_positions(screen):
         if matrix is None:
             # Fallback: Dummy-Matrix falls noch keine Daten da sind
             matrix = [[0 for _ in range(s.COLS)] for _ in range(s.ROWS)]
-        player_cardlayouts[idx] = l.CardLayout(pl.field_pos[f]['x'], pl.field_pos[f]['y'], idx, matrix)
+        s.player_cardlayouts[idx] = l.CardLayout(pl.field_pos[f]['x'], pl.field_pos[f]['y'], idx, matrix)
 
     # Kartenstapel zeichnen
     pygame.draw.rect(
@@ -101,6 +103,6 @@ def card_set_positions(screen):
          pl.field_pos['carddeck']['width'], pl.field_pos['carddeck']['height'])
     )
 
-    for layout in player_cardlayouts.values():
+    for layout in s.player_cardlayouts.values():
         layout.draw(screen)
 
