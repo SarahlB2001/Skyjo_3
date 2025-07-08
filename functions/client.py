@@ -113,8 +113,8 @@ def process_messages(sock, screen):
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
                     s.current_player = None   # <--- WICHTIG: Damit alle Spieler aufdecken dürfen!
-                    if hasattr(s, "points_calculated_time"):
-                        del s.points_calculated_time
+                    #if hasattr(s, "points_calculated_time"):
+                      #  del s.points_calculated_time
                     s.status_message = "Decke zwei Karten auf"
                 # Startnachricht behandeln
                 elif "message" in msg and ("startet" in msg["message"].lower() or "starten" in msg["message"].lower()):
@@ -277,6 +277,8 @@ def process_messages(sock, screen):
 
                 elif msg.get("update") == "punkte_aktualisiert":
                     s.scores = msg["scores"]
+                    s.last_round_scores = msg["scores"].copy()
+                    s.points_calculated_time = pygame.time.get_ticks()
                     if not hasattr(s, "score_history"):
                         s.score_history = {}
                     for pid, score in msg["scores"].items():
@@ -294,6 +296,9 @@ def process_messages(sock, screen):
                         min_score = min(s.scores.values())
                         if ausloeser_score > min_score:
                             s.final_round_scores[ausloeser_id] = ausloeser_score * 2
+
+                    print(f"[DEBUG] Punktzahlen empfangen: {msg['scores']}")
+                    print(f"[DEBUG] points_calculated_time gesetzt: {s.points_calculated_time}")
                 
                 # Nach dem Handler für "triplet_removed":
                 '''

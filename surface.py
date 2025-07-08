@@ -114,13 +114,11 @@ def draw(screen):
             screen.blit(name_text, (x_start, y_pos))
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
 
-            # Score-Historie (lila) anzeigen
-            if hasattr(s, "score_history") and str(idx + 1) in s.score_history:
-                history = s.score_history[str(idx + 1)]
-                if len(history) > 0:
-                    last_score = history[-1]
-                    score_hist_text = PLAYER_FONT.render(f"({last_score})", True, (128, 0, 128))
-                    screen.blit(score_hist_text, (x_start + name_rect.width + 30 + score_rect.width + 10, y_pos))
+            # Score-Historie (lila) anzeigen - NUR wenn Rundenergebnisse vorhanden
+            if hasattr(s, "score_history") and str(idx + 1) in s.score_history and len(s.score_history[str(idx + 1)]) > 0:
+                last_score = s.score_history[str(idx + 1)][-1]  # Letzter Eintrag = Rundenendstand
+                score_hist_text = PLAYER_FONT.render(f"({last_score})", True, (128, 0, 128))
+                screen.blit(score_hist_text, (x_start + name_rect.width + 30 + score_rect.width + 10, y_pos))
 
     for layout in s.player_cardlayouts.values():
         layout.draw(screen)
@@ -226,7 +224,7 @@ def draw(screen):
                 if hasattr(cP, "player_cardlayouts"):
                     # Lokale Punkte berechnen
                     punkte_dict = {}
-                    for pid, layout in s.player_cardlayouts.items():
+                    for pid, layout in cP.player_cardlayouts.items():
                         punkte = sum(
                             card.value
                             for row in layout.cards
@@ -235,15 +233,15 @@ def draw(screen):
                         )
                         punkte_dict[pid] = punkte
 
-                    # Auslöser-ID holen
+                    # Auslöser-ID holen und ggf. verdoppeln
                     ausloeser_id = getattr(s, "round_end_trigger_player", None)
                     if ausloeser_id is not None and ausloeser_id in punkte_dict:
                         ausloeser_score = punkte_dict[ausloeser_id]
                         min_score = min(punkte_dict.values())
-                        # Nur wenn der Auslöser NICHT den niedrigsten Score hat, verdoppeln
                         if ausloeser_score > min_score:
                             punkte_dict[ausloeser_id] = ausloeser_score * 2
 
+                  
                     y = 160
                     font = pygame.font.SysFont(None, 28)
                     for pid, punkte in punkte_dict.items():
@@ -268,4 +266,14 @@ def draw(screen):
         text = font.render(f"Runde {s.current_round}/{s.round_count}", True, (128, 0, 128))
         screen.blit(text, (10, screen.get_height() - 40))
 
+    # Zeige für die Endpunktzahl die offiziellen Werte vom Server
+    if hasattr(s, "final_round_scores"):
+        y = 160
+        font = pygame.font.SysFont(None, 28)
+        for pid, punkte in s.final_round_scores.items():
+            name = s.player_data.get(pid, f"Spieler{pid}")
+            text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+            y += 30
+           
 
