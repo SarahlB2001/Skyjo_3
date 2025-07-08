@@ -8,14 +8,26 @@ import settings as s
 from entities import triplet_logic  # Neuer Import
 from entities.triplet_logic import berechne_punktzahl, calculate_scores  # Diese Funktionen importieren
 
-def create_card_matrices(player_count, rows, cols):
+def create_card_matrices(player_count, ROWS, COLS):
     """Erzeugt die Kartenmatrizen für alle Spieler"""
     karten_matrizen = {}
+    # Erstelle ein vollständiges Deck
+    deck = create_deck()
+
+    # Für jeden Spieler 12 Karten (4×3) aus dem Deck nehmen
     for pid in range(1, player_count + 1):
         matrix = []
-        for row in range(rows):
-            matrix.append([random.randint(-2, 12) for _ in range(cols)])
+        for row in range(ROWS):
+            matrix.append([deck.pop() for _ in range(COLS)])
         karten_matrizen[pid] = matrix
+
+    # Erste Karte für Ablagestapel
+    s.discard_card = deck.pop()
+    s.discard_pile = [s.discard_card]
+
+    # Rest des Decks als Nachziehstapel
+    s.draw_pile = deck
+
     return karten_matrizen
 
 def create_flipped_matrices(player_count, rows, cols):
@@ -25,9 +37,9 @@ def create_flipped_matrices(player_count, rows, cols):
         aufgedeckt_matrizen[pid] = [[False for _ in range(cols)] for _ in range(rows)]
     return aufgedeckt_matrizen
 
-def generate_random_card():
+#def draw_card_from_deck():
     """Generiert eine zufällige Karte für den Nachziehstapel"""
-    return random.randint(-2, 12)
+   # return random.randint(-2, 12)
 
 def determine_starting_player(scores):
     """Bestimmt den Startspieler basierend auf den Punktzahlen"""
@@ -140,6 +152,7 @@ def handle_take_discard_pile(daten, connection, send_data):
     # Alte Karte auf den Ablagestapel legen
     s.discard_pile.append(alte_karte)
     s.discard_card = alte_karte
+    s.discard_pile.append(alte_karte)
 
     # Allen Clients mitteilen
     for v in connection:
@@ -178,7 +191,7 @@ def handle_take_draw_pile(daten, connection, send_data):
     spieler_id = daten["spieler_id"]
 
     # Neue zufällige Karte generieren
-    neue_karte = generate_random_card()
+    neue_karte = draw_card_from_deck()
 
     # Nur dem Spieler mitteilen, der die Karte gezogen hat
     for v in connection:
@@ -206,6 +219,7 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
     s.karten_matrizen[spieler_id][row][col] = s.gezogene_karte
     s.aufgedeckt_matrizen[spieler_id][row][col] = True  # Karte ist immer offen
     s.discard_card = alte_karte
+    s.discard_pile.append(alte_karte)
 
     # Allen Clients mitteilen
     for v in connection:
@@ -309,8 +323,17 @@ def update_next_player(spieler_id, connection, send_data):
         scores = calculate_scores(
             s.karten_matrizen,
             s.aufgedeckt_matrizen,
-            ausloeser_id=s.round_end_trigger_player  # Diese wichtige Parameter fehlte!
+            ausloeser_id=s.round_end_trigger_player
         )
+
+        # HIER DIE VERDOPPLUNGSLOGIK EINFÜGEN:
+        ausloeser_id = s.round_end_trigger_player
+        if ausloeser_id is not None and ausloeser_id in scores:
+            ausloeser_score = scores[ausloeser_id]
+            min_score = min(scores.values())
+            if ausloeser_score > min_score:
+                scores[ausloeser_id] = ausloeser_score * 2
+                print(f"[INFO] Punkte für Auslöser {ausloeser_id} verdoppelt: {ausloeser_score} -> {scores[ausloeser_id]}")
 
         # Allen Clients die finalen Punktzahlen mitteilen
         for v in connection:
@@ -352,3 +375,47 @@ def remove_column_triplets(spieler_id, connection, send_data):
     """Entfernt Dreierkombinationen in den Spalten (delegiert an triplet_logic)"""
     # Einfach die Funktion aus dem triplet_logic Modul aufrufen
     return triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+
+def create_deck():
+    """Erstellt ein vollständiges Skyjo-Kartendeck mit korrekten Häufigkeiten"""
+    deck = []
+
+    # Skyjo-Karten nach offiziellem Spiel:
+    # -2: 5 Karten
+    # -1: 10 Karten
+    # 0: 15 Karten
+    # 1-12: je 10 Karten
+
+    deck.extend([-2] * 5)      # 5x -2
+    deck.extend([-1] * 10)     # 10x -1
+    deck.extend([0] * 15)      # 15x 0
+
+    for i in range(1, 13):
+        deck.extend([i] * 10)  # je 10x Karten von 1-12
+
+    # Mischen des Decks
+    random.shuffle(deck)
+    return deck
+
+def draw_card_from_deck():
+    """Zieht eine Karte vom Nachziehstapel, mischt Ablagestapel falls nötig"""
+    # Wenn Nachziehstapel leer ist, Ablagestapel mischen und als neuen Nachziehstapel verwenden
+    if not s.draw_pile:
+        if s.discard_pile and len(s.discard_pile) > 1:
+            # Oberste Karte vom Ablagestapel behalten
+            top_card = s.discard_pile.pop()
+
+            # Rest mischen und als neuen Nachziehstapel verwenden
+            s.draw_pile = s.discard_pile
+            random.shuffle(s.draw_pile)
+
+            # Ablagestapel mit nur der obersten Karte neu initialisieren
+            s.discard_pile = [top_card]
+            s.discard_card = top_card
+        else:
+            # Notfallmodus wenn alles leer ist: zufällige Karte erstellen
+            print("[WARNUNG] Nachziehstapel und Ablagestapel leer! Erstelle zufällige Karte.")
+            return random.randint(-2, 12)
+
+    # Karte vom Nachziehstapel ziehen
+    return s.draw_pile.pop()

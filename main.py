@@ -113,16 +113,25 @@ def main():
                         if event.key == pygame.K_RETURN:
                             SERVER_IP = s.ip_input.strip()
                             try:
+                                # Timeout setzen für die Verbindung
                                 s.sock, s.spieler_id = c.connect_to_server(SERVER_IP)
+                                # Nur bei erfolgreicher Verbindung Status ändern
                                 s.entering_ip = False
                                 s.waiting_for_name = True
                                 s.ip_input = ""
                             except Exception as e:
-                                s.status_message = f"Verbindung fehlgeschlagen: {e}"
+                                # Bei Fehler im IP-Eingabemodus bleiben
+                                s.status_message = "Falsche IP-Adresse! Bitte nochmal eingeben."
+                                print(f"[ERROR] Verbindungsfehler: {e}")
+                                # Wichtig: Diese Zustände beibehalten
+                                s.entering_ip = True
+                                s.waiting_for_name = False
                         elif event.key == pygame.K_BACKSPACE:
                             s.ip_input = s.ip_input[:-1]
                         else:
-                            s.ip_input += event.unicode
+                            # Begrenze die Eingabe auf 16 Zeichen
+                            if len(s.ip_input) < 16:
+                                s.ip_input += event.unicode
 
                     elif s.waiting_for_name and s.active:
                         if event.key == pygame.K_RETURN:
@@ -188,41 +197,41 @@ def main():
                 status_surface = font.render(s.status_message, True, (0, 0, 0))
                 screen.blit(status_surface, (screen.get_width() // 2 - status_surface.get_width() // 2, 100))
 
-           
-                
+
+
         else:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     s.running = False
 
-                
+
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = event.pos
                     # Nur eigene Karten dürfen angeklickt werden
                     my_layout = cP.player_cardlayouts.get(s.spieler_id)
-                    
+
                     # Ablehnen-Button wurde geklickt
                     if hasattr(s, "ablehnen_button_rect") and s.ablehnen_button_rect.collidepoint(pos):
                         gp.handle_reject_button(my_layout)
-    
+
                     # Nur der aktuelle Spieler darf Aktionen ausführen
                     if s.current_player == s.spieler_id and not s.zug_begonnen:
                         # Kartenstapel angeklickt
                         if hasattr(s, "card_stack_rect") and s.card_stack_rect.collidepoint(pos):
                             gp.handle_draw_pile_click(s.sock, s.spieler_id)
-        
+
                         # Ablagestapel angeklickt
                         elif hasattr(s, "discard_stack_rect") and s.discard_stack_rect.collidepoint(pos):
                             gp.handle_discard_pile_click(s.sock, s.spieler_id)
-    
+
                     # Kartenauswahl für das Aufdecken oder Tauschen
                     if my_layout:
                         for row_idx, row in enumerate(my_layout.cards):
                             for col_idx, card in enumerate(row):
                                 if card.rect.collidepoint(pos):
                                     gp.handle_card_click(s.sock, s.spieler_id, my_layout, row_idx, col_idx, card)
-          
+
             su.draw(screen)
 
         pygame.display.flip()
@@ -234,5 +243,5 @@ def main():
 
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()

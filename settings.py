@@ -66,7 +66,7 @@ CARD_HEIGHT = 70
 gap_width = 45
 gap_height = 3
 
-cards_flipped_this_turn = 0 
+cards_flipped_this_turn = 0
 current_player = None  # Der Spieler, der gerade am Zug ist
 
 
@@ -84,3 +84,5 @@ zug_begonnen = False  # Zeigt an, ob der Spieler bereits eine Aktion in diesem Z
 
 round_end_triggered = False
 round_end_trigger_player = None
+draw_pile = []  # Nachziehstapel
+discard_pile = []  # Ablagestapel
