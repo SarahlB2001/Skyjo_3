@@ -387,3 +387,4 @@ def reset_for_new_round():
     s.setup_phase = True
     s.waiting_for_start = False
     s.zug_begonnen = False
+    s.current_player = None   # <--- WICHTIG: Damit alle Spieler aufdecken dürfen!

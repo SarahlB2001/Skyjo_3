@@ -218,7 +218,7 @@ def draw(screen):
         # Zeige "Alle Karten wurden aufgedeckt..." für 3 Sekunden nach Punkteberechnung
         if hasattr(s, "points_calculated_time"):
             now = pygame.time.get_ticks()
-            if now - s.points_calculated_time < 3000:
+            if now - s.points_calculated_time < 6000:
                 font = pygame.font.SysFont(None, 30)
                 text = font.render("Alle Karten wurden aufgedeckt. Punkte wurden berechnet!", True, (0, 0, 255))
                 screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
@@ -251,6 +251,7 @@ def draw(screen):
                         text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
                         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
                         y += 30
+                        print(f"{name}: {punkte} Punkte")
                 display_other_messages = False  # Restliche Statusanzeigen überspringen
 
     # Nur wenn keine spezielle Statusmeldung aktiv ist, zeige normale Statusmeldungen
@@ -261,7 +262,7 @@ def draw(screen):
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
 
      
-     # Am Ende der draw() Funktion:
+    # Rundenanzeige links unten
     if hasattr(s, "current_round") and hasattr(s, "round_count"):
         font = pygame.font.SysFont(None, 28)
         text = font.render(f"Runde {s.current_round}/{s.round_count}", True, (128, 0, 128))

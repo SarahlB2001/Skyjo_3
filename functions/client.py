@@ -112,7 +112,7 @@ def process_messages(sock, screen):
                     s.warte_auf_entscheidung = False
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
-                    s.current_player = None
+                    s.current_player = None   # <--- WICHTIG: Damit alle Spieler aufdecken dürfen!
                     if hasattr(s, "points_calculated_time"):
                         del s.points_calculated_time
                     s.status_message = "Decke zwei Karten auf"
@@ -296,11 +296,12 @@ def process_messages(sock, screen):
                             s.final_round_scores[ausloeser_id] = ausloeser_score * 2
                 
                 # Nach dem Handler für "triplet_removed":
+                '''
                 elif msg.get("update") == "triplet_punkte_aktualisiert":
                     # Punktzahlen aktualisieren, aber keine Rundenende-Meldung anzeigen
                     s.scores = msg["scores"]
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
-                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!"
+                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!" '''
                 
                 
                 break
