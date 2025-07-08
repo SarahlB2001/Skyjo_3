@@ -15,12 +15,12 @@ from entities import gameprocess as gp
 
 def main():
     pygame.init()
-    screen = su.screen
-    pygame.display.set_caption("Mehrspieler Spiel")
-
     # Initialize surface module
     import surface as su
-    su.initialize()
+    # su.initialize()
+
+    screen = su.screen
+    pygame.display.set_caption("Mehrspieler Spiel")
 
     font = pygame.font.SysFont(None, 36)
     small_font = pygame.font.SysFont(None, 28)
@@ -223,7 +223,7 @@ def main():
                                 if card.rect.collidepoint(pos):
                                     gp.handle_card_click(s.sock, s.spieler_id, my_layout, row_idx, col_idx, card)
           
-            su.draw(screen)
+            su.draw()
 
         pygame.display.flip()
         clock.tick(30)
