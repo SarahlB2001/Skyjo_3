@@ -11,11 +11,35 @@ from entities.triplet_logic import berechne_punktzahl, calculate_scores  # Diese
 def create_card_matrices(player_count, rows, cols):
     """Erzeugt die Kartenmatrizen für alle Spieler"""
     karten_matrizen = {}
+
+    # Erstelle ein vollständiges Deck
+    deck = create_deck()
+
+    # Nachziehstapel in settings speichern
+    s.draw_pile = deck
+
     for pid in range(1, player_count + 1):
         matrix = []
         for row in range(rows):
-            matrix.append([random.randint(-2, 12) for _ in range(cols)])
+            row_cards = []
+            for _ in range(cols):
+                # Karte vom gemischten Deck nehmen
+                if s.draw_pile:
+                    row_cards.append(s.draw_pile.pop())
+                else:
+                    # Notfall: Falls das Deck leer sein sollte
+                    row_cards.append(random.randint(-2, 12))
+            matrix.append(row_cards)
         karten_matrizen[pid] = matrix
+
+    # Erste Karte für Ablagestapel
+    if s.draw_pile:
+        s.discard_card = s.draw_pile.pop()
+        s.discard_pile = [s.discard_card]
+    else:
+        s.discard_card = random.randint(-2, 12)
+        s.discard_pile = [s.discard_card]
+
     return karten_matrizen
 
 def create_flipped_matrices(player_count, rows, cols):
@@ -25,9 +49,9 @@ def create_flipped_matrices(player_count, rows, cols):
         aufgedeckt_matrizen[pid] = [[False for _ in range(cols)] for _ in range(rows)]
     return aufgedeckt_matrizen
 
-def generate_random_card():
-    """Generiert eine zufällige Karte für den Nachziehstapel"""
-    return random.randint(-2, 12)
+#def draw_card_from_deck():
+ #   """Generiert eine zufällige Karte für den Nachziehstapel"""
+  #  return random.randint(-2, 12)
 
 def determine_starting_player(scores):
     """Bestimmt den Startspieler basierend auf den Punktzahlen"""
@@ -178,7 +202,7 @@ def handle_take_draw_pile(daten, connection, send_data):
     spieler_id = daten["spieler_id"]
 
     # Neue zufällige Karte generieren
-    neue_karte = generate_random_card()
+    neue_karte = draw_card_from_deck()
 
     # Nur dem Spieler mitteilen, der die Karte gezogen hat
     for v in connection:
@@ -382,9 +406,52 @@ def reset_for_new_round():
     s.cards_flipped = {}
     s.round_end_triggered = False
     s.round_end_trigger_player = None
-    s.discard_card = generate_random_card()
+    s.discard_card = draw_card_from_deck()
     s.cards_flipped_this_turn = 0
     s.setup_phase = True
     s.waiting_for_start = False
     s.zug_begonnen = False
     s.current_player = None   # <--- WICHTIG: Damit alle Spieler aufdecken dürfen!
+
+def create_deck():
+    """Erstellt ein vollständiges Skyjo-Kartendeck mit korrekten Häufigkeiten"""
+    deck = []
+
+    # Skyjo-Karten nach offiziellem Spiel:
+    deck.extend([-2] * 5)      # 5× -2
+    deck.extend([-1] * 10)     # 10× -1
+    deck.extend([0] * 15)      # 15× 0
+
+    for i in range(1, 13):
+        deck.extend([i] * 10)  # je 10× Karten von 1-12
+
+    # Mischen des Decks
+    random.shuffle(deck)
+    return deck
+
+def draw_card_from_deck():
+    """Zieht eine Karte vom Nachziehstapel"""
+    # Wenn Nachziehstapel leer ist, Ablagestapel mischen und als neuen Nachziehstapel verwenden
+    if not hasattr(s, "draw_pile") or not s.draw_pile:
+        s.draw_pile = []
+
+        # Falls Ablagestapel existiert, diesen verwenden
+        if hasattr(s, "discard_pile") and len(s.discard_pile) > 1:
+            # Oberste Karte behalten
+            top_card = s.discard_pile.pop()
+
+            # Rest mischen und als Nachziehstapel verwenden
+            s.draw_pile = s.discard_pile[:]
+            random.shuffle(s.draw_pile)
+
+            # Ablagestapel nur mit oberster Karte neu initialisieren
+            s.discard_pile = [top_card]
+            s.discard_card = top_card
+
+        # Falls kein Nachziehstapel und Ablagestapel, neues Deck erstellen
+        if not s.draw_pile:
+            s.draw_pile = create_deck()
+            random.shuffle(s.draw_pile)
+
+    # Karte vom Stapel nehmen
+    return s.draw_pile.pop()

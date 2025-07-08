@@ -66,7 +66,7 @@ CARD_HEIGHT = 70
 gap_width = 45
 gap_height = 3
 
-cards_flipped_this_turn = 0 
+cards_flipped_this_turn = 0
 current_player = None  # Der Spieler, der gerade am Zug ist
 
 
@@ -88,3 +88,7 @@ round_end_trigger_player = None
 current_round = 1
 round_count = 1  # Wird vom Host gesetzt
 score_history = {}  # Für die Anzeige der Rundenpunkte
+
+# Kartendeck
+draw_pile = []  # Nachziehstapel
+discard_pile = []  # Ablagestapel
