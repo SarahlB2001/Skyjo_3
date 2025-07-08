@@ -17,12 +17,13 @@ def berechne_punktzahl(matrix, aufgedeckt_matrix, spieler_id):
         for col in range(len(matrix[0])):
             if aufgedeckt_matrix[row][col] and (row, col) not in removed:
                 punkte += matrix[row][col]
+    '''
     # Triplets abziehen (jede entfernte Spalte = 3 Karten)
     if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
         removed_cols = [card["col"] for card in s.removed_cards[spieler_id]]
         for col in set(removed_cols):
             triplet_value = matrix[0][col]
-            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen!
+            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen! '''
     return punkte
 
 def calculate_scores(karten_matrizen, aufgedeckt_matrizen, ausloeser_id=None):

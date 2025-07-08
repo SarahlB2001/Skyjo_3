@@ -301,12 +301,12 @@ def process_messages(sock, screen):
                     print(f"[DEBUG] points_calculated_time gesetzt: {s.points_calculated_time}")
                 
                 # Nach dem Handler für "triplet_removed":
-                '''
+                
                 elif msg.get("update") == "triplet_punkte_aktualisiert":
                     # Punktzahlen aktualisieren, aber keine Rundenende-Meldung anzeigen
                     s.scores = msg["scores"]
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
-                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!" '''
+                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!" 
                 
                 
                 break
