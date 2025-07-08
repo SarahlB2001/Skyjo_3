@@ -90,6 +90,8 @@ def process_messages(sock, screen):
                     if "round_count" in msg:
                         s.round_count = msg["round_count"]
                     print(f"[DEBUG] Neue Runde: {s.current_round}/{s.round_count}")
+                    if hasattr(s, "final_round_scores"):
+                       del s.final_round_scores
                     # Layouts wirklich neu erzeugen
                     s.player_cardlayouts = {}
                     cP.card_set_positions(screen)
@@ -113,8 +115,8 @@ def process_messages(sock, screen):
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
                     s.current_player = None   # <--- WICHTIG: Damit alle Spieler aufdecken dürfen!
-                    #if hasattr(s, "points_calculated_time"):
-                      #  del s.points_calculated_time
+                    if hasattr(s, "points_calculated_time"):
+                        del s.points_calculated_time
                     s.status_message = "Decke zwei Karten auf"
                 # Startnachricht behandeln
                 elif "message" in msg and ("startet" in msg["message"].lower() or "starten" in msg["message"].lower()):
@@ -278,24 +280,32 @@ def process_messages(sock, screen):
                 elif msg.get("update") == "punkte_aktualisiert":
                     s.scores = msg["scores"]
                     s.last_round_scores = msg["scores"].copy()
-                    s.points_calculated_time = pygame.time.get_ticks()
+                    print("[DEBUG] Punktzahlen empfangen:", msg["scores"])
+                    print("[DEBUG] Spieler-ID dieses Clients:", s.spieler_id)
+                    
+                    if not hasattr(s, "total_scores"):
+                     s.total_scores = {}
                     if not hasattr(s, "score_history"):
                         s.score_history = {}
                     for pid, score in msg["scores"].items():
-                        pid_key = str(pid)
+                        pid_key = int(pid)
                         if pid_key not in s.score_history:
                             s.score_history[pid_key] = []
                         s.score_history[pid_key].append(score)
                     # --- NEU: Zeitpunkt merken für die Anzeige ---
-                    s.points_calculated_time = pygame.time.get_ticks()
+                        if pid_key not in s.total_scores:
+                             s.total_scores[pid_key] = 0
+                        s.total_scores[pid_key] += score
                     # --- Rest wie gehabt ---
-                    ausloeser_id = getattr(s, "round_end_trigger_player", None)
-                    s.final_round_scores = s.scores.copy()
+                    #ausloeser_id = getattr(s, "round_end_trigger_player", None)
+                    s.final_round_scores = s.scores.copy() 
+                    s.points_calculated_time = pygame.time.get_ticks()
+                    '''
                     if ausloeser_id is not None and ausloeser_id in s.scores:
                         ausloeser_score = s.scores[ausloeser_id]
                         min_score = min(s.scores.values())
                         if ausloeser_score > min_score:
-                            s.final_round_scores[ausloeser_id] = ausloeser_score * 2
+                            s.final_round_scores[ausloeser_id] = ausloeser_score * 2 '''
 
                     print(f"[DEBUG] Punktzahlen empfangen: {msg['scores']}")
                     print(f"[DEBUG] points_calculated_time gesetzt: {s.points_calculated_time}")

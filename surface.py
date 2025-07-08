@@ -115,10 +115,13 @@ def draw(screen):
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
 
             # Score-Historie (lila) anzeigen - NUR wenn Rundenergebnisse vorhanden
-            if hasattr(s, "score_history") and str(idx + 1) in s.score_history and len(s.score_history[str(idx + 1)]) > 0:
-                last_score = s.score_history[str(idx + 1)][-1]  # Letzter Eintrag = Rundenendstand
-                score_hist_text = PLAYER_FONT.render(f"({last_score})", True, (128, 0, 128))
+            if hasattr(s, "total_scores") and (idx + 1) in s.total_scores:
+                # Hole den Score, egal ob Key int oder str ist
+               
+                total_score = s.total_scores[idx + 1]
+                score_hist_text = PLAYER_FONT.render(f"({total_score})", True, (128, 0, 128))
                 screen.blit(score_hist_text, (x_start + name_rect.width + 30 + score_rect.width + 10, y_pos))
+               
 
     for layout in s.player_cardlayouts.values():
         layout.draw(screen)
@@ -221,7 +224,7 @@ def draw(screen):
                 text = font.render("Alle Karten wurden aufgedeckt. Punkte wurden berechnet!", True, (0, 0, 255))
                 screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
                 # Endgültige Punktzahlen anzeigen UNTER der Meldung
-                if hasattr(cP, "player_cardlayouts"):
+                '''if hasattr(cP, "player_cardlayouts"):
                     # Lokale Punkte berechnen
                     punkte_dict = {}
                     for pid, layout in cP.player_cardlayouts.items():
@@ -249,7 +252,7 @@ def draw(screen):
                         text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
                         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
                         y += 30
-                        print(f"{name}: {punkte} Punkte")
+                        print(f"{name}: {punkte} Punkte") '''
                 display_other_messages = False  # Restliche Statusanzeigen überspringen
 
     # Nur wenn keine spezielle Statusmeldung aktiv ist, zeige normale Statusmeldungen
@@ -275,5 +278,5 @@ def draw(screen):
             text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
             y += 30
-           
+
 
