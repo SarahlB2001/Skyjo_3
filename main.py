@@ -16,7 +16,7 @@ from entities import gameprocess as gp
 def main():
     pygame.init()
     screen = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
-    pygame.display.set_caption("Mehrspieler Spiel")
+    pygame.display.set_caption("Skyjo Multiplayer")
 
     # Initialize surface module
     import surface as su

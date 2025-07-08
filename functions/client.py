@@ -184,7 +184,9 @@ def process_messages(sock, screen):
                     print(f"[DEBUG] WICHTIG! Spielerwechsel von {old_player} zu {s.current_player}")
                 
                 elif "message" in msg:
-                    s.status_message = msg["message"]
+                    # Nur anzeigen, wenn das Spiel noch nicht gestartet ist
+                    if not getattr(s, "game_started", False) or "warten auf andere spieler" not in msg["message"].lower():
+                        s.status_message = msg["message"]
                 
                 elif msg.get("update") == "test":
                     print(f"[DEBUG] Test-Nachricht empfangen: {msg}")
@@ -267,7 +269,7 @@ def process_messages(sock, screen):
                     s.status_message = msg["message"]
                     if "karten_matrizen" in msg:
                         s.karten_matrizen = msg["karten_matrizen"]
-                        cP.player_cardlayouts = {}  # Layouts wirklich löschen!
+                        cP.player_cardlayouts = {}
                         cP.card_set_positions(screen, force_redraw=True)
                     if "aufgedeckt_matrizen" in msg:
                         s.aufgedeckt_matrizen = msg["aufgedeckt_matrizen"]
@@ -289,8 +291,10 @@ def process_messages(sock, screen):
                     s.warte_auf_entscheidung = False
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
+                    s.current_player = None  # <--- WICHTIG: Damit die Setup-Phase neu startet!
                     if hasattr(s, "points_calculated_time"):
                         del s.points_calculated_time
+                    s.status_message = "Decke zwei Karten auf"
                 
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break
