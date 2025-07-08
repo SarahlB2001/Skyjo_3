@@ -83,7 +83,7 @@ def draw(screen):
         rect = pl.field_pos[f]
         if idx < len(namen):
             name = namen[idx]
-            layout = cP.player_cardlayouts.get(idx + 1)
+            layout = s.player_cardlayouts.get(idx + 1)
             punkte = 0
             if layout:
                 punkte = sum(
@@ -122,7 +122,7 @@ def draw(screen):
                     score_hist_text = PLAYER_FONT.render(f"({last_score})", True, (128, 0, 128))
                     screen.blit(score_hist_text, (x_start + name_rect.width + 30 + score_rect.width + 10, y_pos))
 
-    for layout in cP.player_cardlayouts.values():
+    for layout in s.player_cardlayouts.values():
         layout.draw(screen)
 
     # Gezogene Karte anzeigen, wenn vorhanden
@@ -226,7 +226,7 @@ def draw(screen):
                 if hasattr(cP, "player_cardlayouts"):
                     # Lokale Punkte berechnen
                     punkte_dict = {}
-                    for pid, layout in cP.player_cardlayouts.items():
+                    for pid, layout in s.player_cardlayouts.items():
                         punkte = sum(
                             card.value
                             for row in layout.cards
