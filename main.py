@@ -188,14 +188,12 @@ def main():
                 status_surface = font.render(s.status_message, True, (0, 0, 0))
                 screen.blit(status_surface, (screen.get_width() // 2 - status_surface.get_width() // 2, 100))
 
-           
-                
+
         else:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     s.running = False
 
-                
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = event.pos

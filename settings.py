@@ -1,5 +1,5 @@
 # Datei für die Settings (Konstanten, Globale Variablen etc.)
-import server as serv
+# import server as serv
 import threading
 
 # Fürs Fenster:
@@ -38,6 +38,8 @@ connection = []
 player_count = None
 player_count_event = threading.Event()
 lock = threading.Lock()
+
+nameslist = []
 
 # Variablen für den Main
 text_input = ""
@@ -81,3 +83,5 @@ zug_begonnen = False  # Zeigt an, ob der Spieler bereits eine Aktion in diesem Z
 
 round_end_triggered = False
 round_end_trigger_player = None
+
+# cd c:/Users/beny/Desktop/TONI/Skyjo_3
