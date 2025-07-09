@@ -88,3 +88,4 @@ round_end_trigger_player = None
 current_round = 1
 round_count = 1  # Wird vom Host gesetzt
 score_history = {}  # Für die Anzeige der Rundenpunkte
+total_scores = {}

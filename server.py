@@ -117,7 +117,8 @@ def client_thread(conn, spieler_id):
                     
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
                 
                 elif daten.get("aktion") == "nehme_nachziehstapel":
                     # Karte vom Nachziehstapel nehmen
@@ -133,7 +134,8 @@ def client_thread(conn, spieler_id):
                     
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
                 
                 elif daten.get("aktion") == "nachziehstapel_ablehnen":
                     # Gezogene Karte ablehnen
@@ -144,7 +146,8 @@ def client_thread(conn, spieler_id):
                     
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
             else:
                 break
 

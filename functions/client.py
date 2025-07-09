@@ -72,6 +72,10 @@ def process_messages(sock, screen):
                 if not msg:
                     break  # verlässt nur die innere while, nicht die Funktion!
                 
+                # HIER ist die richtige Stelle:
+                if hasattr(s, "game_ended_time") and msg.get("update") != "game_ended":
+                    continue # oder: continue, wenn du die Schleife weiterlaufen lassen willst
+
                 # WICHTIG: Detailliertere Debug-Ausgabe
                 print(f"[DEBUG] Client empfängt Nachricht vom Typ: {msg.get('update', 'unknown')}")
                 if msg.get('update') == "triplet_removed":
@@ -118,6 +122,7 @@ def process_messages(sock, screen):
                     if hasattr(s, "points_calculated_time"):
                         del s.points_calculated_time
                     s.status_message = "Decke zwei Karten auf"
+
                 # Startnachricht behandeln
                 elif "message" in msg and ("startet" in msg["message"].lower() or "starten" in msg["message"].lower()):
                     s.status_message = msg["message"]
@@ -155,18 +160,15 @@ def process_messages(sock, screen):
                         s.aufgedeckt_matrizen[spieler][row][col] = True
                 
                 elif msg.get("update") == "spielreihenfolge":
+                    if hasattr(s, "game_ended_time"):
+                        return
                     s.spielreihenfolge = msg["reihenfolge"]
                     s.scores = msg["scores"]
-                    s.current_player = s.spielreihenfolge[0]
                     s.setup_phase = False
-                    
-                    current_player_name = s.player_data.get(s.current_player, f"Spieler{s.current_player}")
+                    s.current_player = s.spielreihenfolge[0]
+                    current_player_name = s.player_data.get(s.current_player, f"Spieler{s.current_player}")  # <--- Diese Zeile ergänzen!
                     s.status_message = f"{current_player_name} ist am Zug"
                     
-                    print(f"[DEBUG] Current player gesetzt auf: {s.current_player}")
-                    reihenfolge_namen = [s.player_data.get(pid, f"Spieler{pid}") for pid in s.spielreihenfolge]
-                    print("Spielreihenfolge (Namen):", reihenfolge_namen)
-                    print(f"Startspieler: {s.player_data.get(s.current_player, f'Spieler{s.current_player}')}")
                 
                 elif msg.get("update") == "nachziehstapel_karte":
                     s.gezogene_karte = msg["karte"]
@@ -213,6 +215,8 @@ def process_messages(sock, screen):
                 
                 elif msg.get("update") == "naechster_spieler":
                     print(f"[DEBUG] WICHTIG! Nachricht 'naechster_spieler' empfangen: {msg}")
+                    if hasattr(s, "game_ended_time"):
+                        return
                     old_player = s.current_player
                     s.current_player = msg["spieler"]
                     s.zug_begonnen = False
@@ -318,8 +322,12 @@ def process_messages(sock, screen):
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
                     s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!" 
                 
+                elif msg.get("update") == "game_ended":
+                    s.status_message = msg["message"]
+                    s.game_ended_time = pygame.time.get_ticks()
+                    s.podium_shown = False  # Damit das Podium wieder angezeigt wird
+                    continue
                 
-                break
                 
                 
                 

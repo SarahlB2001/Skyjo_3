@@ -269,7 +269,11 @@ def handle_reject_draw_pile(daten, connection, send_data):
     return spieler_id
 
 def update_next_player(spieler_id, connection, send_data):
-    """Aktualisiert den nächsten Spieler"""
+
+    if getattr(s, "game_over", False):
+        print("[DEBUG] Spiel ist vorbei (Flag), kein naechster_spieler mehr!")
+        return s.current_player
+     
     # Nächster Spieler ist dran
     s.current_player = get_next_player(spieler_id, s.spielreihenfolge)
 
@@ -340,10 +344,21 @@ def update_next_player(spieler_id, connection, send_data):
                         "update": "game_ended",
                         "message": "Alle Runden beendet. Spielende!"
                     })
+                
+                # --- HIER BLOCKIEREN ---
+            # Wenn das Spiel vorbei ist, KEIN "naechster_spieler" mehr senden!
+                if hasattr(s, "current_round") and hasattr(s, "round_count") and s.current_round >= s.round_count:
+                    s.game_over = True 
+                    print("[DEBUG] Spiel ist vorbei, kein naechster_spieler mehr!")
+                    s.round_end_triggered = False
+                    s.round_end_trigger_player = None
+                    return None
 
         s.round_end_triggered = False
         s.round_end_trigger_player = None
         return s.current_player
+
+    
 
     # Normal weitermachen
     for v in connection:
@@ -351,7 +366,7 @@ def update_next_player(spieler_id, connection, send_data):
             "update": "naechster_spieler",
             "spieler": s.current_player
         })
-    return s.current_player
+    return s.current_player 
 
 # Die bestehende check_if_all_cards_revealed Funktion ersetzen
 def check_if_all_cards_revealed(spieler_id):

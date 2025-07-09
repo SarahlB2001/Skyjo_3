@@ -74,7 +74,7 @@ def player_place_position():
 def draw(screen):
     screen.blit(BACKGROUND_IMAGE, (0, 0))
     cP.card_place_position(screen)
-
+    display_other_messages = True  ######
     # Spielerfelder und Namen zeichnen
     fields = cP.player_fields.get(s.player_count, [])
     namen = [s.player_data.get(i, f"Spieler{i}") for i in range(1, s.player_count + 1)]
@@ -201,17 +201,16 @@ def draw(screen):
         else:
             s.round_end_triggered = False
 
-    # Zeige "Runde beendet!" für 2 Sekunden nach Rundenende
+    # Zeige "Runde beendet!" für 4 Sekunden nach Rundenende
     if hasattr(s, "round_ended_time"):
         now = pygame.time.get_ticks()
-        if now - s.round_ended_time < 2000:
+        if now - s.round_ended_time < 4000:
             font = pygame.font.SysFont(None, 36)
             text = font.render("Runde beendet!", True, (0, 128, 0))
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
             # Andere Status-Nachrichten unterdrücken ohne return zu verwenden
             display_other_messages = False
-        else:
-            display_other_messages = True
+        
     else:
         display_other_messages = True
 
@@ -268,7 +267,7 @@ def draw(screen):
         font = pygame.font.SysFont(None, 28)
         text = font.render(f"Runde {s.current_round}/{s.round_count}", True, (128, 0, 128))
         screen.blit(text, (10, screen.get_height() - 40))
-
+    '''
     # Zeige für die Endpunktzahl die offiziellen Werte vom Server
     if hasattr(s, "final_round_scores"):
         y = 160
@@ -277,6 +276,40 @@ def draw(screen):
             name = s.player_data.get(pid, f"Spieler{pid}")
             text = font.render(f"{name}: {punkte} Punkte", True, (0, 0, 0))
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
-            y += 30
+            y += 30 '''
+
+    # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
+    # Zeige das Podium, wenn das Spiel vorbei ist
+    #if hasattr(s, "total_scores") and hasattr(s, "game_ended_time") and len(s.total_scores) > 0:
+    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and (not hasattr(s, "current_round") or not hasattr(s, "round_count") or s.current_round >= s.round_count):    
+        screen.fill((255, 255, 255))
+        
+            # Prüfe, ob das Spiel wirklich vorbei ist (z.B. nach game_ended)
+        
+        # Sortiere Spieler nach Punktzahl (aufsteigend = Gewinner zuerst)
+        podium = sorted(s.total_scores.items(), key=lambda x: x[1])
+        font = pygame.font.SysFont(None, 48)
+        headline = font.render("Endstand / Podium", True, (0, 0, 0))
+        screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 180))
+
+                # Zeige die Plätze
+        font = pygame.font.SysFont(None, 36)
+        y = 250
+        for platz, (pid, punkte) in enumerate(podium, 1):
+            name = s.player_data.get(pid, f"Spieler{pid}")
+            color = (218, 165, 32) if platz == 1 else (128, 128, 128) if platz == 2 else (205, 127, 50) if platz == 3 else (0, 0, 0)
+            text = font.render(f"{platz}. {name}  ({punkte} Punkte)", True, color)
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+            y += 45
+
+        # Optional: Gewinner-Text
+        winner_name = s.player_data.get(podium[0][0], f"Spieler{podium[0][0]}")
+        winner_text = font.render(f"Gewinner: {winner_name}!", True, (0, 128, 0))
+        screen.blit(winner_text, (screen.get_width() // 2 - winner_text.get_width() // 2, y + 20))
+
+        # Merke, dass das Podium gezeigt wurde (damit es nicht mehrfach erscheint)
+        s.podium_shown = True
+
+        return  # Alles andere ausblenden, solange das Podium angezeigt wird
 
 
