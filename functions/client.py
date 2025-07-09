@@ -126,6 +126,8 @@ def process_messages(sock, screen):
                     # Statusvariablen zurücksetzen
                     s.setup_phase = True
                     s.cards_flipped_this_turn = 0
+                    for pid in s.player_data: #
+                     s.cards_flipped[pid] = 0 #
                     s.waiting_for_start = False
                     s.zug_begonnen = False
                     s.gezogene_karte = None
