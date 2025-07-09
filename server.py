@@ -61,11 +61,9 @@ def client_thread(conn, spieler_id):
             print(len(s.nameslist), s.player_count)
 
         # Allen Spielern "Warten..." senden
-        # if spieler_id < s.player_count - 1 and len(s.nameslist) != s.player_count :
         if len(s.nameslist) != s.player_count:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
-        # if spieler_id == s.player_count - 1 and len(s.nameslist) == s.player_count :
         if len(s.nameslist) == s.player_count:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
 
