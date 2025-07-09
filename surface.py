@@ -216,14 +216,14 @@ def draw(screen):
 
     if display_other_messages:
         # Zeige "Alle Karten wurden aufgedeckt..." für 3 Sekunden nach Punkteberechnung
-        if hasattr(s, "points_calculated_time"):
+        '''if hasattr(s, "points_calculated_time"):
             now = pygame.time.get_ticks()
             if now - s.points_calculated_time < 6000:
                 font = pygame.font.SysFont(None, 30)
                 text = font.render("Alle Karten wurden aufgedeckt. Punkte wurden berechnet!", True, (0, 0, 255))
                 screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 120))
                 # Endgültige Punktzahlen anzeigen UNTER der Meldung
-                '''if hasattr(cP, "player_cardlayouts"):
+                if hasattr(cP, "player_cardlayouts"):
                     # Lokale Punkte berechnen
                     punkte_dict = {}
                     for pid, layout in cP.player_cardlayouts.items():
@@ -252,7 +252,7 @@ def draw(screen):
                         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
                         y += 30
                         print(f"{name}: {punkte} Punkte") '''
-                display_other_messages = False  # Restliche Statusanzeigen überspringen
+                #display_other_messages = False ''' # Restliche Statusanzeigen überspringen 
 
     # Nur wenn keine spezielle Statusmeldung aktiv ist, zeige normale Statusmeldungen
     # Nur wenn keine spezielle Statusmeldung aktiv ist UND der Spieler NICHT am Zug ist
@@ -281,7 +281,7 @@ def draw(screen):
     # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
     # Zeige das Podium, wenn das Spiel vorbei ist
     #if hasattr(s, "total_scores") and hasattr(s, "game_ended_time") and len(s.total_scores) > 0:
-    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over",False): # (not hasattr(s, "current_round") or not hasattr(s, "round_count") or s.current_round >= s.round_count):    
+    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over", False):
         screen.fill((255, 255, 255))
         
             # Prüfe, ob das Spiel wirklich vorbei ist (z.B. nach game_ended)
@@ -311,5 +311,50 @@ def draw(screen):
         s.podium_shown = True
 
         return  # Alles andere ausblenden, solange das Podium angezeigt wird
+
+    # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
+    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over", False):
+        # Hintergrundbox (halbtransparent)
+        podium_rect = pygame.Rect(screen.get_width()//2 - 300, 120, 600, 350)
+        podium_surface = pygame.Surface((600, 350), pygame.SRCALPHA)
+        podium_surface.fill((255, 255, 255, 230))  # Weiß, leicht transparent
+        screen.blit(podium_surface, podium_rect.topleft)
+        pygame.draw.rect(screen, (128, 0, 128), podium_rect, 4, border_radius=18)  # Lila Rahmen
+
+        # Überschrift
+        font = pygame.font.SysFont(None, 54, bold=True)
+        headline = font.render("🏆 Endstand / Podium 🏆", True, (128, 0, 128))
+        screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 140))
+
+        # Plätze anzeigen
+        font = pygame.font.SysFont(None, 38)
+        y = 210
+        podium = sorted(s.total_scores.items(), key=lambda x: x[1])
+        for platz, (pid, punkte) in enumerate(podium, 1):
+            name = s.player_data.get(pid, f"Spieler{pid}")
+            if platz == 1:
+                color = (218, 165, 32)  # Gold
+                platz_icon = "🥇"
+            elif platz == 2:
+                color = (192, 192, 192)  # Silber
+                platz_icon = "🥈"
+            elif platz == 3:
+                color = (205, 127, 50)   # Bronze
+                platz_icon = "🥉"
+            else:
+                color = (80, 80, 80)
+                platz_icon = f"{platz}."
+            text = font.render(f"{platz_icon} {name}  ({punkte} Punkte)", True, color)
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+            y += 45
+
+        # Gewinner-Text
+        winner_name = s.player_data.get(podium[0][0], f"Spieler{podium[0][0]}")
+        winner_font = pygame.font.SysFont(None, 40, bold=True)
+        winner_text = winner_font.render(f"🎉 Gewinner: {winner_name}! 🎉", True, (0, 128, 0))
+        screen.blit(winner_text, (screen.get_width() // 2 - winner_text.get_width() // 2, y + 20))
+
+        s.podium_shown = True
+        return
 
 
