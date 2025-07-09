@@ -159,6 +159,13 @@ def process_messages(sock, screen):
                     if "round_count" in msg and msg["round_count"] is not None:
                         s.round_count = msg["round_count"]
                     cP.card_set_positions(screen)
+                    for pid, layout in s.player_cardlayouts.items():
+                        if hasattr(s, "aufgedeckt_matrizen") and pid in s.aufgedeckt_matrizen:
+                            aufgedeckt = s.aufgedeckt_matrizen[pid]
+                            for row_idx, row in enumerate(layout.cards):
+                                for col_idx, card in enumerate(row):
+                                    card.is_face_up = aufgedeckt[row_idx][col_idx]
+                                    card.removed = False
                     s.waiting_for_start = False
                     s.game_started = True
                     print("[DEBUG] Spiel gestartet!")

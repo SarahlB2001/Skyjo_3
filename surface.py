@@ -280,50 +280,20 @@ def draw(screen):
 
     # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
     # Zeige das Podium, wenn das Spiel vorbei ist
-    #if hasattr(s, "total_scores") and hasattr(s, "game_ended_time") and len(s.total_scores) > 0:
     if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over", False):
-        screen.fill((255, 255, 255))
-        
-            # Prüfe, ob das Spiel wirklich vorbei ist (z.B. nach game_ended)
-        
-        # Sortiere Spieler nach Punktzahl (aufsteigend = Gewinner zuerst)
-        podium = sorted(s.total_scores.items(), key=lambda x: x[1])
-        font = pygame.font.SysFont(None, 48)
-        headline = font.render("Endstand / Podium", True, (0, 0, 0))
-        screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 180))
-
-                # Zeige die Plätze
-        font = pygame.font.SysFont(None, 36)
-        y = 250
-        for platz, (pid, punkte) in enumerate(podium, 1):
-            name = s.player_data.get(pid, f"Spieler{pid}")
-            color = (218, 165, 32) if platz == 1 else (128, 128, 128) if platz == 2 else (205, 127, 50) if platz == 3 else (0, 0, 0)
-            text = font.render(f"{platz}. {name}  ({punkte} Punkte)", True, color)
-            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
-            y += 45
-
-        # Optional: Gewinner-Text
-        winner_name = s.player_data.get(podium[0][0], f"Spieler{podium[0][0]}")
-        winner_text = font.render(f"Gewinner: {winner_name}!", True, (0, 128, 0))
-        screen.blit(winner_text, (screen.get_width() // 2 - winner_text.get_width() // 2, y + 20))
-
-        # Merke, dass das Podium gezeigt wurde (damit es nicht mehrfach erscheint)
-        s.podium_shown = True
-
-        return  # Alles andere ausblenden, solange das Podium angezeigt wird
-
-    # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
-    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over", False):
-        # Hintergrundbox (halbtransparent)
+        # Podium-Hintergrundbild laden (nur einmal)
+        if not hasattr(s, "podium_bg"):
+            s.podium_bg = pygame.image.load("podium.jpg")
+            s.podium_bg = pygame.transform.scale(s.podium_bg, (600, 350))
         podium_rect = pygame.Rect(screen.get_width()//2 - 300, 120, 600, 350)
-        podium_surface = pygame.Surface((600, 350), pygame.SRCALPHA)
-        podium_surface.fill((255, 255, 255, 230))  # Weiß, leicht transparent
-        screen.blit(podium_surface, podium_rect.topleft)
-        pygame.draw.rect(screen, (128, 0, 128), podium_rect, 4, border_radius=18)  # Lila Rahmen
+        screen.blit(s.podium_bg, podium_rect.topleft)
+
+        # Lila Rahmen
+        pygame.draw.rect(screen, (128, 0, 128), podium_rect, 4, border_radius=18)
 
         # Überschrift
         font = pygame.font.SysFont(None, 54, bold=True)
-        headline = font.render("🏆 Endstand / Podium 🏆", True, (128, 0, 128))
+        headline = font.render("Endstand / Podium ", True, (128, 0, 128))
         screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 140))
 
         # Plätze anzeigen
@@ -332,26 +302,16 @@ def draw(screen):
         podium = sorted(s.total_scores.items(), key=lambda x: x[1])
         for platz, (pid, punkte) in enumerate(podium, 1):
             name = s.player_data.get(pid, f"Spieler{pid}")
-            if platz == 1:
-                color = (218, 165, 32)  # Gold
-                platz_icon = "🥇"
-            elif platz == 2:
-                color = (192, 192, 192)  # Silber
-                platz_icon = "🥈"
-            elif platz == 3:
-                color = (205, 127, 50)   # Bronze
-                platz_icon = "🥉"
-            else:
-                color = (80, 80, 80)
-                platz_icon = f"{platz}."
-            text = font.render(f"{platz_icon} {name}  ({punkte} Punkte)", True, color)
+            color = (0, 0, 139)  # Dunkelblau für alle Plätze
+            platz_text = f"{platz}."
+            text = font.render(f"{platz_text} {name}:  ({punkte} Punkte)", True, color)
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
             y += 45
 
         # Gewinner-Text
         winner_name = s.player_data.get(podium[0][0], f"Spieler{podium[0][0]}")
         winner_font = pygame.font.SysFont(None, 40, bold=True)
-        winner_text = winner_font.render(f"🎉 Gewinner: {winner_name}! 🎉", True, (0, 128, 0))
+        winner_text = winner_font.render(f"Gewinner: {winner_name}! ", True, (0, 128, 0))
         screen.blit(winner_text, (screen.get_width() // 2 - winner_text.get_width() // 2, y + 20))
 
         s.podium_shown = True

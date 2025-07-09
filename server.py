@@ -55,12 +55,12 @@ def client_thread(conn, spieler_id):
         else:
             s.player_count_event.wait()
 
-        daten = recv_data(conn)
-        if daten:
-            name = daten.get("name", f"Spieler{spieler_id + 1}")
-            with s.lock:
-                s.player_data[spieler_id + 1] = name
-            print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
+            daten = recv_data(conn)
+            if daten:
+                name = daten.get("name", f"Spieler{spieler_id + 1}")
+                with s.lock:
+                    s.player_data[spieler_id + 1] = name
+                print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
 
         # Allen Spielern "Warten..." senden
         if spieler_id < s.player_count - 1:
@@ -102,7 +102,7 @@ def client_thread(conn, spieler_id):
                     spieler_id, karte = sgp.handle_card_flip(daten, s.connection, send_data)
 
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte ({karte['row']}, {karte['col']}) aufgedeckt.")
-                    print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
+                    #print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
 
                     # Prüfen, ob alle Spieler 2 Karten aufgedeckt haben
                     if sgp.check_if_setup_complete(s.player_count, s.cards_flipped, s.connection, send_data):

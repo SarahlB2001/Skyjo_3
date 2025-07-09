@@ -311,7 +311,7 @@ def update_next_player(spieler_id, connection, send_data):
         print("[INFO] Runde beendet!")
 
         # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
-        time.sleep(3) #############war 3
+        time.sleep(4) #############war 3
 
         # Alle verdeckten Karten aufdecken
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
@@ -331,7 +331,9 @@ def update_next_player(spieler_id, connection, send_data):
                         time.sleep(0.05)  # Sehr kurze Pause reicht!
 
         # KORREKTUR: Längere Wartezeit für die Verarbeitung
-        time.sleep(5)  # 3 Sekunden statt nur 1 ###########################
+        pause = 2 + s.player_count * 1.5  # z.B. 3 Sekunden + 1,5 Sekunden pro Spieler
+        time.sleep(pause)
+        
 
         # KORREKTUR: Trigger-Spieler explizit übergeben
         scores = calculate_scores(
@@ -369,7 +371,7 @@ def update_next_player(spieler_id, connection, send_data):
                         "message": "Alle Runden beendet. Spielende!"
                     })
                 
-                # --- HIER BLOCKIEREN ---
+              
             # Wenn das Spiel vorbei ist, KEIN "naechster_spieler" mehr senden!
                 if hasattr(s, "current_round") and hasattr(s, "round_count") and s.current_round >= s.round_count:
                     s.game_over = True 
