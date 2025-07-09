@@ -82,6 +82,12 @@ def process_messages(sock, screen):
                 if not msg:
                     break  # verlässt nur die innere while, nicht die Funktion!
                 
+                if msg.get("update") == "game_ended":
+                    s.status_message = msg["message"]
+                    s.game_over = True
+                    s.game_ended_time = pygame.time.get_ticks()
+                    s.podium_shown = False  # Damit das Podium wieder angezeigt wird
+                    continue
                 # HIER ist die richtige Stelle:
                 if hasattr(s, "game_ended_time") and msg.get("update") != "game_ended":
                     continue # oder: continue, wenn du die Schleife weiterlaufen lassen willst
@@ -332,11 +338,12 @@ def process_messages(sock, screen):
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
                     s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!" 
                 
-                elif msg.get("update") == "game_ended":
+                '''  elif msg.get("update") == "game_ended":
                     s.status_message = msg["message"]
+                    s.game_over = True
                     s.game_ended_time = pygame.time.get_ticks()
                     s.podium_shown = False  # Damit das Podium wieder angezeigt wird
-                    continue
+                    continue '''
                 
                 
                 

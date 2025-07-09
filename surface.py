@@ -281,7 +281,7 @@ def draw(screen):
     # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
     # Zeige das Podium, wenn das Spiel vorbei ist
     #if hasattr(s, "total_scores") and hasattr(s, "game_ended_time") and len(s.total_scores) > 0:
-    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and (not hasattr(s, "current_round") or not hasattr(s, "round_count") or s.current_round >= s.round_count):    
+    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over",False): # (not hasattr(s, "current_round") or not hasattr(s, "round_count") or s.current_round >= s.round_count):    
         screen.fill((255, 255, 255))
         
             # Prüfe, ob das Spiel wirklich vorbei ist (z.B. nach game_ended)
