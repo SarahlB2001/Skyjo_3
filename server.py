@@ -72,12 +72,12 @@ def client_thread(conn, spieler_id):
             # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen (aus serv_gameprocess)
             karten_matrizen = sgp.create_card_matrices(s.player_count, s.ROWS, s.COLS)
             s.karten_matrizen = karten_matrizen
-            
+
             aufgedeckt_matrizen = sgp.create_flipped_matrices(s.player_count, s.ROWS, s.COLS)
             s.aufgedeckt_matrizen = aufgedeckt_matrizen
 
             # Erzeuge eine Karte für den Ablagestapel
-            discard_card_value = sgp.generate_random_card()
+            discard_card_value = sgp.draw_card_from_deck()
             s.discard_card = discard_card_value
 
             for v in s.connection:
@@ -100,21 +100,21 @@ def client_thread(conn, spieler_id):
                 if daten.get("aktion") == "karte_aufdecken":
                     # Karte aufdecken
                     spieler_id, karte = sgp.handle_card_flip(daten, s.connection, send_data)
-                    
+
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte ({karte['row']}, {karte['col']}) aufgedeckt.")
                     print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
 
                     # Prüfen, ob alle Spieler 2 Karten aufgedeckt haben
                     if sgp.check_if_setup_complete(s.player_count, s.cards_flipped, s.connection, send_data):
                         print(f"[DEBUG] Setup abgeschlossen. Spielreihenfolge: {s.spielreihenfolge}")
-                
+
                 elif daten.get("aktion") == "nehme_ablagestapel":
                     # Karte vom Ablagestapel nehmen
                     spieler_id, discard_card = sgp.handle_take_discard_pile(daten, s.connection, send_data)
-                    
+
                     # Pause für Verarbeitung
                     time.sleep(0.1)
-                    
+
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
                     if not getattr(s, "game_over", False):
@@ -124,14 +124,14 @@ def client_thread(conn, spieler_id):
                     # Karte vom Nachziehstapel nehmen
                     spieler_id, neue_karte = sgp.handle_take_draw_pile(daten, s.connection, send_data)
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte {neue_karte} vom Nachziehstapel gezogen")
-                
+
                 elif daten.get("aktion") == "nachziehstapel_tauschen":
                     # Mit gezogener Karte tauschen
                     spieler_id, alte_karte = sgp.handle_swap_with_draw_pile(daten, s.connection, send_data)
-                    
+
                     # Pause für Verarbeitung
                     time.sleep(0.1)
-                    
+
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
                     if not getattr(s, "game_over", False):
@@ -140,10 +140,10 @@ def client_thread(conn, spieler_id):
                 elif daten.get("aktion") == "nachziehstapel_ablehnen":
                     # Gezogene Karte ablehnen
                     spieler_id = sgp.handle_reject_draw_pile(daten, s.connection, send_data)
-                    
+
                     # Pause für Verarbeitung
                     time.sleep(0.1)
-                    
+
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
                     if not getattr(s, "game_over", False):
