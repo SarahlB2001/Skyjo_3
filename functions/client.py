@@ -301,12 +301,17 @@ def process_messages(sock, screen):
                     s.round_end_triggered_time = pygame.time.get_ticks()
 
                 elif msg.get("update") == "round_ended":
-                    s.status_message = "Runde beendet!"
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
-                    s.round_ended_time = pygame.time.get_ticks()  # Zeit merken
+                    s.round_ended_time = pygame.time.get_ticks()
+                    s.block_until = s.round_ended_time + 4000  # 4 Sekunden blockieren
 
                 elif msg.get("update") == "punkte_aktualisiert":
+                    # Wenn gerade "Runde beendet!" angezeigt wird, warte ab
+                    if hasattr(s, "block_until") and pygame.time.get_ticks() < s.block_until:
+                        # Nachricht später erneut verarbeiten (z.B. in eine Queue legen oder einfach return)
+                        return
+                    
                     s.scores = msg["scores"]
                     s.last_round_scores = msg["scores"].copy()
                     print("[DEBUG] Punktzahlen empfangen:", msg["scores"])
@@ -325,17 +330,12 @@ def process_messages(sock, screen):
                         if pid_key not in s.total_scores:
                              s.total_scores[pid_key] = 0
                         s.total_scores[pid_key] += score
+
                     # --- Rest wie gehabt ---
-                    #ausloeser_id = getattr(s, "round_end_trigger_player", None)
+                   
                     s.final_round_scores = s.scores.copy()
                     s.points_calculated_time = pygame.time.get_ticks()
-                    '''
-                    if ausloeser_id is not None and ausloeser_id in s.scores:
-                        ausloeser_score = s.scores[ausloeser_id]
-                        min_score = min(s.scores.values())
-                        if ausloeser_score > min_score:
-                            s.final_round_scores[ausloeser_id] = ausloeser_score * 2 '''
-
+                   
                     print(f"[DEBUG] Punktzahlen empfangen: {msg['scores']}")
                     print(f"[DEBUG] points_calculated_time gesetzt: {s.points_calculated_time}")
 
@@ -347,12 +347,7 @@ def process_messages(sock, screen):
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
                     s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!" 
                 
-                '''  elif msg.get("update") == "game_ended":
-                    s.status_message = msg["message"]
-                    s.game_over = True
-                    s.game_ended_time = pygame.time.get_ticks()
-                    s.podium_shown = False  # Damit das Podium wieder angezeigt wird
-                    continue '''
+               
                 
                 
                 
