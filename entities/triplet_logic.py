@@ -17,12 +17,13 @@ def berechne_punktzahl(matrix, aufgedeckt_matrix, spieler_id):
         for col in range(len(matrix[0])):
             if aufgedeckt_matrix[row][col] and (row, col) not in removed:
                 punkte += matrix[row][col]
+    '''
     # Triplets abziehen (jede entfernte Spalte = 3 Karten)
     if hasattr(s, "removed_cards") and spieler_id in s.removed_cards:
         removed_cols = [card["col"] for card in s.removed_cards[spieler_id]]
         for col in set(removed_cols):
             triplet_value = matrix[0][col]
-            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen!
+            punkte -= 3 * triplet_value  # <-- KORREKT: 3 mal Wert abziehen! '''
     return punkte
 
 def calculate_scores(karten_matrizen, aufgedeckt_matrizen, ausloeser_id=None):
@@ -178,26 +179,7 @@ def remove_column_triplets(spieler_id, connection, send_data):
     
     return True, columns_to_remove
 
-def is_affected_by_triplet_removal(spieler_id, row, col):
-    """
-    Prüft, ob eine bestimmte Kartenposition durch Dreierkombinationen entfernt wurde.
-    
-    Args:
-        spieler_id: ID des Spielers
-        row: Zeilenindex der Karte
-        col: Spaltenindex der Karte
-        
-    Returns:
-        bool: True wenn die Karte entfernt wurde, sonst False
-    """
-    if not hasattr(s, "removed_cards") or spieler_id not in s.removed_cards:
-        return False
-    
-    for card in s.removed_cards[spieler_id]:
-        if card["row"] == row and card["col"] == col:
-            return True
-    
-    return False
+
 
 def check_if_all_cards_revealed_with_triplets(spieler_id):
     """

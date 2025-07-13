@@ -1,21 +1,48 @@
 """
-Server-side game logic without pygame dependencies
-This avoids UI-related imports and window creation
+Dieses Modul enthält die serverseitige Spiellogik für Skyjo.
+Es verwaltet die Kartenmatrizen, Spielreihenfolge, Punkteberechnung und
+Kommunikation mit den Clients, ohne pygame-Abhängigkeiten.
+Enthalten sind Funktionen für das Erstellen und Verwalten der Karten,
+Spieleraktionen, Rundenfortschritt und Triplet-Logik.
 """
 import random
 import time
 import settings as s
-from entities import triplet_logic  # Neuer Import
+from entities import triplet_logic
 from entities.triplet_logic import berechne_punktzahl, calculate_scores  # Diese Funktionen importieren
 
 def create_card_matrices(player_count, rows, cols):
     """Erzeugt die Kartenmatrizen für alle Spieler"""
     karten_matrizen = {}
+
+    # Erstelle ein vollständiges Deck
+    deck = create_deck()
+
+    # Nachziehstapel in settings speichern
+    s.draw_pile = deck
+
     for pid in range(1, player_count + 1):
         matrix = []
         for row in range(rows):
-            matrix.append([random.randint(-2, 12) for _ in range(cols)])
+            row_cards = []
+            for _ in range(cols):
+                # Karte vom gemischten Deck nehmen
+                if s.draw_pile:
+                    row_cards.append(s.draw_pile.pop())
+                else:
+                    # Notfall: Falls das Deck leer sein sollte
+                    row_cards.append(random.randint(-2, 12))
+            matrix.append(row_cards)
         karten_matrizen[pid] = matrix
+
+    # Erste Karte für Ablagestapel
+    if s.draw_pile:
+        s.discard_card = s.draw_pile.pop()
+        s.discard_pile = [s.discard_card]
+    else:
+        s.discard_card = random.randint(-2, 12)
+        s.discard_pile = [s.discard_card]
+
     return karten_matrizen
 
 def create_flipped_matrices(player_count, rows, cols):
@@ -25,9 +52,6 @@ def create_flipped_matrices(player_count, rows, cols):
         aufgedeckt_matrizen[pid] = [[False for _ in range(cols)] for _ in range(rows)]
     return aufgedeckt_matrizen
 
-def generate_random_card():
-    """Generiert eine zufällige Karte für den Nachziehstapel"""
-    return random.randint(-2, 12)
 
 def determine_starting_player(scores):
     """Bestimmt den Startspieler basierend auf den Punktzahlen"""
@@ -64,10 +88,10 @@ def handle_card_flip(daten, connection, send_data):
         s.cards_flipped = {}
     s.cards_flipped[spieler_id] = s.cards_flipped.get(spieler_id, 0) + 1
 
-    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    # Auf Dreierkombinationen prüfen
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
-    # NEU: Rundenende prüfen
+    # Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
         s.round_end_trigger_player = spieler_id
@@ -154,7 +178,7 @@ def handle_take_discard_pile(daten, connection, send_data):
     # Nach dem Tausch:
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
-    # NEU: Rundenende prüfen
+    # Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
         s.round_end_trigger_player = spieler_id
@@ -178,7 +202,7 @@ def handle_take_draw_pile(daten, connection, send_data):
     spieler_id = daten["spieler_id"]
 
     # Neue zufällige Karte generieren
-    neue_karte = generate_random_card()
+    neue_karte = draw_card_from_deck()
 
     # Nur dem Spieler mitteilen, der die Karte gezogen hat
     for v in connection:
@@ -217,12 +241,12 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
 
-    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    # Auf Dreierkombinationen prüfen
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     if hat_triplets:
-        #import time
-        time.sleep(0.5) ############################war 2
-    # NEU: Rundenende prüfen
+
+        time.sleep(0.5)
+    # Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
         s.round_end_trigger_player = spieler_id
@@ -269,11 +293,15 @@ def handle_reject_draw_pile(daten, connection, send_data):
     return spieler_id
 
 def update_next_player(spieler_id, connection, send_data):
-    """Aktualisiert den nächsten Spieler"""
+
+    if getattr(s, "game_over", False):
+        print("[DEBUG] Spiel ist vorbei (Flag), kein naechster_spieler mehr!")
+        return s.current_player
+
     # Nächster Spieler ist dran
     s.current_player = get_next_player(spieler_id, s.spielreihenfolge)
 
-    # NEU: Rundenende prüfen
+    # Rundenende prüfen
     if s.round_end_triggered and s.current_player == s.round_end_trigger_player:
         # Rundenende wirklich durchführen!
         for v in connection:
@@ -283,33 +311,45 @@ def update_next_player(spieler_id, connection, send_data):
         print("[INFO] Runde beendet!")
 
         # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
-        time.sleep(3) #############war 3
+        time.sleep(4)
 
-        # Alle verdeckten Karten aufdecken
+        # Alle verdeckten Karten auf einmal aufdecken
+        all_cards_to_reveal = {}
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
+            all_cards_to_reveal[pid] = []
             for row in range(len(aufgedeckt_matrix)):
                 for col in range(len(aufgedeckt_matrix[row])):
                     entfernt = False
                     if hasattr(s, "removed_cards") and pid in s.removed_cards:
                         entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
-                    if not entfernt:
+                    if not entfernt and not aufgedeckt_matrix[row][col]:  # Nur nicht aufgedeckte Karten
+                        # Markiere Karte als aufgedeckt
                         aufgedeckt_matrix[row][col] = True
-                        for v in connection:
-                            send_data(v, {
-                                "update": "karte_aufgedeckt",
-                                "spieler": pid,
-                                "karte": {"row": row, "col": col}
-                            })
-                        time.sleep(0.05)  # Sehr kurze Pause reicht!
+                        # Füge zur Liste hinzu
+                        all_cards_to_reveal[pid].append({"row": row, "col": col})
 
-        # KORREKTUR: Längere Wartezeit für die Verarbeitung
-        time.sleep(2)  # 3 Sekunden statt nur 1 ###########################
+        # Sende eine einzige Nachricht mit allen Karten
+        for v in connection:
+            send_data(v, {
+                "update": "reveal_all_cards",
+                "all_cards": all_cards_to_reveal
+            })
+        print("[DEBUG] Alle verbleibenden Karten aufgedeckt!")
 
-        # KORREKTUR: Trigger-Spieler explizit übergeben
+        # Warte kurz damit alle Clients die Nachricht verarbeiten können
+        time.sleep(1.0)
+
+
+        # Längere Wartezeit für die Verarbeitung
+        pause = 2.5 + s.player_count * 1.5
+        time.sleep(pause)
+
+
+        # Trigger-Spieler explizit übergeben
         scores = calculate_scores(
             s.karten_matrizen,
             s.aufgedeckt_matrizen,
-            ausloeser_id=s.round_end_trigger_player  # Diese wichtige Parameter fehlte!
+            ausloeser_id=s.round_end_trigger_player
         )
 
         # Allen Clients die finalen Punktzahlen mitteilen
@@ -319,9 +359,42 @@ def update_next_player(spieler_id, connection, send_data):
                 "scores": scores
             })
 
+        # ...nach Punkteberechnung und Senden der Punktzahlen...
+        if hasattr(s, "current_round") and hasattr(s, "round_count"):
+            if s.current_round < s.round_count:
+                s.current_round += 1
+                reset_for_new_round()
+                for v in connection:
+                    send_data(v, {
+                        "update": "new_round_starting",
+                        "message": f"Runde {s.current_round} beginnt!",
+                        "karten_matrizen": s.karten_matrizen,
+                        "aufgedeckt_matrizen": s.aufgedeckt_matrizen,
+                        "discard_card": s.discard_card,
+                        "current_round": s.current_round,
+                        "round_count": s.round_count
+                    })
+            else:
+                for v in connection:
+                    send_data(v, {
+                        "update": "game_ended",
+                        "message": "Alle Runden beendet. Spielende!"
+                    })
+
+
+            # Wenn das Spiel vorbei ist, KEIN "naechster_spieler" mehr senden!
+                if hasattr(s, "current_round") and hasattr(s, "round_count") and s.current_round >= s.round_count:
+                    s.game_over = True
+                    print("[DEBUG] Spiel ist vorbei, kein naechster_spieler mehr!")
+                    s.round_end_triggered = False
+                    s.round_end_trigger_player = None
+                    return None
+
         s.round_end_triggered = False
         s.round_end_trigger_player = None
         return s.current_player
+
+
 
     # Normal weitermachen
     for v in connection:
@@ -331,7 +404,7 @@ def update_next_player(spieler_id, connection, send_data):
         })
     return s.current_player
 
-# Die bestehende check_if_all_cards_revealed Funktion ersetzen
+
 def check_if_all_cards_revealed(spieler_id):
     """Prüft, ob ein Spieler alle seine Karten aufgedeckt hat"""
     return triplet_logic.check_if_all_cards_revealed_with_triplets(spieler_id)
@@ -352,3 +425,60 @@ def remove_column_triplets(spieler_id, connection, send_data):
     """Entfernt Dreierkombinationen in den Spalten (delegiert an triplet_logic)"""
     # Einfach die Funktion aus dem triplet_logic Modul aufrufen
     return triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
+
+def reset_for_new_round():
+    s.karten_matrizen = create_card_matrices(s.player_count, s.ROWS, s.COLS)
+    s.aufgedeckt_matrizen = create_flipped_matrices(s.player_count, s.ROWS, s.COLS)
+    s.removed_cards = {}
+    s.cards_flipped = {}
+    s.round_end_triggered = False
+    s.round_end_trigger_player = None
+    s.discard_card = draw_card_from_deck()
+    s.cards_flipped_this_turn = 0
+    s.setup_phase = True
+    s.waiting_for_start = False
+    s.zug_begonnen = False
+    s.current_player = None
+
+def create_deck():
+    """Erstellt ein vollständiges Skyjo-Kartendeck mit korrekten Häufigkeiten"""
+    deck = []
+
+    # Skyjo-Karten nach offiziellem Spiel:
+    deck.extend([-2] * 5)      # 5× -2
+    deck.extend([-1] * 10)     # 10× -1
+    deck.extend([0] * 15)      # 15× 0
+
+    for i in range(1, 13):
+        deck.extend([i] * 10)  # je 10× Karten von 1-12
+
+    # Mischen des Decks
+    random.shuffle(deck)
+    return deck
+
+def draw_card_from_deck():
+    """Zieht eine Karte vom Nachziehstapel"""
+    # Wenn Nachziehstapel leer ist, Ablagestapel mischen und als neuen Nachziehstapel verwenden
+    if not hasattr(s, "draw_pile") or not s.draw_pile:
+        s.draw_pile = []
+
+        # Falls Ablagestapel existiert, diesen verwenden
+        if hasattr(s, "discard_pile") and len(s.discard_pile) > 1:
+            # Oberste Karte behalten
+            top_card = s.discard_pile.pop()
+
+            # Rest mischen und als Nachziehstapel verwenden
+            s.draw_pile = s.discard_pile[:]
+            random.shuffle(s.draw_pile)
+
+            # Ablagestapel nur mit oberster Karte neu initialisieren
+            s.discard_pile = [top_card]
+            s.discard_card = top_card
+
+        # Falls kein Nachziehstapel und Ablagestapel, neues Deck erstellen
+        if not s.draw_pile:
+            s.draw_pile = create_deck()
+            random.shuffle(s.draw_pile)
+
+    # Karte vom Stapel nehmen
+    return s.draw_pile.pop()

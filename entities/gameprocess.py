@@ -1,3 +1,10 @@
+"""
+Dieses Modul enthält die Client-seitige Spiellogik für Skyjo.
+Es verarbeitet die Interaktionen mit Karten, Nachzieh- und Ablagestapel,
+und steuert die Kommunikation mit dem Server bei Spielzügen.
+Enthalten sind Funktionen für Kartenklicks, Stapelinteraktionen,
+Punkteberechnung und Spielfortschritt.
+"""
 import pygame
 import server as serv
 import settings as s
@@ -6,22 +13,12 @@ from dictionaries import cardSetPosition as cP
 # Karteninteraktion
 def handle_card_click(sock, spieler_id, my_layout, row_idx, col_idx, card):
     """Verarbeitet Klicks auf Karten im Spielfeld"""
-    # NEUE ZEILE: Prüfen, ob die Karte entfernt wurde
+    # Prüfen, ob die Karte entfernt wurde
     if hasattr(card, "removed") and card.removed:
         return False
-        
-    # Im ersten Zug: max. 2 Karten aufdecken
-    if s.cards_flipped_this_turn < 2 and not card.is_face_up:
-        serv.send_data(sock, {
-            "aktion": "karte_aufdecken",
-            "spieler_id": spieler_id,
-            "karte": {"row": row_idx, "col": col_idx}
-        })
-        s.cards_flipped_this_turn += 1
-        return True
     
     # Nach Ablehnung einer Nachziehstapelkarte eine eigene Karte aufdecken
-    elif s.muss_karte_aufdecken and not card.is_face_up:
+    if s.muss_karte_aufdecken and not card.is_face_up:
         serv.send_data(sock, {
             "aktion": "nachziehstapel_ablehnen",
             "spieler_id": spieler_id,
@@ -57,6 +54,25 @@ def handle_card_click(sock, spieler_id, my_layout, row_idx, col_idx, card):
         s.gezogene_karte = None
         s.status_message = ""
         return True
+    
+    # Im Setup: Maximal 2 Karten pro Spieler aufdecken
+    if s.setup_phase and not card.is_face_up:
+        # Zähle, wie viele Karten der aktuelle Spieler schon aufgedeckt hat
+        flipped = 0
+        for row in my_layout.cards:
+            for c in row:
+                if c.is_face_up:
+                    flipped += 1
+        if flipped < 2:
+            serv.send_data(sock, {
+                "aktion": "karte_aufdecken",
+                "spieler_id": spieler_id,
+                "karte": {"row": row_idx, "col": col_idx}
+            })
+            return True
+        else:
+            s.status_message = "Du hast schon 2 Karten aufgedeckt!"
+            return False
     
     return False
 

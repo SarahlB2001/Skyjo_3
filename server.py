@@ -1,3 +1,7 @@
+'''Diese Datei enthält den Server-Code für das Skyjo-Spiel. Sie verwaltet
+die Netzwerkverbindungen, akzeptiert eingehende Client-Verbindungen, weist Spieler-Ids
+zu und verarbeitet die Spiel-Logik. Der Server kommuniziert mit den Clients.'''
+
 import socket
 import threading
 import pickle
@@ -39,43 +43,45 @@ def client_thread(conn, spieler_id):
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
 
+            # Rundenanzahl abfragen
+            daten = recv_data(conn)
+            if daten and "anzahl_runden" in daten:
+                s.round_count = daten["anzahl_runden"]
+                print(f"[INFO] Rundenanzahl festgelegt auf {s.round_count}")
+
             daten = recv_data(conn)
             if daten:
                 name = daten.get("name", f"Spieler{spieler_id +1}")
                 with s.lock:
                     s.player_data[spieler_id + 1] = name
                 print(f"[INFO] Spieler {spieler_id +1} heißt {name}")
-                # s.nameslist.append(name)
 
         else:
             s.player_count_event.wait()
 
-        daten = recv_data(conn)
-        if daten:
-            name = daten.get("name", f"Spieler{spieler_id + 1}")
-            with s.lock:
-                s.player_data[spieler_id + 1] = name
-            print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
-            s.nameslist.append(name)
-            print(s.nameslist)
-            print(len(s.nameslist), s.player_count)
+            daten = recv_data(conn)
+            if daten:
+                name = daten.get("name", f"Spieler{spieler_id + 1}")
+                with s.lock:
+                    s.player_data[spieler_id + 1] = name
+                print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
 
         # Allen Spielern "Warten..." senden
-        if len(s.nameslist) != s.player_count:
+        if spieler_id < s.player_count - 1:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
-        if len(s.nameslist) == s.player_count:
+        if spieler_id == s.player_count - 1:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
 
-            # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen (aus serv_gameprocess)
+            # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen
             karten_matrizen = sgp.create_card_matrices(s.player_count, s.ROWS, s.COLS)
             s.karten_matrizen = karten_matrizen
-            
+
             aufgedeckt_matrizen = sgp.create_flipped_matrices(s.player_count, s.ROWS, s.COLS)
             s.aufgedeckt_matrizen = aufgedeckt_matrizen
 
             # Erzeuge eine Karte für den Ablagestapel
-            discard_card_value = sgp.generate_random_card()
+            discard_card_value = sgp.draw_card_from_deck()
             s.discard_card = discard_card_value
 
             for v in s.connection:
@@ -85,7 +91,9 @@ def client_thread(conn, spieler_id):
                     "spielernamen": s.player_data,
                     "karten_matrizen": karten_matrizen,
                     "aufgedeckt_matrizen": aufgedeckt_matrizen,
-                    "discard_card": discard_card_value
+                    "discard_card": discard_card_value,
+                    "current_round": s.current_round,
+                    "round_count": s.round_count
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 
@@ -96,51 +104,53 @@ def client_thread(conn, spieler_id):
                 if daten.get("aktion") == "karte_aufdecken":
                     # Karte aufdecken
                     spieler_id, karte = sgp.handle_card_flip(daten, s.connection, send_data)
-                    
+
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte ({karte['row']}, {karte['col']}) aufgedeckt.")
-                    print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
 
                     # Prüfen, ob alle Spieler 2 Karten aufgedeckt haben
                     if sgp.check_if_setup_complete(s.player_count, s.cards_flipped, s.connection, send_data):
                         print(f"[DEBUG] Setup abgeschlossen. Spielreihenfolge: {s.spielreihenfolge}")
-                
+
                 elif daten.get("aktion") == "nehme_ablagestapel":
                     # Karte vom Ablagestapel nehmen
                     spieler_id, discard_card = sgp.handle_take_discard_pile(daten, s.connection, send_data)
-                    
+
                     # Pause für Verarbeitung
                     time.sleep(0.1)
-                    
+
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
-                
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
+
                 elif daten.get("aktion") == "nehme_nachziehstapel":
                     # Karte vom Nachziehstapel nehmen
                     spieler_id, neue_karte = sgp.handle_take_draw_pile(daten, s.connection, send_data)
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte {neue_karte} vom Nachziehstapel gezogen")
-                
+
                 elif daten.get("aktion") == "nachziehstapel_tauschen":
                     # Mit gezogener Karte tauschen
                     spieler_id, alte_karte = sgp.handle_swap_with_draw_pile(daten, s.connection, send_data)
-                    
+
                     # Pause für Verarbeitung
                     time.sleep(0.1)
-                    
+
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
-                
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
+
                 elif daten.get("aktion") == "nachziehstapel_ablehnen":
                     # Gezogene Karte ablehnen
                     spieler_id = sgp.handle_reject_draw_pile(daten, s.connection, send_data)
-                    
+
                     # Pause für Verarbeitung
                     time.sleep(0.1)
-                    
+
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
             else:
                 break
 
