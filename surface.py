@@ -54,13 +54,6 @@ def player_place_position():
 
 
 def draw(screen):
-    # Spiel-verlassen-Nachricht hat höchste Priorität!
-    # if getattr(s, "game_over", False) and s.status_message:
-    #     font = pygame.font.SysFont(None, 36)
-    #     text = font.render(s.status_message, True, (255, 0, 0))
-    #     screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
-    #     return  # Keine weiteren Hinweise anzeigen
-
     screen.blit(BACKGROUND_IMAGE, (0, 0))
     cP.card_place_position(screen)
     display_other_messages = True
@@ -166,7 +159,6 @@ def draw(screen):
         if text:
             screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
 
-       
 
     # Zeige die Runden-Ende-Nachricht, wenn sie in status_message steht
     if s.status_message and "Runde beendet" in s.status_message:
@@ -203,10 +195,10 @@ def draw(screen):
                  ''' Restliche Statusanzeigen überspringen '''
     # Nur wenn keine spezielle Statusmeldung aktiv ist UND der Spieler NICHT am Zug ist
     if display_other_messages and s.status_message and s.current_player != s.spieler_id:
-        if not (hasattr(s, "player_left_message") and s.status_message == s.player_left_message):
-            font = pygame.font.SysFont(None, 22)
-            text = font.render(s.status_message, True, (0, 0, 0))
-            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+        font = pygame.font.SysFont(None, 22)
+        text = font.render(s.status_message, True, (0, 0, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
 
     # Rundenanzeige links unten
     if hasattr(s, "current_round") and hasattr(s, "round_count"):
@@ -215,6 +207,7 @@ def draw(screen):
         screen.blit(text, (10, screen.get_height() - 40))
 
     # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
+    # Zeige das Podium, wenn das Spiel vorbei ist
     if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over", False):
         # Podium-Hintergrundbild laden (nur einmal)
         if not hasattr(s, "podium_bg"):
@@ -250,21 +243,6 @@ def draw(screen):
         screen.blit(winner_text, (screen.get_width() // 2 - winner_text.get_width() // 2, y + 20))
 
         s.podium_shown = True
-        # KEIN return hier!
+        return
 
-    # Am Ende der Funktion:
-    if hasattr(s, "player_left_message") and s.player_left_message:
-        font = pygame.font.SysFont(None, 32)
-        leave_text = font.render(s.player_left_message, True, (255, 0, 0))  # Rot
-        y_pos = screen.get_height() - leave_text.get_height() - 20
-        screen.blit(leave_text, (screen.get_width() // 2 - leave_text.get_width() // 2, y_pos))
 
-    # --- Podium/Statusanzeige ---
-    # Zeige die Statusnachricht zentriert und prominent, aber NICHT wenn es die player_left_message ist!
-    if getattr(s, "game_over", False) and s.status_message and (
-        not (hasattr(s, "player_left_message") and s.status_message == s.player_left_message)
-    ):
-        font = pygame.font.SysFont(None, 36)
-        text = font.render(s.status_message, True, (255, 0, 0))
-        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
-        # return  # ENTFERNEN!

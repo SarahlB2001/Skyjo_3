@@ -32,7 +32,6 @@ def send_data(conn, data):
         return False
 
 def client_thread(conn, spieler_id):
-    spieler_name = None  # Lokale Variable für den Namen
     try:
         # Spieler-ID senden
         send_data(conn, {"spieler_id": spieler_id + 1})
@@ -52,20 +51,20 @@ def client_thread(conn, spieler_id):
 
             daten = recv_data(conn)
             if daten:
-                spieler_name = daten.get("name", f"Spieler{spieler_id +1}")
+                name = daten.get("name", f"Spieler{spieler_id +1}")
                 with s.lock:
-                    s.player_data[spieler_id + 1] = spieler_name
-                print(f"[INFO] Spieler {spieler_id +1} heißt {spieler_name}")
+                    s.player_data[spieler_id + 1] = name
+                print(f"[INFO] Spieler {spieler_id +1} heißt {name}")
 
         else:
             s.player_count_event.wait()
 
             daten = recv_data(conn)
             if daten:
-                spieler_name = daten.get("name", f"Spieler{spieler_id + 1}")
+                name = daten.get("name", f"Spieler{spieler_id + 1}")
                 with s.lock:
-                    s.player_data[spieler_id + 1] = spieler_name
-                print(f"[INFO] Spieler {spieler_id + 1} heißt {spieler_name}")
+                    s.player_data[spieler_id + 1] = name
+                print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
 
         # Allen Spielern "Warten..." senden
         if spieler_id < s.player_count - 1:
@@ -165,25 +164,19 @@ def client_thread(conn, spieler_id):
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")
     finally:
-        name = spieler_name if spieler_name is not None else s.player_data.get(spieler_id + 1, f"Spieler{spieler_id + 1}")
+        # Spieler hat das Spiel verlassen
+        name = s.player_data.get(spieler_id + 1, f"Spieler{spieler_id + 1}")
         print(f"[INFO] Spieler {name} hat das Spiel verlassen.")
-        # Entferne die Verbindung zuerst!
-        if conn in s.connection:
-            s.connection.remove(conn)
         # Informiere alle anderen Spieler
         for v in s.connection:
-            try:
+            if v != conn:
                 send_data(v, {
                     "update": "player_left",
                     "spieler_id": spieler_id + 1,
                     "name": name,
                     "message": f"{name} hat das Spiel verlassen. Bitte verlasse das Spiel ."
                 })
-            except Exception as e:
-                print(f"[ERROR] Fehler beim Senden an Client: {e}")
-        with s.lock:
-            if spieler_id + 1 in s.player_data:
-                del s.player_data[spieler_id + 1]
+        # Setze Spiel als beendet
         s.game_over = True
         try:
             conn.close()
@@ -218,7 +211,6 @@ def start_server():
 
         if s.player_count is not None and spieler_id >= s.player_count:
             print("[INFO] Alle Spieler verbunden, das Spiel kann starten.")
-
 
 if __name__ == "__main__":
     start_server()
