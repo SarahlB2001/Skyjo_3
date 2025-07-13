@@ -8,7 +8,7 @@ Spieleraktionen, Rundenfortschritt und Triplet-Logik.
 import random
 import time
 import settings as s
-from entities import triplet_logic  
+from entities import triplet_logic
 from entities.triplet_logic import berechne_punktzahl, calculate_scores  # Diese Funktionen importieren
 
 def create_card_matrices(player_count, rows, cols):
@@ -244,8 +244,8 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
     # Auf Dreierkombinationen prüfen
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     if hat_triplets:
-       
-        time.sleep(0.5) 
+
+        time.sleep(0.5)
     # Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
@@ -297,7 +297,7 @@ def update_next_player(spieler_id, connection, send_data):
     if getattr(s, "game_over", False):
         print("[DEBUG] Spiel ist vorbei (Flag), kein naechster_spieler mehr!")
         return s.current_player
-     
+
     # Nächster Spieler ist dran
     s.current_player = get_next_player(spieler_id, s.spielreihenfolge)
 
@@ -311,7 +311,7 @@ def update_next_player(spieler_id, connection, send_data):
         print("[INFO] Runde beendet!")
 
         # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
-        time.sleep(4) 
+        time.sleep(4)
 
         # Alle verdeckten Karten aufdecken
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
@@ -328,18 +328,18 @@ def update_next_player(spieler_id, connection, send_data):
                                 "spieler": pid,
                                 "karte": {"row": row, "col": col}
                             })
-                        time.sleep(0.05)  
+                        time.sleep(0.05)
 
         # Längere Wartezeit für die Verarbeitung
-        pause = 2 + s.player_count * 1.5  
+        pause = 2.5 + s.player_count * 1.5
         time.sleep(pause)
-        
+
 
         # Trigger-Spieler explizit übergeben
         scores = calculate_scores(
             s.karten_matrizen,
             s.aufgedeckt_matrizen,
-            ausloeser_id=s.round_end_trigger_player 
+            ausloeser_id=s.round_end_trigger_player
         )
 
         # Allen Clients die finalen Punktzahlen mitteilen
@@ -361,8 +361,8 @@ def update_next_player(spieler_id, connection, send_data):
                         "karten_matrizen": s.karten_matrizen,
                         "aufgedeckt_matrizen": s.aufgedeckt_matrizen,
                         "discard_card": s.discard_card,
-                        "current_round": s.current_round,      
-                        "round_count": s.round_count          
+                        "current_round": s.current_round,
+                        "round_count": s.round_count
                     })
             else:
                 for v in connection:
@@ -370,11 +370,11 @@ def update_next_player(spieler_id, connection, send_data):
                         "update": "game_ended",
                         "message": "Alle Runden beendet. Spielende!"
                     })
-                
-              
+
+
             # Wenn das Spiel vorbei ist, KEIN "naechster_spieler" mehr senden!
                 if hasattr(s, "current_round") and hasattr(s, "round_count") and s.current_round >= s.round_count:
-                    s.game_over = True 
+                    s.game_over = True
                     print("[DEBUG] Spiel ist vorbei, kein naechster_spieler mehr!")
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
@@ -384,7 +384,7 @@ def update_next_player(spieler_id, connection, send_data):
         s.round_end_trigger_player = None
         return s.current_player
 
-    
+
 
     # Normal weitermachen
     for v in connection:
@@ -392,7 +392,7 @@ def update_next_player(spieler_id, connection, send_data):
             "update": "naechster_spieler",
             "spieler": s.current_player
         })
-    return s.current_player 
+    return s.current_player
 
 
 def check_if_all_cards_revealed(spieler_id):
@@ -428,7 +428,7 @@ def reset_for_new_round():
     s.setup_phase = True
     s.waiting_for_start = False
     s.zug_begonnen = False
-    s.current_player = None  
+    s.current_player = None
 
 def create_deck():
     """Erstellt ein vollständiges Skyjo-Kartendeck mit korrekten Häufigkeiten"""
