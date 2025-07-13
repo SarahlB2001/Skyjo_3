@@ -1,3 +1,9 @@
+"""
+Dieses Modul enthält die Positionsdaten für Spieler und Karten auf dem Spielfeld.
+Es definiert die Koordinaten und Größen für die Spielerfelder, Kartenstapel und Ablagestapel
+für verschiedene Spielerzahlen im Spiel Skyjo.
+Die Daten werden für die grafische Darstellung und Platzierung der Elemente verwendet.
+"""
 import settings as s
 
 # Für Spiel mit 2 Leuten: 1 & 3 (oder 2 & 5)
@@ -61,9 +67,9 @@ field_pos = {'1': eins,
              'carddeck': carddeck,
              'discarddeck': discarddeck}
 
-player_pos = {2: [(eins['x'], eins['y']), (drei ['x'], drei['y'])],
-              3: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (funf ['x'], funf['y'])],
-              4: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (sechs ['x'], sechs['y'])],
-              5: [(eins['x'], eins['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (funf ['x'], funf['y']), (sechs ['x'], sechs['y'])],
-              6: [(eins['x'], eins['y']), (zwei ['x'], zwei['y']), (drei ['x'], drei['y']), (vier ['x'], vier['y']), (funf ['x'], funf['y']), (sechs ['x'], sechs['y'])]}
+player_pos = {2: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS)],
+              3: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (funf ['x'], funf['y'] - s.PL_NAME_POS)],
+              4: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (vier ['x'], vier['y'] - s.PL_NAME_POS), (sechs ['x'], sechs['y'] - s.PL_NAME_POS)],
+              5: [(eins['x'], eins['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (vier ['x'], vier['y'] - s.PL_NAME_POS), (funf ['x'], funf['y'] - s.PL_NAME_POS), (sechs ['x'], sechs['y'] - s.PL_NAME_POS)],
+              6: [(eins['x'], eins['y'] - s.PL_NAME_POS), (zwei ['x'], zwei['y'] - s.PL_NAME_POS), (drei ['x'], drei['y'] - s.PL_NAME_POS), (vier ['x'], vier['y'] - s.PL_NAME_POS), (funf ['x'], funf['y'] - s.PL_NAME_POS), (sechs ['x'], sechs['y'] - s.PL_NAME_POS)]}
 

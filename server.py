@@ -1,3 +1,7 @@
+'''Diese Datei enthält den Server-Code für das Skyjo-Spiel. Sie verwaltet
+die Netzwerkverbindungen, akzeptiert eingehende Client-Verbindungen, weist Spieler-Ids
+zu und verarbeitet die Spiel-Logik. Der Server kommuniziert mit den Clients.'''
+
 import socket
 import threading
 import pickle
@@ -39,7 +43,7 @@ def client_thread(conn, spieler_id):
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
 
-            # NEU: Rundenanzahl abfragen
+            # Rundenanzahl abfragen
             daten = recv_data(conn)
             if daten and "anzahl_runden" in daten:
                 s.round_count = daten["anzahl_runden"]
@@ -55,12 +59,12 @@ def client_thread(conn, spieler_id):
         else:
             s.player_count_event.wait()
 
-        daten = recv_data(conn)
-        if daten:
-            name = daten.get("name", f"Spieler{spieler_id + 1}")
-            with s.lock:
-                s.player_data[spieler_id + 1] = name
-            print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
+            daten = recv_data(conn)
+            if daten:
+                name = daten.get("name", f"Spieler{spieler_id + 1}")
+                with s.lock:
+                    s.player_data[spieler_id + 1] = name
+                print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
 
         # Allen Spielern "Warten..." senden
         if spieler_id < s.player_count - 1:
@@ -69,7 +73,7 @@ def client_thread(conn, spieler_id):
         if spieler_id == s.player_count - 1:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
 
-            # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen (aus serv_gameprocess)
+            # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen
             karten_matrizen = sgp.create_card_matrices(s.player_count, s.ROWS, s.COLS)
             s.karten_matrizen = karten_matrizen
 
@@ -77,7 +81,7 @@ def client_thread(conn, spieler_id):
             s.aufgedeckt_matrizen = aufgedeckt_matrizen
 
             # Erzeuge eine Karte für den Ablagestapel
-            discard_card_value = sgp.generate_random_card()
+            discard_card_value = sgp.draw_card_from_deck()
             s.discard_card = discard_card_value
 
             for v in s.connection:
@@ -88,8 +92,8 @@ def client_thread(conn, spieler_id):
                     "karten_matrizen": karten_matrizen,
                     "aufgedeckt_matrizen": aufgedeckt_matrizen,
                     "discard_card": discard_card_value,
-                    "current_round": s.current_round,      # <--- NEU
-                    "round_count": s.round_count           # <--- NEU
+                    "current_round": s.current_round,
+                    "round_count": s.round_count
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 
@@ -102,18 +106,10 @@ def client_thread(conn, spieler_id):
                     spieler_id, karte = sgp.handle_card_flip(daten, s.connection, send_data)
 
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte ({karte['row']}, {karte['col']}) aufgedeckt.")
-                    print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
 
                     # Prüfen, ob alle Spieler 2 Karten aufgedeckt haben
                     if sgp.check_if_setup_complete(s.player_count, s.cards_flipped, s.connection, send_data):
                         print(f"[DEBUG] Setup abgeschlossen. Spielreihenfolge: {s.spielreihenfolge}")
-
-
-                    # Nach dem Nehmen vom Ablagestapel prüfen, ob alle Karten aufgedeckt wurden
-                    if sgp.check_if_all_cards_revealed(spieler_id):
-                        print(f"[INFO] Spieler {spieler_id} hat alle Karten aufgedeckt! Rundenende wird eingeleitet.")
-                        sgp.handle_round_end(s.connection, send_data)
-                        continue
 
                 elif daten.get("aktion") == "nehme_ablagestapel":
                     # Karte vom Ablagestapel nehmen
@@ -122,47 +118,15 @@ def client_thread(conn, spieler_id):
                     # Pause für Verarbeitung
                     time.sleep(0.1)
 
-                    # Nach dem Nehmen vom Ablagestapel prüfen, ob alle Karten aufgedeckt wurden
-                    if sgp.check_if_all_cards_revealed(spieler_id):
-                         print(f"[INFO] Spieler {spieler_id} hat alle Karten aufgedeckt! Rundenende wird eingeleitet.")
-                         sgp.handle_round_end(s.connection, send_data)
-                         continue
-                                        # Wenn Rundenende aktiv ist und Spieler seinen letzten Zug gemacht hat
-                    if hasattr(s, "round_ending") and s.round_ending and spieler_id in s.last_turn_players:
-                        s.last_turn_players.remove(spieler_id)
-                        print(f"[DEBUG] Spieler {spieler_id} hat seinen letzten Zug gemacht. Verbleibende Spieler: {s.last_turn_players}")
-
-                        # Wenn alle Spieler ihren letzten Zug gemacht haben
-                        if not s.last_turn_players:
-                            print("[DEBUG] Alle Spieler haben ihren letzten Zug gemacht. Beende Runde.")
-                            sgp.finalize_round(s.connection, send_data)
-                            continue
-                        else:
-                            # Zum nächsten Spieler wechseln, der seinen letzten Zug noch nicht gemacht hat
-                            next_player = sgp.find_next_last_turn_player(spieler_id)
-                            if next_player:
-                                s.current_player = next_player
-                                for v in s.connection:
-                                    send_data(v, {
-                                        "update": "naechster_spieler",
-                                        "spieler": s.current_player
-                                    })
-                                print(f"[DEBUG] Nächster Spieler für letzten Zug: {s.current_player}")
-                            continue
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
 
                 elif daten.get("aktion") == "nehme_nachziehstapel":
                     # Karte vom Nachziehstapel nehmen
                     spieler_id, neue_karte = sgp.handle_take_draw_pile(daten, s.connection, send_data)
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte {neue_karte} vom Nachziehstapel gezogen")
-
-                    # Nach dem Nehmen vom Nachziehstapel prüfen, ob alle Karten aufgedeckt wurden
-                    if sgp.check_if_all_cards_revealed(spieler_id):
-                        print(f"[INFO] Spieler {spieler_id} hat alle Karten aufgedeckt! Rundenende wird eingeleitet.")
-                        sgp.handle_round_end(s.connection, send_data)
-                        continue
 
                 elif daten.get("aktion") == "nachziehstapel_tauschen":
                     # Mit gezogener Karte tauschen
@@ -171,36 +135,10 @@ def client_thread(conn, spieler_id):
                     # Pause für Verarbeitung
                     time.sleep(0.1)
 
-                    # Nach dem Aufdecken prüfen, ob alle Karten aufgedeckt wurden
-                    if sgp.check_if_all_cards_revealed(spieler_id):
-                        print(f"[INFO] Spieler {spieler_id} hat alle Karten aufgedeckt! Rundenende wird eingeleitet.")
-                        sgp.handle_round_end(s.connection, send_data)
-                        continue
-                                        # Wenn Rundenende aktiv ist und Spieler seinen letzten Zug gemacht hat
-                    if hasattr(s, "round_ending") and s.round_ending and spieler_id in s.last_turn_players:
-                        s.last_turn_players.remove(spieler_id)
-                        print(f"[DEBUG] Spieler {spieler_id} hat seinen letzten Zug gemacht. Verbleibende Spieler: {s.last_turn_players}")
-
-                        # Wenn alle Spieler ihren letzten Zug gemacht haben
-                        if not s.last_turn_players:
-                            print("[DEBUG] Alle Spieler haben ihren letzten Zug gemacht. Beende Runde.")
-                            sgp.finalize_round(s.connection, send_data)
-                            continue
-                        else:
-                            # Zum nächsten Spieler wechseln, der seinen letzten Zug noch nicht gemacht hat
-                            next_player = sgp.find_next_last_turn_player(spieler_id)
-                            if next_player:
-                                s.current_player = next_player
-                                for v in s.connection:
-                                    send_data(v, {
-                                        "update": "naechster_spieler",
-                                        "spieler": s.current_player
-                                    })
-                                print(f"[DEBUG] Nächster Spieler für letzten Zug: {s.current_player}")
-                            continue
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
 
                 elif daten.get("aktion") == "nachziehstapel_ablehnen":
                     # Gezogene Karte ablehnen
@@ -209,36 +147,10 @@ def client_thread(conn, spieler_id):
                     # Pause für Verarbeitung
                     time.sleep(0.1)
 
-                    # Nach der Aktion prüfen, ob alle Karten aufgedeckt wurden
-                    if sgp.check_if_all_cards_revealed(spieler_id):
-                        print(f"[INFO] Spieler {spieler_id} hat alle Karten aufgedeckt! Rundenende wird eingeleitet.")
-                        sgp.handle_round_end(s.connection, send_data)
-                        continue
-                                        # Wenn Rundenende aktiv ist und Spieler seinen letzten Zug gemacht hat
-                    if hasattr(s, "round_ending") and s.round_ending and spieler_id in s.last_turn_players:
-                        s.last_turn_players.remove(spieler_id)
-                        print(f"[DEBUG] Spieler {spieler_id} hat seinen letzten Zug gemacht. Verbleibende Spieler: {s.last_turn_players}")
-
-                        # Wenn alle Spieler ihren letzten Zug gemacht haben
-                        if not s.last_turn_players:
-                            print("[DEBUG] Alle Spieler haben ihren letzten Zug gemacht. Beende Runde.")
-                            sgp.finalize_round(s.connection, send_data)
-                            continue
-                        else:
-                            # Zum nächsten Spieler wechseln, der seinen letzten Zug noch nicht gemacht hat
-                            next_player = sgp.find_next_last_turn_player(spieler_id)
-                            if next_player:
-                                s.current_player = next_player
-                                for v in s.connection:
-                                    send_data(v, {
-                                        "update": "naechster_spieler",
-                                        "spieler": s.current_player
-                                    })
-                                print(f"[DEBUG] Nächster Spieler für letzten Zug: {s.current_player}")
-                            continue
                     # Nächster Spieler
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
-                    print(f"[DEBUG] Nächster Spieler: {next_player}")
+                    if not getattr(s, "game_over", False):
+                        print(f"[DEBUG] Nächster Spieler: {next_player}")
             else:
                 break
 

@@ -1,3 +1,10 @@
+"""
+Dieses Modul enthält die Client-seitige Spiellogik für Skyjo.
+Es verarbeitet die Interaktionen mit Karten, Nachzieh- und Ablagestapel,
+und steuert die Kommunikation mit dem Server bei Spielzügen.
+Enthalten sind Funktionen für Kartenklicks, Stapelinteraktionen,
+Punkteberechnung und Spielfortschritt.
+"""
 import pygame
 import server as serv
 import settings as s
@@ -6,20 +13,10 @@ from dictionaries import cardSetPosition as cP
 # Karteninteraktion
 def handle_card_click(sock, spieler_id, my_layout, row_idx, col_idx, card):
     """Verarbeitet Klicks auf Karten im Spielfeld"""
-    # NEUE ZEILE: Prüfen, ob die Karte entfernt wurde
+    # Prüfen, ob die Karte entfernt wurde
     if hasattr(card, "removed") and card.removed:
         return False
-    ''' 
-    # Im ersten Zug: max. 2 Karten aufdecken
-    if s.cards_flipped_this_turn < 2 and not card.is_face_up:
-        serv.send_data(sock, {
-            "aktion": "karte_aufdecken",
-            "spieler_id": spieler_id,
-            "karte": {"row": row_idx, "col": col_idx}
-        })
-        s.cards_flipped_this_turn += 1
-        return True
-    '''
+    
     # Nach Ablehnung einer Nachziehstapelkarte eine eigene Karte aufdecken
     if s.muss_karte_aufdecken and not card.is_face_up:
         serv.send_data(sock, {

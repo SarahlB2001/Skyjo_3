@@ -1,9 +1,15 @@
+"""
+Dieses Modul verwaltet die Platzierung und Darstellung der Kartenlayouts auf dem Spielfeld.
+Es enthält Funktionen zum Zeichnen der Spielerfelder, Kartenstapel und Ablagestapel
+sowie zur Initialisierung der Kartenlayouts für alle Spieler im Spiel Skyjo.
+Die Positionsdaten werden aus plaPosition.py übernommen.
+"""
 import settings as s
 import surface as su
 from dictionaries import plaPosition as pl
 import pygame
 import layout as l
-import time  # <-- Diese Zeile hinzufügen, um das time-Modul zu importieren
+import time  
 
 player_fields = {
     2: ['1', '3'],
