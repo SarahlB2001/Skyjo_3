@@ -65,12 +65,13 @@ def client_thread(conn, spieler_id):
                 with s.lock:
                     s.player_data[spieler_id + 1] = name
                 print(f"[INFO] Spieler {spieler_id + 1} heißt {name}")
+                s.nameslist.append(name)
 
         # Allen Spielern "Warten..." senden
-        if spieler_id < s.player_count - 1:
+        if len(s.nameslist) != s.player_count:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
-        if spieler_id == s.player_count - 1:
+        if len(s.nameslist) == s.player_count:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
 
             # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen
