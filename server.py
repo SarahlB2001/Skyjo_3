@@ -163,6 +163,25 @@ def client_thread(conn, spieler_id):
 
     except Exception as e:
         print(f"[FEHLER] Spieler {spieler_id + 1} Verbindung verloren: {e}")
+    finally:
+        # Spieler hat das Spiel verlassen
+        name = s.player_data.get(spieler_id + 1, f"Spieler{spieler_id + 1}")
+        print(f"[INFO] Spieler {name} hat das Spiel verlassen.")
+        # Informiere alle anderen Spieler
+        for v in s.connection:
+            if v != conn:
+                send_data(v, {
+                    "update": "player_left",
+                    "spieler_id": spieler_id + 1,
+                    "name": name,
+                    "message": f"{name} hat das Spiel verlassen. Bitte verlasse das Spiel ."
+                })
+        # Setze Spiel als beendet
+        s.game_over = True
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def start_server():
     HOST = "0.0.0.0"
