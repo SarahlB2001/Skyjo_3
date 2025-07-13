@@ -1,7 +1,9 @@
+'''Die Datei ist für die visuelle Darstellung der Karten im Spiel verantwortlich.
+Sie enthält die Klasse CardLayout, die eine Matrix von Karten für einen Spieler erstellt und zeichnet.'''
+
 from entities.cards import Card
 import settings as s
-import random as r
-import surface as sf
+
 
 
 class CardLayout:

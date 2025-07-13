@@ -1,3 +1,7 @@
+'''Diese Datei enthält den Server-Code für das Skyjo-Spiel. Sie verwaltet
+die Netzwerkverbindungen, akzeptiert eingehende Client-Verbindungen, weist Spieler-Ids
+zu und verarbeitet die Spiel-Logik. Der Server kommuniziert mit den Clients.'''
+
 import socket
 import threading
 import pickle
@@ -39,7 +43,7 @@ def client_thread(conn, spieler_id):
                 print(f"[INFO] Anzahl der Spieler festgelegt auf {s.player_count}")
                 s.player_count_event.set()
 
-            # NEU: Rundenanzahl abfragen
+            # Rundenanzahl abfragen
             daten = recv_data(conn)
             if daten and "anzahl_runden" in daten:
                 s.round_count = daten["anzahl_runden"]
@@ -69,7 +73,7 @@ def client_thread(conn, spieler_id):
         if spieler_id == s.player_count - 1:
             print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
 
-            # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen (aus serv_gameprocess)
+            # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen
             karten_matrizen = sgp.create_card_matrices(s.player_count, s.ROWS, s.COLS)
             s.karten_matrizen = karten_matrizen
 
@@ -88,8 +92,8 @@ def client_thread(conn, spieler_id):
                     "karten_matrizen": karten_matrizen,
                     "aufgedeckt_matrizen": aufgedeckt_matrizen,
                     "discard_card": discard_card_value,
-                    "current_round": s.current_round,      # <--- NEU
-                    "round_count": s.round_count           # <--- NEU
+                    "current_round": s.current_round,
+                    "round_count": s.round_count
                 })
             print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
 
@@ -102,7 +106,6 @@ def client_thread(conn, spieler_id):
                     spieler_id, karte = sgp.handle_card_flip(daten, s.connection, send_data)
 
                     print(f"[DEBUG] Spieler {spieler_id} hat Karte ({karte['row']}, {karte['col']}) aufgedeckt.")
-                    #print(f"[DEBUG] Aufgedeckte Kartenmatrix für Spieler {spieler_id}: {s.aufgedeckt_matrizen[spieler_id]}")
 
                     # Prüfen, ob alle Spieler 2 Karten aufgedeckt haben
                     if sgp.check_if_setup_complete(s.player_count, s.cards_flipped, s.connection, send_data):
@@ -119,7 +122,7 @@ def client_thread(conn, spieler_id):
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
                     if not getattr(s, "game_over", False):
                         print(f"[DEBUG] Nächster Spieler: {next_player}")
-                
+
                 elif daten.get("aktion") == "nehme_nachziehstapel":
                     # Karte vom Nachziehstapel nehmen
                     spieler_id, neue_karte = sgp.handle_take_draw_pile(daten, s.connection, send_data)
@@ -136,7 +139,7 @@ def client_thread(conn, spieler_id):
                     next_player = sgp.update_next_player(spieler_id, s.connection, send_data)
                     if not getattr(s, "game_over", False):
                         print(f"[DEBUG] Nächster Spieler: {next_player}")
-                
+
                 elif daten.get("aktion") == "nachziehstapel_ablehnen":
                     # Gezogene Karte ablehnen
                     spieler_id = sgp.handle_reject_draw_pile(daten, s.connection, send_data)
