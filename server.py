@@ -172,5 +172,6 @@ def start_server():
         if s.player_count is not None and spieler_id >= s.player_count:
             print("[INFO] Alle Spieler verbunden, das Spiel kann starten.")
 
+
 if __name__ == "__main__":
     start_server()
