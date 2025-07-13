@@ -45,7 +45,8 @@ text_input = ""
 active = False
 ip_input = ""
 entering_ip = False
-round_count = None  # Rundenanzahl, wird nach der Spieleranzahl festgelegt
+startnachricht_gesendet = False 
+round_count = None  
 game_mode = None
 waiting_for_name = False
 waiting_for_players = False
@@ -91,3 +92,4 @@ total_scores = {}
 # Kartendeck
 draw_pile = []  # Nachziehstapel
 discard_pile = []  # Ablagestapel
+

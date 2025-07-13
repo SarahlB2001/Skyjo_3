@@ -70,32 +70,39 @@ def client_thread(conn, spieler_id):
         if spieler_id < s.player_count - 1:
             send_data(conn, {"message": "Warten auf andere Spieler..."})
 
-        if spieler_id == s.player_count - 1:
-            print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
+        # Prüfe nach jedem Namen, ob alle Namen vorhanden sind ---
+        with s.lock:
+            if (
+                s.player_count is not None
+                and len(s.player_data) == s.player_count
+                and not getattr(s, "startnachricht_gesendet", False)
+            ):
+                print("[INFO] Alle Spieler verbunden, sende Startnachricht...")
 
-            # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen
-            karten_matrizen = sgp.create_card_matrices(s.player_count, s.ROWS, s.COLS)
-            s.karten_matrizen = karten_matrizen
+                # Kartenmatrizen und Aufgedeckt-Matrizen erzeugen
+                karten_matrizen = sgp.create_card_matrices(s.player_count, s.ROWS, s.COLS)
+                s.karten_matrizen = karten_matrizen
 
-            aufgedeckt_matrizen = sgp.create_flipped_matrices(s.player_count, s.ROWS, s.COLS)
-            s.aufgedeckt_matrizen = aufgedeckt_matrizen
+                aufgedeckt_matrizen = sgp.create_flipped_matrices(s.player_count, s.ROWS, s.COLS)
+                s.aufgedeckt_matrizen = aufgedeckt_matrizen
 
-            # Erzeuge eine Karte für den Ablagestapel
-            discard_card_value = sgp.draw_card_from_deck()
-            s.discard_card = discard_card_value
+                # Erzeuge eine Karte für den Ablagestapel
+                discard_card_value = sgp.draw_card_from_deck()
+                s.discard_card = discard_card_value
 
-            for v in s.connection:
-                send_data(v, {
-                    "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
-                    "anzahl_spieler": s.player_count,
-                    "spielernamen": s.player_data,
-                    "karten_matrizen": karten_matrizen,
-                    "aufgedeckt_matrizen": aufgedeckt_matrizen,
-                    "discard_card": discard_card_value,
-                    "current_round": s.current_round,
-                    "round_count": s.round_count
-                })
-            print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
+                for v in s.connection:
+                    send_data(v, {
+                        "message": "Alle Spieler verbunden. Ihr könnt jetzt starten!",
+                        "anzahl_spieler": s.player_count,
+                        "spielernamen": s.player_data,
+                        "karten_matrizen": karten_matrizen,
+                        "aufgedeckt_matrizen": aufgedeckt_matrizen,
+                        "discard_card": discard_card_value,
+                        "current_round": s.current_round,
+                        "round_count": s.round_count
+                    })
+                print(f"[DEBUG] Startnachricht gesendet, Spieleranzahl: {s.player_count}")
+                s.startnachricht_gesendet = True  # <--- Flag setzen
 
         # Hauptspielschleife
         while True:
