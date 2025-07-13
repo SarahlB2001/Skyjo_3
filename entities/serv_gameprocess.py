@@ -330,32 +330,6 @@ def update_next_player(spieler_id, connection, send_data):
                             })
                         time.sleep(0.05)
 
-        # Alle verdeckten Karten auf einmal aufdecken
-        all_cards_to_reveal = {}
-        for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
-            all_cards_to_reveal[pid] = []
-            for row in range(len(aufgedeckt_matrix)):
-                for col in range(len(aufgedeckt_matrix[row])):
-                    entfernt = False
-                    if hasattr(s, "removed_cards") and pid in s.removed_cards:
-                        entfernt = any(card["row"] == row and card["col"] == col for card in s.removed_cards[pid])
-                    if not entfernt and not aufgedeckt_matrix[row][col]:
-                        # Markiere Karte als aufgedeckt
-                        aufgedeckt_matrix[row][col] = True
-                        # Füge zur Liste hinzu
-                        all_cards_to_reveal[pid].append({"row": row, "col": col})
-
-        # Sende eine einzige Nachricht mit allen Karten
-        for v in connection:
-            send_data(v, {
-                "update": "reveal_all_cards",
-                "all_cards": all_cards_to_reveal
-            })
-        print("[DEBUG] Alle verbleibenden Karten aufgedeckt!")
-
-        # Warte kurz damit alle Clients die Nachricht verarbeiten können
-        time.sleep(1.0)
-
         # Längere Wartezeit für die Verarbeitung
         pause = 2.5 + s.player_count * 1.5
         time.sleep(pause)
