@@ -88,7 +88,7 @@ def process_messages(sock, screen):
                 msg = serv.recv_data(sock)
                 if not msg:
                     break  # verlässt nur die innere while, nicht die Funktion!
-                
+
                 if msg.get("update") == "game_ended":
                     s.status_message = msg["message"]
                     s.game_over = True
@@ -143,7 +143,7 @@ def process_messages(sock, screen):
                     s.warte_auf_entscheidung = False
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
-                    s.current_player = None  
+                    s.current_player = None
                     if hasattr(s, "points_calculated_time"):
                         del s.points_calculated_time
                     s.status_message = "Decke zwei Karten auf"
@@ -200,8 +200,8 @@ def process_messages(sock, screen):
                     s.current_player = s.spielreihenfolge[0]
                     current_player_name = s.player_data.get(s.current_player, f"Spieler{s.current_player}")  # <--- Diese Zeile ergänzen!
                     s.status_message = f"{current_player_name} ist am Zug"
-                    
-                
+
+
                 elif msg.get("update") == "nachziehstapel_karte":
                     s.gezogene_karte = msg["karte"]
                     s.status_message = "Tausche mit Karte auf Spielfeld"
@@ -241,7 +241,7 @@ def process_messages(sock, screen):
                     layout = s.player_cardlayouts.get(spieler)
                     if layout:
                         card = layout.cards[row][col]
-                        card.is_face_up = True  
+                        card.is_face_up = True
 
                     s.discard_card = ablagestapel
 
@@ -296,7 +296,7 @@ def process_messages(sock, screen):
                                 card.is_face_up = True
                                 print(f"[DEBUG] Karte ({row},{col}) als entfernt markiert")
 
-                    
+
                     print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}")
 
                 elif msg.get("update") == "round_end_triggered":
@@ -316,9 +316,9 @@ def process_messages(sock, screen):
                 elif msg.get("update") == "punkte_aktualisiert":
                     # Wenn gerade "Runde beendet!" angezeigt wird, warte ab
                     if hasattr(s, "block_until") and pygame.time.get_ticks() < s.block_until:
-                       
+
                         return
-                    
+
                     s.scores = msg["scores"]
                     s.last_round_scores = msg["scores"].copy()
                     print("[DEBUG] Punktzahlen empfangen:", msg["scores"])
@@ -333,16 +333,16 @@ def process_messages(sock, screen):
                         if pid_key not in s.score_history:
                             s.score_history[pid_key] = []
                         s.score_history[pid_key].append(score)
-                    
+
                         if pid_key not in s.total_scores:
                              s.total_scores[pid_key] = 0
                         s.total_scores[pid_key] += score
 
-                    
-                   
+
+
                     s.final_round_scores = s.scores.copy()
                     s.points_calculated_time = pygame.time.get_ticks()
-                   
+
                     print(f"[DEBUG] Punktzahlen empfangen: {msg['scores']}")
                     print(f"[DEBUG] points_calculated_time gesetzt: {s.points_calculated_time}")
 
@@ -352,13 +352,29 @@ def process_messages(sock, screen):
                     # Punktzahlen aktualisieren, aber keine Rundenende-Meldung anzeigen
                     s.scores = msg["scores"]
                     print("[DEBUG] Neue Punktzahlen nach Triplet:", s.scores)
-                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!" 
-                
-               
-                
-                
-                
-                
+                    s.status_message = "Dreierkombination entfernt. Punkte aktualisiert!"
+
+                elif msg.get("update") == "reveal_all_cards":
+                    print("[DEBUG] Nachricht zum Aufdecken aller Karten empfangen")
+                    all_cards = msg["all_cards"]
+                    for pid, cards in all_cards.items():
+                        pid = int(pid) if isinstance(pid, str) else pid
+                        layout = s.player_cardlayouts.get(pid)
+                        if layout:
+                            for card_info in cards:
+                                row = card_info["row"]
+                                col = card_info["col"]
+                                card = layout.cards[row][col]
+                                card.is_face_up = True
+                                # Auch die Aufgedeckt-Matrix aktualisieren
+                                if hasattr(s, "aufgedeckt_matrizen"):
+                                    s.aufgedeckt_matrizen[pid][row][col] = True
+                    s.status_message = "Alle Karten aufgedeckt!"
+
+
+
+
+
             except (BlockingIOError, ConnectionError, TimeoutError):
                 break
     finally:
