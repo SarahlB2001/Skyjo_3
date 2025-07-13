@@ -328,7 +328,7 @@ def update_next_player(spieler_id, connection, send_data):
                                 "spieler": pid,
                                 "karte": {"row": row, "col": col}
                             })
-                        time.sleep(0.05)
+                        time.sleep(0.09)
 
         # Längere Wartezeit für die Verarbeitung
         pause = 2.5 + s.player_count * 1.5
