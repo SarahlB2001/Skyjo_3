@@ -39,7 +39,9 @@ def main():
     round_count_buttons = [pygame.Rect(0, 420, 50, 50) for _ in range(5)]
 
     while s.running:
-        # NACHRICHTEN EMPFANGEN - IMMER!
+        clock.tick(s.FPS)
+
+        # Nachrichten immer verarbeiten!
         if s.sock:
             c.process_messages(s.sock, screen)
 
