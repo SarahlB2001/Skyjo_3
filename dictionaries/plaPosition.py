@@ -1,3 +1,9 @@
+"""
+Dieses Modul enthält die Positionsdaten für Spieler und Karten auf dem Spielfeld.
+Es definiert die Koordinaten und Größen für die Spielerfelder, Kartenstapel und Ablagestapel
+für verschiedene Spielerzahlen im Spiel Skyjo.
+Die Daten werden für die grafische Darstellung und Platzierung der Elemente verwendet.
+"""
 import settings as s
 
 # Für Spiel mit 2 Leuten: 1 & 3 (oder 2 & 5)

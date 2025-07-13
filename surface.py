@@ -1,27 +1,36 @@
+''' Diese Datei enthält Funktionen zum Zeichnen der Spiel-Oberfläche für Skyjo.
+Sie beinhaltet die Darstellung von Spielerfeldern, Namen, Karten, Punkteständen und das Endpodium. '''
+
 import settings as s
 from dictionaries import plaPosition as pl
 from dictionaries import cardSetPosition as cP
-# import server as serv
 import pygame
-pygame.init()
 import layout as l
+import time
 
 player_fields = {
     2: ['1', '3'],
     3: ['1', '3', '5'],
-    4: ['1', '3', '4', '6'],
+    4: ['1', '3', '4', '5', '6'],
     5: ['1', '3', '4', '5', '6'],
     6: ['1', '2', '3', '4', '5', '6']
 }
 
-screen = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
-PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
 
-BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
-BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
+WINDOW = None
+PLAYER_FONT = None
+BACKGROUND_IMAGE = None
+
+
+def initialize():
+    global WINDOW, PLAYER_FONT, BACKGROUND_IMAGE
+    WINDOW = pygame.display.set_mode((s.HEIGHT, s.WIDTH))
+    PLAYER_FONT = pygame.font.SysFont("comicsans", s.PLAYER_SIZE)
+    BACKGROUND_IMAGE = pygame.image.load("sky.jpg")
+    BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (s.HEIGHT, s.WIDTH))
 
 def first_draw():
-    screen.fill(s.WINDOW_COLOR)
+    WINDOW.fill(s.WINDOW_COLOR)
 
     pygame.display.flip()
 
@@ -34,235 +43,70 @@ def draw_player_names():
             y = pl.field_pos[f]['y']
             name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)
             text_rect = name_text.get_rect(center=(x + pl.field_pos['size']['width'] // 2, y - 25))
-            screen.blit(name_text, text_rect)
+            WINDOW.blit(name_text, text_rect)
 
-'''''
-def calculate_gaps (size_x, size_y, cols, rows, card_width, card_height):
-
-    gap_width = (size_x - (cols * card_width)) / (cols + 1) ##################################
-
-    gap_height = (size_y - (rows * card_height)) / (rows + 1)
-    s.gap_width = gap_width
-    s.gap_height = gap_height
-    # return gap_width, gap_height
-
-calculate_gaps(pl.size['width'], pl.size['height'], s.COLS, s.ROWS, s.CARD_WIDTH, s.CARD_HEIGHT)
-
-'''
 def player_place_position():
     for index, (spieler_id, name) in enumerate(s.player_daten.items()):
         if index < len(pl.player_pos[s.player_count]):
             x_pos, y_pos = pl.player_pos[s.player_count][index]
             name_text = PLAYER_FONT.render(name, True, s.PLAYER_FONT_COLOR)
-            screen.blit(name_text, (x_pos, y_pos))
+            WINDOW.blit(name_text, (x_pos, y_pos))
 
 
-def draw():
+def draw(screen):
     screen.blit(BACKGROUND_IMAGE, (0, 0))
     cP.card_place_position(screen)
-
-    for layout in cP.player_cardlayouts.values():
-        layout.draw(screen)
-
-    # Punktzahlen mit vorherigen Rundenpunkten anzeigen
+    display_other_messages = True
+    # Spielerfelder und Namen zeichnen
     fields = cP.player_fields.get(s.player_count, [])
+    namen = [s.player_data.get(i, f"Spieler{i}") for i in range(1, s.player_count + 1)]
+
     for idx, f in enumerate(fields):
         rect = pl.field_pos[f]
-        player_id = idx + 1
-        if idx < len(s.player_data):
-            name = s.player_data.get(player_id, f"Spieler{player_id}")
-            layout = cP.player_cardlayouts.get(player_id)
+        if idx < len(namen):
+            name = namen[idx]
+            layout = s.player_cardlayouts.get(idx + 1)
             punkte = 0
             if layout:
-                # NUR aufgedeckte Karten zählen, die nicht entfernt wurden
-                punkte = sum(card.value for row in layout.cards for card in row
-                             if card.is_face_up and (not hasattr(card, 'is_removed') or not card.is_removed))
+                punkte = sum(
+    card.value
+    for row in layout.cards
+    for card in row
+    if card.is_face_up and not getattr(card, "removed", False)
+)
 
             # Farbe bestimmen
-            name_color = (0, 0, 255) if player_id == s.spieler_id else s.PLAYER_FONT_COLOR
-
-            # Spielername und aktuelle Punktzahl
+            name_color = (0, 0, 255) if (idx + 1) == s.spieler_id else s.PLAYER_FONT_COLOR
             name_text = PLAYER_FONT.render(name, True, name_color)
-            score_text = PLAYER_FONT.render(f"Score: {punkte}", True, s.PLAYER_FONT_COLOR)
-
-            # Vorherige Rundenpunkte in lila anzeigen (für Runden > 1)
-            prev_score_text = None
-            if hasattr(s, "round_scores") and s.current_round > 1:
-                prev_rounds_sum = 0
-                for round_num in range(1, s.current_round):
-                    if round_num in s.round_scores and player_id in s.round_scores[round_num]:
-                        prev_rounds_sum += s.round_scores[round_num][player_id]
-
-                if prev_rounds_sum > 0:
-                    prev_score_text = PLAYER_FONT.render(f" ({prev_rounds_sum})", True, (128, 0, 128))  # Lila Farbe
+            score_text = PLAYER_FONT.render(f"   Score: {punkte}", True, s.PLAYER_FONT_COLOR)
 
             # Position berechnen
             name_rect = name_text.get_rect()
             score_rect = score_text.get_rect()
             total_width = name_rect.width + 30 + score_rect.width
-            if prev_score_text:
-                total_width += prev_score_text.get_width()
-
             x_start = rect['x'] + pl.field_pos['size']['width']//2 - total_width//2
             y_pos = rect['y'] - 28
 
             # Grüner Punkt für aktuellen Spieler
-            if hasattr(s, 'current_player') and s.current_player == player_id:
-                pygame.draw.circle(screen, (0, 255, 0), (x_start - 20, y_pos + 10), 8)
+            if hasattr(s, 'current_player') and s.current_player == (idx + 1):
+                pygame.draw.circle(screen, (0, 255, 0), (x_start - 20, y_pos + 10), 8)  # Grüner Punkt
 
-            # Zeichnen
             screen.blit(name_text, (x_start, y_pos))
             screen.blit(score_text, (x_start + name_rect.width + 30, y_pos))
-            if prev_score_text:
-                screen.blit(prev_score_text, (x_start + name_rect.width + 10 + score_rect.width, y_pos))
 
-    # Zwischen Runden-Anzeige
-    if hasattr(s, "between_rounds") and s.between_rounds:
-        # Halbdurchsichtiger Hintergrund
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()))
-        overlay.set_alpha(180)  # Transparenz (0-255)
-        overlay.fill((240, 240, 240))  # Hellgrau
-        screen.blit(overlay, (0, 0))
+            # Score-Historie (lila) anzeigen - NUR wenn Rundenergebnisse vorhanden
+            if hasattr(s, "total_scores") and (idx + 1) in s.total_scores:
+                # Hole den Score, egal ob Key int oder str ist
 
-        font_large = pygame.font.SysFont(None, 48)
-        font_medium = pygame.font.SysFont(None, 36)
-        font_small = pygame.font.SysFont(None, 28)
+                total_score = s.total_scores[idx + 1]
+                score_hist_text = PLAYER_FONT.render(f"({total_score})", True, (128, 0, 128))
+                screen.blit(score_hist_text, (x_start + name_rect.width + 30 + score_rect.width + 10, y_pos))
 
-        # Überschrift
-        title = font_large.render(f"Ende der Runde {s.current_round}", True, (0, 0, 0))
-        screen.blit(title, (screen.get_width()//2 - title.get_width()//2, 100))
 
-        # Ergebnisse anzeigen
-        y_pos = 180
-        header = font_medium.render("Spieler             Rundenpunkte     Gesamtpunkte", True, (0, 0, 0))
-        screen.blit(header, (screen.get_width()//2 - header.get_width()//2, y_pos))
-        y_pos += 40
+    for layout in s.player_cardlayouts.values():
+        layout.draw(screen)
 
-        # Sortieren nach Gesamtpunkten (niedrigste zuerst)
-        sorted_players = sorted(s.total_scores.keys(), key=lambda pid: s.total_scores[pid])
-
-        for pid in sorted_players:
-            name = s.player_data.get(pid, f"Spieler {pid}")
-            round_score = s.final_scores.get(pid, 0)
-            total_score = s.total_scores.get(pid, 0)
-
-            # Markierung für Rundenauslöser
-            if pid == s.round_end_trigger:
-                name = f"{name} *"
-
-            player_text = font_small.render(f"{name}", True, (0, 0, 0))
-            round_text = font_small.render(f"{round_score}", True, (0, 0, 0))
-            total_text = font_small.render(f"{total_score}", True, (0, 0, 0))
-
-            center_x = screen.get_width()//2
-            screen.blit(player_text, (center_x - 200, y_pos))
-            screen.blit(round_text, (center_x, y_pos))
-            screen.blit(total_text, (center_x + 150, y_pos))
-
-            y_pos += 30
-
-        # Hinweis für Rundenauslöser
-        if hasattr(s, "round_end_trigger"):
-            trigger_name = s.player_data.get(s.round_end_trigger, f"Spieler {s.round_end_trigger}")
-            if hasattr(s, "final_scores") and s.round_end_trigger in s.final_scores:
-                doubled = False
-                min_score = min(s.final_scores.values())
-                if s.final_scores[s.round_end_trigger] > min_score:
-                    doubled = True
-
-                if doubled:
-                    note = font_small.render(f"* {trigger_name} hat das Rundenende ausgelöst, aber nicht die niedrigste Punktzahl und erhält doppelte Punkte.",
-                                           True, (255, 0, 0))
-                else:
-                    note = font_small.render(f"* {trigger_name} hat das Rundenende ausgelöst und hat die niedrigste Punktzahl.",
-                                           True, (0, 150, 0))
-
-                screen.blit(note, (screen.get_width()//2 - note.get_width()//2, y_pos + 20))
-
-        # Weiter-Button
-        button_width = 200
-        button_height = 50
-        button_x = screen.get_width()//2 - button_width//2
-        button_y = screen.get_height() - 120
-
-        pygame.draw.rect(screen, (0, 150, 0), (button_x, button_y, button_width, button_height))
-
-        if hasattr(s, "current_round") and hasattr(s, "total_rounds") and s.current_round < s.total_rounds:
-            button_text = font_medium.render("Nächste Runde", True, (255, 255, 255))
-        else:
-            button_text = font_medium.render("Spiel beenden", True, (255, 255, 255))
-
-        screen.blit(button_text, (button_x + button_width//2 - button_text.get_width()//2,
-                                 button_y + button_height//2 - button_text.get_height()//2))
-
-        # Button-Rechteck speichern für Klick-Erkennung
-        s.next_round_button = pygame.Rect(button_x, button_y, button_width, button_height)
-
-    # Spielende-Anzeige
-    if hasattr(s, "game_over") and s.game_over:
-        # Halbdurchsichtiger Hintergrund
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()))
-        overlay.set_alpha(200)  # Transparenz (0-255)
-        overlay.fill((240, 240, 240))  # Hellgrau
-        screen.blit(overlay, (0, 0))
-
-        font_large = pygame.font.SysFont(None, 64)
-        font_medium = pygame.font.SysFont(None, 36)
-        font_small = pygame.font.SysFont(None, 28)
-
-        # Überschrift
-        title = font_large.render("Spielende", True, (0, 0, 0))
-        screen.blit(title, (screen.get_width()//2 - title.get_width()//2, 100))
-
-        # Ergebnisse anzeigen
-        y_pos = 180
-        header = font_medium.render("Platz     Spieler             Gesamtpunkte", True, (0, 0, 0))
-        screen.blit(header, (screen.get_width()//2 - header.get_width()//2, y_pos))
-        y_pos += 40
-
-        # Sortieren nach Gesamtpunkten (niedrigste zuerst)
-        sorted_players = sorted(s.total_scores.keys(), key=lambda pid: s.total_scores[pid])
-
-        for place, pid in enumerate(sorted_players, 1):
-            name = s.player_data.get(pid, f"Spieler {pid}")
-            total_score = s.total_scores.get(pid, 0)
-
-            # Gold/Silber/Bronze Farben für die ersten drei Plätze
-            if place == 1:
-                color = (212, 175, 55)  # Gold
-            elif place == 2:
-                color = (192, 192, 192)  # Silber
-            elif place == 3:
-                color = (205, 127, 50)  # Bronze
-            else:
-                color = (0, 0, 0)  # Schwarz
-
-            place_text = font_small.render(f"{place}.", True, color)
-            player_text = font_small.render(f"{name}", True, color)
-            total_text = font_small.render(f"{total_score}", True, color)
-
-            center_x = screen.get_width()//2
-            screen.blit(place_text, (center_x - 150, y_pos))
-            screen.blit(player_text, (center_x - 100, y_pos))
-            screen.blit(total_text, (center_x + 150, y_pos))
-
-            y_pos += 30
-
-        # Button zum Hauptmenü zurückkehren
-        button_width = 300
-        button_height = 50
-        button_x = screen.get_width()//2 - button_width//2
-        button_y = screen.get_height() - 120
-
-        pygame.draw.rect(screen, (0, 100, 200), (button_x, button_y, button_width, button_height))
-        button_text = font_medium.render("Zurück zum Hauptmenü", True, (255, 255, 255))
-        screen.blit(button_text, (button_x + button_width//2 - button_text.get_width()//2,
-                                 button_y + button_height//2 - button_text.get_height()//2))
-
-        # Button-Rechteck speichern für Klick-Erkennung
-        s.main_menu_button = pygame.Rect(button_x, button_y, button_width, button_height)
-
-     # Gezogene Karte anzeigen, wenn vorhanden
+    # Gezogene Karte anzeigen, wenn vorhanden
     if hasattr(s, "gezogene_karte") and s.gezogene_karte is not None:
         card_img = pygame.image.load(f"Karten_png/card_{s.gezogene_karte}.png")
         card_img = pygame.transform.scale(card_img, (s.CARD_WIDTH * 1.5, s.CARD_HEIGHT * 1.5))
@@ -276,7 +120,7 @@ def draw():
         button_x = screen.get_width() // 2 - button_width // 2
         button_y = pl.field_pos['carddeck']['y'] - button_height - 10  # 10px Abstand über den Stapeln
 
-     # Button-Rechteck zeichnen
+        # Button-Rechteck zeichnen
         ablehnen_button = pygame.Rect(button_x, button_y, button_width, button_height)
         pygame.draw.rect(screen, (255, 0, 0), ablehnen_button)  # Roter Button
 
@@ -289,20 +133,116 @@ def draw():
         # Button-Rechteck in settings speichern für Klick-Erkennung
         s.ablehnen_button_rect = ablehnen_button
 
-    # Status-Nachricht anzeigen
-    if hasattr(s, "status_message") and s.status_message:
-        status_font = pygame.font.SysFont(None, 24)
-        status_text = status_font.render(s.status_message, True, (0, 0, 0))
-        screen.blit(status_text, (screen.get_width() // 2 - status_text.get_width() // 2, 30))
+        # Tauschoption anzeigen
+        font = pygame.font.SysFont(None, 22)
+        text = font.render("Klicke auf eine Karte zum Tauschen oder auf 'Ablehnen'", True, (0, 0, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, button_y - 30))
 
-    # Temporäre Meldungen anzeigen (z.B. "3 gleiche Karten entfernt!")
-    if hasattr(s, "temp_message") and s.temp_message:
-        current_time = pygame.time.get_ticks()
-        # Meldung für 3 Sekunden anzeigen
-        if current_time - s.temp_message_time < 3000:
-            font = pygame.font.SysFont(None, 30)
-            text = font.render(s.temp_message, True, (255, 0, 0))  # Rote Schrift
-            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 40))
+
+    # Spielanweisungen für den aktiven Spieler oder Karte aufdecken
+    if s.current_player == s.spieler_id:
+        font = pygame.font.SysFont(None, 22)  # Konsistente Schriftgröße
+
+        if hasattr(s, "muss_karte_aufdecken") and s.muss_karte_aufdecken:
+            # Aufdecken-Nachricht hat Priorität über andere Anweisungen
+            text = font.render("WÄHLE EINE VERDECKTE KARTE ZUM AUFDECKEN", True, (255, 0, 0))
+        elif hasattr(s, "tausche_mit_ablagestapel") and s.tausche_mit_ablagestapel:
+            # Nachricht für Tausch mit Ablagestapel
+            text = font.render("Wähle eine Karte auf deinem Spielfeld zum Tauschen", True, (0, 0, 0))
+        elif not s.zug_begonnen:
+            # Standard-Spielanweisung
+            text = font.render("WÄHLE: Entweder Karte vom Ablagestapel ODER vom Nachziehstapel", True, (0, 0, 0))
         else:
-            # Nach 3 Sekunden löschen
-            s.temp_message = ""
+            # Kein Text, wenn der Zug bereits begonnen hat
+            text = None
+
+        if text:
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
+
+    # Zeige die Runden-Ende-Nachricht, wenn sie in status_message steht
+    if s.status_message and "Runde beendet" in s.status_message:
+        font = pygame.font.SysFont(None, 36)
+        text = font.render(s.status_message, True, (0, 128, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
+
+    # Zeige die Rundenende-Nachricht für 2 Sekunden für ALLE Spieler
+    if getattr(s, "round_end_triggered", False) and hasattr(s, "round_end_triggered_time"):
+        now = pygame.time.get_ticks()
+        if now - s.round_end_triggered_time < 2000:  # 2 Sekunden
+            font = pygame.font.SysFont(None, 30)
+            text = font.render("Rundenende ausgelöst. Restliche Spieler haben noch einen Zug!", True, (255, 0, 0))
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 50))
+        else:
+            s.round_end_triggered = False
+
+    # Zeige "Runde beendet!" für 4 Sekunden nach Rundenende
+    if hasattr(s, "round_ended_time"):
+        now = pygame.time.get_ticks()
+        if now - s.round_ended_time < 4000:
+            font = pygame.font.SysFont(None, 36)
+            text = font.render("Runde beendet!", True, (0, 128, 0))
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 80))
+            # Andere Status-Nachrichten unterdrücken ohne return zu verwenden
+            display_other_messages = False
+
+    else:
+        display_other_messages = True
+
+    if display_other_messages:
+        # Zeige "Alle Karten wurden aufgedeckt..." für 3 Sekunden nach Punkteberechnung
+
+                 ''' Restliche Statusanzeigen überspringen '''
+    # Nur wenn keine spezielle Statusmeldung aktiv ist UND der Spieler NICHT am Zug ist
+    if display_other_messages and s.status_message and s.current_player != s.spieler_id:
+        font = pygame.font.SysFont(None, 22)
+        text = font.render(s.status_message, True, (0, 0, 0))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, 10))
+
+
+    # Rundenanzeige links unten
+    if hasattr(s, "current_round") and hasattr(s, "round_count"):
+        font = pygame.font.SysFont(None, 28)
+        text = font.render(f"Runde {s.current_round}/{s.round_count}", True, (128, 0, 128))
+        screen.blit(text, (10, screen.get_height() - 40))
+
+    # --- PODIUM/GEWINNER-ANZEIGE nach der letzten Runde ---
+    # Zeige das Podium, wenn das Spiel vorbei ist
+    if hasattr(s, "total_scores") and len(s.total_scores) > 0 and getattr(s, "game_over", False):
+        # Podium-Hintergrundbild laden (nur einmal)
+        if not hasattr(s, "podium_bg"):
+            s.podium_bg = pygame.image.load("podium.jpg")
+            s.podium_bg = pygame.transform.scale(s.podium_bg, (600, 350))
+        podium_rect = pygame.Rect(screen.get_width()//2 - 300, 120, 600, 350)
+        screen.blit(s.podium_bg, podium_rect.topleft)
+
+        # Lila Rahmen
+        pygame.draw.rect(screen, (128, 0, 128), podium_rect, 4, border_radius=18)
+
+        # Überschrift
+        font = pygame.font.SysFont(None, 54, bold=True)
+        headline = font.render("Endstand / Podium ", True, (128, 0, 128))
+        screen.blit(headline, (screen.get_width() // 2 - headline.get_width() // 2, 140))
+
+        # Plätze anzeigen
+        font = pygame.font.SysFont(None, 38)
+        y = 210
+        podium = sorted(s.total_scores.items(), key=lambda x: x[1])
+        for platz, (pid, punkte) in enumerate(podium, 1):
+            name = s.player_data.get(pid, f"Spieler{pid}")
+            color = (0, 0, 139)  # Dunkelblau für alle Plätze
+            platz_text = f"{platz}."
+            text = font.render(f"{platz_text} {name}:  ({punkte} Punkte)", True, color)
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
+            y += 45
+
+        # Gewinner-Text
+        winner_name = s.player_data.get(podium[0][0], f"Spieler{podium[0][0]}")
+        winner_font = pygame.font.SysFont(None, 40, bold=True)
+        winner_text = winner_font.render(f"Gewinner: {winner_name}! ", True, (0, 128, 0))
+        screen.blit(winner_text, (screen.get_width() // 2 - winner_text.get_width() // 2, y + 20))
+
+        s.podium_shown = True
+        return
+
+

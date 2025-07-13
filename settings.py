@@ -1,13 +1,16 @@
-# Datei für die Settings (Konstanten, Globale Variablen etc.)
-# import server as serv
+'''Eine zentrale Datei für globale Einstellungen und Variablen.
+Sie enthält Konstanten wie Fenstergrößen, Farben und Spielkonfiguration,
+sowie gemeinsam genutzte Spielzustandsvariablen, die von verschiedenen Modulen verwendet werden.'''
+
 import threading
 
 # Fürs Fenster:
 HEIGHT, WIDTH = 1200, 600
 
+
 WINDOW_COLOR = "SILVER"
 
-# FPS
+
 FPS = 60
 
 
@@ -25,8 +28,6 @@ PLAYER_X_POSITION = 10
 PLAYER_Y_POSITION = 10
 
 PLAYER_SIZE = 20
-PL_NAME_POS = 1.3 * PLAYER_SIZE
-#PLAYER_FONT = pygame.font.SysFont("comicsans", PLAYER_SIZE)
 PLAYER_FONT_COLOR = BLACK
 
 # Variablen für den Server
@@ -39,19 +40,17 @@ player_count = None
 player_count_event = threading.Event()
 lock = threading.Lock()
 
-nameslist = []
-
 # Variablen für den Main
 text_input = ""
 active = False
 ip_input = ""
 entering_ip = False
 round_count = None  # Rundenanzahl, wird nach der Spieleranzahl festgelegt
-game_mode = None  # None -> keine Auswahl, 'host' -> hosten, 'join' -> beitreten
-waiting_for_name = False  # Flag für Namen eingeben
-waiting_for_players = False  # Flag für die Auswahl der Spieleranzahl (nur für den Host)
-waiting_for_rounds = False  # Flag für die Auswahl der Rundenanzahl (nur für den Host)
-waiting_for_start = False  # Flag, dass wir auf Startnachricht warten
+game_mode = None
+waiting_for_name = False
+waiting_for_players = False
+waiting_for_rounds = False
+waiting_for_start = False
 status_message = ""
 running = True
 sock = None
@@ -65,9 +64,9 @@ CARD_HEIGHT = 70
 gap_width = 45
 gap_height = 3
 
-cards_flipped_this_turn = 0 
-current_player = None  # Der Spieler, der gerade am Zug ist
-
+cards_flipped_this_turn = 0
+current_player = None
+cards_flipped = {}
 
 CARD_IMAGES= {
     i: f"img/card_{i}.png" for i in range ( -2, 13)
@@ -79,9 +78,16 @@ warte_auf_entscheidung = False
 gezogene_karte = None
 muss_karte_aufdecken = False
 setup_phase = True  # Phase in der 2 Karten aufgedeckt werden
-zug_begonnen = False  # Zeigt an, ob der Spieler bereits eine Aktion in diesem Zug begonnen hat
+zug_begonnen = False
 
 round_end_triggered = False
 round_end_trigger_player = None
 
-# cd c:/Users/beny/Desktop/TONI/Skyjo_3
+current_round = 1
+round_count = 1  # Wird vom Host gesetzt
+score_history = {}  # Für die Anzeige der Rundenpunkte
+total_scores = {}
+
+# Kartendeck
+draw_pile = []  # Nachziehstapel
+discard_pile = []  # Ablagestapel
