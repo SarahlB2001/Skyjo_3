@@ -1,11 +1,14 @@
 """
-Server-side game logic without pygame dependencies
-This avoids UI-related imports and window creation
+Dieses Modul enthält die serverseitige Spiellogik für Skyjo.
+Es verwaltet die Kartenmatrizen, Spielreihenfolge, Punkteberechnung und
+Kommunikation mit den Clients, ohne pygame-Abhängigkeiten.
+Enthalten sind Funktionen für das Erstellen und Verwalten der Karten,
+Spieleraktionen, Rundenfortschritt und Triplet-Logik.
 """
 import random
 import time
 import settings as s
-from entities import triplet_logic  # Neuer Import
+from entities import triplet_logic  
 from entities.triplet_logic import berechne_punktzahl, calculate_scores  # Diese Funktionen importieren
 
 def create_card_matrices(player_count, rows, cols):
@@ -49,9 +52,6 @@ def create_flipped_matrices(player_count, rows, cols):
         aufgedeckt_matrizen[pid] = [[False for _ in range(cols)] for _ in range(rows)]
     return aufgedeckt_matrizen
 
-#def draw_card_from_deck():
- #   """Generiert eine zufällige Karte für den Nachziehstapel"""
-  #  return random.randint(-2, 12)
 
 def determine_starting_player(scores):
     """Bestimmt den Startspieler basierend auf den Punktzahlen"""
@@ -88,10 +88,10 @@ def handle_card_flip(daten, connection, send_data):
         s.cards_flipped = {}
     s.cards_flipped[spieler_id] = s.cards_flipped.get(spieler_id, 0) + 1
 
-    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    # Auf Dreierkombinationen prüfen
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
-    # NEU: Rundenende prüfen
+    # Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
         s.round_end_trigger_player = spieler_id
@@ -178,7 +178,7 @@ def handle_take_discard_pile(daten, connection, send_data):
     # Nach dem Tausch:
     triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
 
-    # NEU: Rundenende prüfen
+    # Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
         s.round_end_trigger_player = spieler_id
@@ -241,12 +241,12 @@ def handle_swap_with_draw_pile(daten, connection, send_data):
             "ablagestapel": alte_karte
         })
 
-    # NEUE ZEILE: Auf Dreierkombinationen prüfen
+    # Auf Dreierkombinationen prüfen
     hat_triplets, _ = triplet_logic.remove_column_triplets(spieler_id, connection, send_data)
     if hat_triplets:
-        #import time
-        time.sleep(0.5) ############################war 2
-    # NEU: Rundenende prüfen
+       
+        time.sleep(0.5) 
+    # Rundenende prüfen
     if not s.round_end_triggered and all_cards_visible_or_removed(spieler_id):
         s.round_end_triggered = True
         s.round_end_trigger_player = spieler_id
@@ -301,7 +301,7 @@ def update_next_player(spieler_id, connection, send_data):
     # Nächster Spieler ist dran
     s.current_player = get_next_player(spieler_id, s.spielreihenfolge)
 
-    # NEU: Rundenende prüfen
+    # Rundenende prüfen
     if s.round_end_triggered and s.current_player == s.round_end_trigger_player:
         # Rundenende wirklich durchführen!
         for v in connection:
@@ -311,7 +311,7 @@ def update_next_player(spieler_id, connection, send_data):
         print("[INFO] Runde beendet!")
 
         # 4 Sekunden Pause, damit die Nachricht sichtbar bleibt
-        time.sleep(4) #############war 3
+        time.sleep(4) 
 
         # Alle verdeckten Karten aufdecken
         for pid, aufgedeckt_matrix in s.aufgedeckt_matrizen.items():
@@ -328,18 +328,18 @@ def update_next_player(spieler_id, connection, send_data):
                                 "spieler": pid,
                                 "karte": {"row": row, "col": col}
                             })
-                        time.sleep(0.05)  # Sehr kurze Pause reicht!
+                        time.sleep(0.05)  
 
-        # KORREKTUR: Längere Wartezeit für die Verarbeitung
-        pause = 2 + s.player_count * 1.5  # z.B. 3 Sekunden + 1,5 Sekunden pro Spieler
+        # Längere Wartezeit für die Verarbeitung
+        pause = 2 + s.player_count * 1.5  
         time.sleep(pause)
         
 
-        # KORREKTUR: Trigger-Spieler explizit übergeben
+        # Trigger-Spieler explizit übergeben
         scores = calculate_scores(
             s.karten_matrizen,
             s.aufgedeckt_matrizen,
-            ausloeser_id=s.round_end_trigger_player  # Diese wichtige Parameter fehlte!
+            ausloeser_id=s.round_end_trigger_player 
         )
 
         # Allen Clients die finalen Punktzahlen mitteilen
@@ -361,8 +361,8 @@ def update_next_player(spieler_id, connection, send_data):
                         "karten_matrizen": s.karten_matrizen,
                         "aufgedeckt_matrizen": s.aufgedeckt_matrizen,
                         "discard_card": s.discard_card,
-                        "current_round": s.current_round,      # <--- NEU
-                        "round_count": s.round_count           # <--- NEU
+                        "current_round": s.current_round,      
+                        "round_count": s.round_count          
                     })
             else:
                 for v in connection:
@@ -394,7 +394,7 @@ def update_next_player(spieler_id, connection, send_data):
         })
     return s.current_player 
 
-# Die bestehende check_if_all_cards_revealed Funktion ersetzen
+
 def check_if_all_cards_revealed(spieler_id):
     """Prüft, ob ein Spieler alle seine Karten aufgedeckt hat"""
     return triplet_logic.check_if_all_cards_revealed_with_triplets(spieler_id)
@@ -428,7 +428,7 @@ def reset_for_new_round():
     s.setup_phase = True
     s.waiting_for_start = False
     s.zug_begonnen = False
-    s.current_player = None   # <--- WICHTIG: Damit alle Spieler aufdecken dürfen!
+    s.current_player = None  
 
 def create_deck():
     """Erstellt ein vollständiges Skyjo-Kartendeck mit korrekten Häufigkeiten"""

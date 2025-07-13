@@ -1,3 +1,10 @@
+"""
+Dieses Modul enthält die Client-Funktionen für das Skyjo-Spiel.
+Es stellt die Verbindung zum Server her, empfängt und verarbeitet Nachrichten,
+und verwaltet die Kommunikation sowie die Spiellogik auf der Client-Seite.
+Enthalten sind Funktionen für die Netzwerkverbindung, das Empfangen von Daten,
+das Verarbeiten von Server-Nachrichten und Hilfsfunktionen wie die lokale IP-Ermittlung.
+"""
 import socket
 import sys
 import server as serv
@@ -136,7 +143,7 @@ def process_messages(sock, screen):
                     s.warte_auf_entscheidung = False
                     s.round_end_triggered = False
                     s.round_end_trigger_player = None
-                    s.current_player = None   # <--- WICHTIG: Damit alle Spieler aufdecken dürfen!
+                    s.current_player = None  
                     if hasattr(s, "points_calculated_time"):
                         del s.points_calculated_time
                     s.status_message = "Decke zwei Karten auf"
@@ -216,7 +223,7 @@ def process_messages(sock, screen):
                     # Ablagestapel aktualisieren
                     s.discard_card = ablagestapel
 
-                    # NEUE ZEILEN: Ablagestapel-Array korrekt aktualisieren
+                    # Ablagestapel-Array korrekt aktualisieren
                     if not hasattr(s, "discard_pile"):
                         s.discard_pile = []
 
@@ -234,7 +241,7 @@ def process_messages(sock, screen):
                     layout = s.player_cardlayouts.get(spieler)
                     if layout:
                         card = layout.cards[row][col]
-                        card.is_face_up = True  # Immer aufgedeckt setzen!
+                        card.is_face_up = True  
 
                     s.discard_card = ablagestapel
 
@@ -289,7 +296,7 @@ def process_messages(sock, screen):
                                 card.is_face_up = True
                                 print(f"[DEBUG] Karte ({row},{col}) als entfernt markiert")
 
-                    # Keine UI-Anzeige mehr
+                    
                     print(f"[DEBUG] Dreierkombination entfernt: Spieler {spieler}, Spalte {col}")
 
                 elif msg.get("update") == "round_end_triggered":
@@ -297,7 +304,7 @@ def process_messages(sock, screen):
                     s.round_end_triggered = True
                     s.round_end_trigger_player = ausloeser
                     s.status_message = "Rundenende ausgelöst. Alle Spieler haben noch einen Zug!"
-                    # NEU: Zeit merken, wann die Nachricht angezeigt wurde
+                    # Zeit merken, wann die Nachricht angezeigt wurde
                     s.round_end_triggered_time = pygame.time.get_ticks()
 
                 elif msg.get("update") == "round_ended":
@@ -309,7 +316,7 @@ def process_messages(sock, screen):
                 elif msg.get("update") == "punkte_aktualisiert":
                     # Wenn gerade "Runde beendet!" angezeigt wird, warte ab
                     if hasattr(s, "block_until") and pygame.time.get_ticks() < s.block_until:
-                        # Nachricht später erneut verarbeiten (z.B. in eine Queue legen oder einfach return)
+                       
                         return
                     
                     s.scores = msg["scores"]
@@ -326,12 +333,12 @@ def process_messages(sock, screen):
                         if pid_key not in s.score_history:
                             s.score_history[pid_key] = []
                         s.score_history[pid_key].append(score)
-                    # --- NEU: Zeitpunkt merken für die Anzeige ---
+                    
                         if pid_key not in s.total_scores:
                              s.total_scores[pid_key] = 0
                         s.total_scores[pid_key] += score
 
-                    # --- Rest wie gehabt ---
+                    
                    
                     s.final_round_scores = s.scores.copy()
                     s.points_calculated_time = pygame.time.get_ticks()

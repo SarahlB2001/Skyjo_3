@@ -179,26 +179,7 @@ def remove_column_triplets(spieler_id, connection, send_data):
     
     return True, columns_to_remove
 
-def is_affected_by_triplet_removal(spieler_id, row, col):
-    """
-    Prüft, ob eine bestimmte Kartenposition durch Dreierkombinationen entfernt wurde.
-    
-    Args:
-        spieler_id: ID des Spielers
-        row: Zeilenindex der Karte
-        col: Spaltenindex der Karte
-        
-    Returns:
-        bool: True wenn die Karte entfernt wurde, sonst False
-    """
-    if not hasattr(s, "removed_cards") or spieler_id not in s.removed_cards:
-        return False
-    
-    for card in s.removed_cards[spieler_id]:
-        if card["row"] == row and card["col"] == col:
-            return True
-    
-    return False
+
 
 def check_if_all_cards_revealed_with_triplets(spieler_id):
     """

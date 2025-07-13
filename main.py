@@ -7,7 +7,6 @@ import functions.client as c
 import server as serv
 import layout as l
 import settings as s
-#import surface as su
 import time
 from dictionaries import cardSetPosition as cP
 from entities import gameprocess as gp
