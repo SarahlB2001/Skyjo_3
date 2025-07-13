@@ -372,10 +372,11 @@ def process_messages(sock, screen):
                     s.status_message = "Alle Karten aufgedeckt!"
 
                 elif msg.get("update") == "player_left":
-                    s.status_message = msg.get("message", "Ein Spieler hat das Spiel verlassen. Bitte verlasse das Spiel.")
+                    s.player_left_message = msg.get("message", "Ein Spieler hat das Spiel verlassen. Bitte verlasse das Spiel.")
+                    # NICHT: s.status_message = ...
                     s.game_over = True
                     s.player_left_time = pygame.time.get_ticks()
-                    print(f"[INFO] {s.status_message}")
+                    print(f"[INFO] {s.player_left_message}")
                    
 
 
